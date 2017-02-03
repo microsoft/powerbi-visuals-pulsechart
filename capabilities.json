@@ -1,0 +1,144 @@
+{
+  "dataRoles": [
+    {
+      "name": "Date",
+      "kind": "Grouping",
+      "displayName": "Date"
+    },
+    {
+      "name": "Values",
+      "kind": "Measure",
+      "displayName": "Values"
+    }
+  ],
+  "dataViewMappings": [
+    {
+      "conditions": [
+        {
+          "Date": {
+            "min": 0,
+            "max": 1
+          },
+          "Values": {
+            "min": 0,
+            "max": 1
+          },
+          "Labels": {
+            "min": 0,
+            "max": 1
+          }
+        }
+      ],
+      "categorical": {
+        "categories": {
+          "select": [
+            {
+              "for": {
+                "in": "Date"
+              }
+            }
+          ],
+          "dataReductionAlgorithm": {
+            "top": {
+              "count": 10000
+            }
+          }
+        },
+        "values": {
+          "select": [
+            {
+              "bind": {
+                "to": "Values"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "supportsHighlight": true,
+  "objects": {
+    "lineoptions": {
+      "displayName": "Line",
+      "properties": {
+        "fill": {
+          "displayName": "Fill",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "lineThickness": {
+          "displayName": "Thickness",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
+    "dotoptions": {
+      "displayName": "Dot",
+      "properties": {
+        "color": {
+          "displayName": "Fill",
+          "type": {
+            "fill": {
+              "solid": {
+                "color": true
+              }
+            }
+          }
+        },
+        "dotSizeMin": {
+          "displayName": "Min size",
+          "type": {
+            "numeric": true
+          }
+        },
+        "dotSizeMax": {
+          "displayName": "Max size",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    },
+    "counteroptions": {
+      "displayName": "Counter",
+      "properties": {
+        "counterTitle": {
+          "displayName": "Title",
+          "type": {
+            "text": true
+          }
+        }
+      }
+    },
+    "misc": {
+      "displayName": "Animation",
+      "properties": {
+        "isAnimated": {
+          "displayName": "Animated",
+          "type": {
+            "bool": true
+          }
+        },
+        "isStopped": {
+          "displayName": "Stop on load",
+          "type": {
+            "bool": true
+          }
+        },
+        "duration": {
+          "displayName": "Time",
+          "type": {
+            "numeric": true
+          }
+        }
+      }
+    }
+  }
+}
