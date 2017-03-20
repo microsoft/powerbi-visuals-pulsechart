@@ -1,7 +1,7 @@
 {
   "name": "powerbi-visuals-pulsechart",
-  "description": "Pulse chart shows a line chart annotated with key events.  Each events can be selected to filter and cross highlight other visuals to reveal insights or help tell a story.  Pulse chart supports animation so you can load your report and watch it play through key events, without user interaction. This visualization is perfect for story telling with data, especially the Power BI publish to web feature. Use it anywhere you need to draw attention to events that shaped a trend.",
-	"version": "2.0.1",
+  "description": "Pulse chart shows a line chart annotated with key events.  Each events can be selected to filter and cross highlight other visuals to reveal insights or help tell a story. Pulse chart supports animation so you can load your report and watch it play through key events, without user interaction. This visualization is perfect for story telling with data, especially the Power BI publish to web feature. Use it anywhere you need to draw attention to events that shaped a trend.",
+  "version": "2.0.1",
   "author": {
     "name": "Microsoft",
     "email": "pbicvsupport@microsoft.com"
@@ -37,11 +37,13 @@
     "lodash": "4.16.2",
     "moment": "2.15.1",
     "powerbi-visuals-tools": "1.4.0",
-    "powerbi-visuals-utils-chartutils": "0.3.0",
-    "powerbi-visuals-utils-dataviewutils": "1.0.1",
-    "powerbi-visuals-utils-testutils": "0.2.2",
-    "powerbi-visuals-utils-tooltiputils": "0.3.0",
+    "powerbi-visuals-utils-chartutils": "^0.3.0",
+    "powerbi-visuals-utils-colorutils": "^0.2.1",
+    "powerbi-visuals-utils-dataviewutils": "^1.0.1",
+    "powerbi-visuals-utils-testutils": "^0.2.2",
+    "powerbi-visuals-utils-tooltiputils": "^0.3.0",
     "tslint": "3.15.1",
+    "typescript": "^1.8.10",
     "typings": "1.4.0"
   }
 }

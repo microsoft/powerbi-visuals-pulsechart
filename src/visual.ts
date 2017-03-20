@@ -24,34 +24,139 @@
  *  THE SOFTWARE.
  */
 
-namespace powerbi.visuals.samples {
+module powerbi.extensibility.visual {
     // d3
-    import Selection = D3.Selection;
+    import Selection = d3.Selection;
+    import UpdateSelection = d3.selection.Update;
 
-    import ValueFormatter = powerbi.visuals.valueFormatter;
-    import ClassAndSelector = jsCommon.CssConstants.ClassAndSelector;
-    import createClassAndSelector = jsCommon.CssConstants.createClassAndSelector;
-    import TextMeasurementService = powerbi.TextMeasurementService;
-    import defaultLabelPrecision = dataLabelUtils.defaultLabelPrecision;
-    import defaultLabelColor = dataLabelUtils.defaultLabelColor;
-    import DefaultFontSizeInPt = dataLabelUtils.DefaultFontSizeInPt;
-    import defaultLabelDensity = dataLabelUtils.defaultLabelDensity;
+    // powerbi
+    import DataView = powerbi.DataView;
+    import IViewport = powerbi.IViewport;
+    import IVisualHost = powerbi.extensibility.visual.IVisualHost;
+    import converterHelper = powerbi.extensibility.utils.dataview.converterHelper;
 
-    export interface PulseChartConstructorOptions {
-        animator?: IGenericAnimator;
-        svg?: D3.Selection;
-        behavior?: IInteractiveBehavior;
-    }
+    import DataViewObject = powerbi.extensibility.utils.dataview.DataViewObject;
+    import DataViewObjects = powerbi.extensibility.utils.dataview.DataViewObjects;
+    import DataViewValueColumn = powerbi.DataViewValueColumn;
+    import VisualObjectInstance = powerbi.VisualObjectInstance;
+    import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
+    import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
+    import DataViewObjectPropertyIdentifier = powerbi.DataViewObjectPropertyIdentifier;
+    import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
+
+    // powerbi.extensibility
+    import IColorPalette = powerbi.extensibility.IColorPalette;
+    import VisualTooltipDataItem = powerbi.extensibility.VisualTooltipDataItem;
+
+    // powerbi.extensibility.visual
+    import IVisual = powerbi.extensibility.visual.IVisual;
+    import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
+    import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
+
+    // powerbi.extensibility.utils.svg
+    import IRect = powerbi.extensibility.utils.svg.IRect;
+    import SVGUtil = powerbi.extensibility.utils.svg;
+    import IMargin = powerbi.extensibility.utils.svg.IMargin;
+    import translate = powerbi.extensibility.utils.svg.translate;
+    import ClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.ClassAndSelector;
+    import createClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.createClassAndSelector;
+
+    // powerbi.extensibility.utils.formatting
+    import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
+    import ValueFormatterOptions = powerbi.extensibility.utils.formatting.ValueFormatterOptions;
+    import TextProperties = powerbi.extensibility.utils.formatting.TextProperties;
+    import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
+    import textMeasurementService = powerbi.extensibility.utils.formatting.textMeasurementService;
+
+    // powerbi.extensibility.utils.interactivity
+    import appendClearCatcher = powerbi.extensibility.utils.interactivity.appendClearCatcher;
+    import SelectableDataPoint = powerbi.extensibility.utils.interactivity.SelectableDataPoint;
+    import IInteractiveBehavior = powerbi.extensibility.utils.interactivity.IInteractiveBehavior;
+    import IInteractivityService = powerbi.extensibility.utils.interactivity.IInteractivityService;
+    import createInteractivityService = powerbi.extensibility.utils.interactivity.createInteractivityService;
+
+    // powerbi.extensibility.utils.tooltip
+    import TooltipEventArgs = powerbi.extensibility.utils.tooltip.TooltipEventArgs;
+    import ITooltipServiceWrapper = powerbi.extensibility.utils.tooltip.ITooltipServiceWrapper;
+    import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
+    import createTooltipServiceWrapper = powerbi.extensibility.utils.tooltip.createTooltipServiceWrapper;
+
+    // powerbi.extensibility.utils.color
+    import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
+
+    // powerbi.extensibility.utils.chart
+    import LegendModule = powerbi.extensibility.utils.chart.legend;
+    import ILegend = powerbi.extensibility.utils.chart.legend.ILegend;
+    import LegendData = powerbi.extensibility.utils.chart.legend.LegendData;
+    import LegendDataModule = powerbi.extensibility.utils.chart.legend.data;
+    import LegendIcon = powerbi.extensibility.utils.chart.legend.LegendIcon;
+    import legendProps = powerbi.extensibility.utils.chart.legend.legendProps;
+    import legendPosition = powerbi.extensibility.utils.chart.legend.position;
+    import createLegend = powerbi.extensibility.utils.chart.legend.createLegend;
+    import LegendPosition = powerbi.extensibility.utils.chart.legend.LegendPosition;
+    import ILabelLayout = powerbi.extensibility.utils.chart.dataLabel.ILabelLayout;
+    import DataLabelManager = powerbi.extensibility.utils.chart.dataLabel.DataLabelManager;
+    import LabelEnabledDataPoint = powerbi.extensibility.utils.chart.dataLabel.LabelEnabledDataPoint;
+
+    // powerbi.extensibility.utils.chart
+    import AxisHelper = powerbi.extensibility.utils.chart.axis;
+    import axisScale = powerbi.extensibility.utils.chart.axis.scale;
+    import IAxisProperties = powerbi.extensibility.utils.chart.axis.IAxisProperties;
+
+    // powerbi.visuals
+    import ISelectionId = powerbi.visuals.ISelectionId;
+
+    import Axis = d3.svg.Axis;
+
+    export interface Line extends d3.svg.Line<PulseChartDataPoint> { }
+    export interface LinearScale extends d3.scale.Linear<any, any> { }
+    export interface TimeScale extends d3.time.Scale<any, any> { }
+
+    type GenericScale = TimeScale | LinearScale;
+    export interface Datum { };
+    export interface Primitive { };
+
+    export type StyleProperties = { [key: string]: Primitive | ((datum: Datum, index: number, outerIndex: number) => Primitive) }
 
     export interface PulseBehaviorOptions {
         layerOptions?: any[];
-        clearCatcher: D3.Selection;
+        clearCatcher: Selection<any>;
     }
 
     export interface TooltipSettings {
         dataPointColor: string;
         marginTop: number;
         timeHeight: number;
+    }
+
+
+    export const enum PointLabelPosition {
+        Above,
+        Below,
+    }
+
+    export const enum Orientation {
+        Vertical,
+        Horizontal
+    }
+
+    export interface VisualDataLabelsSettings {
+        show: boolean;
+        showLabelPerSeries?: boolean;
+        labelOrientation?: Orientation;
+        isSeriesExpanded?: boolean;
+        displayUnits?: number;
+        showCategory?: boolean;
+        position?: any;
+        precision?: number;
+        labelColor: string;
+        categoryLabelColor?: string;
+        fontSize?: number;
+        labelStyle?: any;
+    }
+
+    export interface PointDataLabelsSettings extends VisualDataLabelsSettings {
+        position: PointLabelPosition;
     }
 
     export interface PulseChartChartDataLabelsSettings extends PointDataLabelsSettings {
@@ -137,17 +242,10 @@ namespace powerbi.visuals.samples {
         transparency: number;
     }
 
-    export function createEnumTypeFromEnum(type: any): IEnumType {
-        var even: any = false;
-        return createEnumType(Object.keys(type)
-            .filter((key,i) => ((!!(i % 2)) === even && type[key] === key && !void(even === !even)) || (!!(i % 2)) !== even)
-            .map(x => <IEnumMember>{ value: x, displayName: x }));
-    }
-
     export enum PulseChartXAxisDateFormat {
-        //DateAndTime = <any>'Date and time',
+        // DateAndTime = <any>'Date and time',
         DateOnly = <any>'Date only',
-        TimeOnly  = <any>'Time only'
+        TimeOnly = <any>'Time only'
     }
 
     export enum XAxisPosition {
@@ -163,6 +261,7 @@ namespace powerbi.visuals.samples {
     export interface PulseChartGapsSettings {
         show: boolean;
         visibleGapsPercentage: number;
+        // showByDefault: boolean;
     }
 
     export interface PulseChartSeriesSetting {
@@ -200,7 +299,7 @@ namespace powerbi.visuals.samples {
         backgroundColor: string;
     }
 
-    export interface PulseChartYAxisSettings extends PulseChartAxisSettings {}
+    export interface PulseChartYAxisSettings extends PulseChartAxisSettings { }
 
     export interface PulseChartSettings {
         formatStringProperty: DataViewObjectPropertyIdentifier;
@@ -245,10 +344,10 @@ namespace powerbi.visuals.samples {
 
         grouped: DataViewValueColumnGroup[];
 
-        xScale?: D3.Scale.TimeScale | D3.Scale.LinearScale;
-        commonYScale?: D3.Scale.LinearScale;
-        yScales?: D3.Scale.LinearScale[];
-        yAxis?: D3.Svg.Axis;
+        xScale?: TimeScale | LinearScale;
+        commonYScale?: LinearScale;
+        yScales?: LinearScale[];
+        yAxis?: Axis;
 
         widthOfXAxisLabel: number;
         widthOfTooltipValueLabel: number;
@@ -266,8 +365,8 @@ namespace powerbi.visuals.samples {
 
     export interface PulseChartXAxisProperties {
         values: (Date | number)[];
-        scale: D3.Scale.TimeScale;
-        axis: D3.Svg.Axis;
+        scale: TimeScale;
+        axis: Axis;
         rotate: boolean;
     }
 
@@ -294,8 +393,8 @@ namespace powerbi.visuals.samples {
     }
 
     export interface PulseChartBehaviorOptions {
-        selection: D3.Selection;
-        clearCatcher: D3.Selection;
+        selection: Selection<any>;
+        clearCatcher: Selection<any>;
         interactivityService: IInteractivityService;
         hasHighlights: boolean;
         onSelectCallback(): void;
@@ -305,8 +404,15 @@ namespace powerbi.visuals.samples {
         setSelection(d: PulseChartDataPoint): void;
     }
 
+    export enum PulseAnimatorStates {
+        Ready,
+        Play,
+        Paused,
+        Stopped,
+    }
+
     export class PulseChart implements IVisual {
-        public static RoleDisplayNames = <PulseChartDataRoles<string>> {
+        public static RoleDisplayNames = <PulseChartDataRoles<string>>{
             Timestamp: "Timestamp",
             Category: "Category",
             Value: "Value",
@@ -315,331 +421,6 @@ namespace powerbi.visuals.samples {
             EventSize: "Event Size",
             RunnerCounter: "Runner Counter",
         };
-
-        public static RoleNames = <PulseChartDataRoles<string>>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => i);
-
-        public static capabilities: VisualCapabilities = {
-            dataRoles: [
-                {
-                    displayName: PulseChart.RoleDisplayNames.Timestamp,
-                    name: PulseChart.RoleNames.Timestamp,
-                    kind: powerbi.VisualDataRoleKind.Grouping
-                },
-                {
-                    displayName: PulseChart.RoleDisplayNames.Value,
-                    name: PulseChart.RoleNames.Value,
-                    kind: powerbi.VisualDataRoleKind.Measure
-                },
-                /* Temporary disabled
-                {
-                    displayName: PulseChart.RoleDisplayNames.Category,
-                    name: PulseChart.RoleNames.Category,
-                    kind: powerbi.VisualDataRoleKind.Grouping
-                },*/
-                {
-                    displayName: PulseChart.RoleDisplayNames.EventTitle,
-                    name: PulseChart.RoleNames.EventTitle,
-                    kind: powerbi.VisualDataRoleKind.GroupingOrMeasure
-                },
-                {
-                    displayName: PulseChart.RoleDisplayNames.EventDescription,
-                    name: PulseChart.RoleNames.EventDescription,
-                    kind: powerbi.VisualDataRoleKind.GroupingOrMeasure
-                },
-                {
-                    displayName: PulseChart.RoleDisplayNames.EventSize,
-                    name: PulseChart.RoleNames.EventSize,
-                    kind: powerbi.VisualDataRoleKind.Measure
-                },
-                {
-                    displayName: PulseChart.RoleDisplayNames.RunnerCounter,
-                    name: PulseChart.RoleNames.RunnerCounter,
-                    kind: powerbi.VisualDataRoleKind.GroupingOrMeasure
-                },
-            ],
-            dataViewMappings: [{
-                conditions: <any>[
-                    <PulseChartDataRoles<NumberRange>> {
-                        Timestamp: { max: 1 },
-                        Value: { max: 1 },
-                        Category: { max: 1 },
-                        EventTitle: { max: 1 },
-                        EventDescription: { max: 1 },
-                        EventSize: { max: 1 },
-                        RunnerCounter: { max: 1 },
-                    }
-                ],
-                categorical: {
-                    categories: {
-                        select: [
-                            { for: { in: PulseChart.RoleNames.Timestamp } },
-                            { bind: { to: PulseChart.RoleNames.EventTitle } },
-                            { bind: { to: PulseChart.RoleNames.EventDescription } },
-                            { bind: { to: PulseChart.RoleNames.EventDescription } },
-                            { bind: { to: PulseChart.RoleNames.RunnerCounter } }
-                        ],
-                        dataReductionAlgorithm: { top: { count: 10000 } }
-                    },
-                    values: {
-                        group: {
-                            by: PulseChart.RoleNames.Category,
-                            select: [
-                                { bind: { to: PulseChart.RoleNames.Value } },
-                                { bind: { to: PulseChart.RoleNames.EventSize } },
-                            ],
-                            dataReductionAlgorithm: { top: {} }
-                        },
-                    },
-                },
-            }],
-            objects: {
-                series: {
-                    displayName: "Series",
-                    description: "Series",
-                    properties: {
-                        fill: {
-                            displayName: "Fill",
-                            type: {
-                                fill: {
-                                    solid: {
-                                        color: true
-                                    }
-                                }
-                            }
-                        },
-                        width: {
-                            displayName: 'Width',
-                            type: {
-                                numeric: true
-                            }
-                        },
-                    }
-                },
-                gaps: {
-                    displayName: "Gaps",
-                    description: "Gaps",
-                    properties: {
-                        show: {
-                            displayName: "Show",
-                            type: { bool: true }
-                        },
-                        transparency: {//visibleGapsPercentage
-                            displayName: 'Visible gaps',
-                            type: { numeric: true }
-                        },
-                    }
-                },
-                general: {
-                    displayName: 'General',
-                    properties: {
-                        formatString: { type: { formatting: { formatString: true } } },
-                        fill: {
-                            displayName: 'Background color',
-                            type: { fill: { solid: { color: true } } }
-                        }
-                    }
-                },
-                popup: {
-                    displayName: "Popup",
-                    properties: {
-                        show: {
-                            displayName: "Show",
-                            type: { bool: true }
-                        },
-                        alwaysOnTop: {
-                            displayName: "Always on top",
-                            type: { bool: true }
-                        },
-                        width: {
-                            displayName: "Width",
-                            type: {
-                                numeric: true
-                            }
-                        },
-                        height: {
-                            displayName: "Height",
-                            type: {
-                                numeric: true
-                            }
-                        },
-                        color: {
-                            displayName: "Fill",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        fontSize: {
-                            displayName: "Text size",
-                            type: { formatting: { fontSize: true } }
-                        },
-                        fontColor: {
-                            displayName: "Text color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        showTime: {
-                            displayName: "Show time",
-                            type: { bool: true }
-                        },
-                        showTitle: {
-                            displayName: "Show title",
-                            type: { bool: true }
-                        },
-                        timeColor: {
-                            displayName: "Time color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        timeFill: {
-                            displayName: "Time fill",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                    }
-                },
-                dots: {
-                    displayName: "Dots",
-                    properties: {
-                        color: {
-                            displayName: "Fill",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        minSize: {
-                            displayName: "Min Size",
-                            type: { numeric: true }
-                        },
-                        maxSize: {
-                            displayName: "Max Size",
-                            type: { numeric: true }
-                        },
-                        size: {
-                            displayName: "Default Size",
-                            type: { numeric: true }
-                        },
-                        transparency: {
-                            displayName: "Transparency",
-                            type: { numeric: true }
-                        },
-                    }
-                },
-                xAxis: {
-                    displayName: "X Axis",
-                    properties: {
-                        show: {
-                            displayName: "Show",
-                            type: { bool: true }
-                        },
-                        position: {
-                            displayName: "Position",
-                            type: { enumeration: createEnumTypeFromEnum(XAxisPosition) }
-                        },
-                        fontColor: {
-                            displayName: "Font Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        color: {
-                            displayName: "Axis Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        backgroundColor: {
-                            displayName: "Background Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                    }
-                },
-                yAxis: {
-                    displayName: "Y Axis",
-                    properties: {
-                        show: {
-                            displayName: "Show",
-                            type: { bool: true }
-                        },
-                        fontColor: {
-                            displayName: "Font Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        color: {
-                            displayName: "Axis Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                    }
-                },
-                playback: {
-                    displayName: 'Playback',
-                    properties: {
-                        autoplay: {
-                            displayName: "Autoplay",
-                            type: { bool: true }
-                        },
-                        playSpeed: {
-                            displayName: "Speed (dots/sec)",
-                            type: { numeric: true }
-                        },
-                        pauseDuration: {
-                            displayName: "Pause Duration",
-                            type: { numeric: true }
-                        },
-                        autoplayPauseDuration: {
-                            displayName: "Start Delay",
-                            type: { numeric: true }
-                        },
-                        color: {
-                            displayName: "Buttons Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                        position: {
-                            displayName: "Position",
-                            type: { text: true }
-                        }
-                    }
-                },
-                runnerCounter: {
-                    displayName: 'Runner Counter',
-                    properties: {
-                        show: {
-                            displayName: "Show",
-                            type: { bool: true }
-                        },
-                        label: {
-                            displayName: "Label",
-                            type: { text: true }
-                        },
-                        position: {
-                            displayName: "Position",
-                            type: { enumeration: createEnumTypeFromEnum(RunnerCounterPosition) }
-                        },
-                        fontSize: {
-                            displayName: "Text Size",
-                            type: { formatting: { fontSize: true } }
-                        },
-                        fontColor: {
-                            displayName: "Font Color",
-                            type: { fill: { solid: { color: true } } }
-                        },
-                    }
-                },
-            },
-            sorting: {
-                implicit: {
-                    clauses: [{
-                            role: PulseChart.RoleNames.Timestamp,
-                            direction: 1//SortDirection.Ascending
-                        }]
-                }
-            },
-            supportsHighlight: true
-        };
-
-        private static Properties: PulseChartProperties = PulseChart.getProperties(PulseChart.capabilities);
-        public static getProperties(capabilities: VisualCapabilities): any {
-            var result = {};
-            for(var objectKey in capabilities.objects) {
-                result[objectKey] = {};
-                for(var propKey in capabilities.objects[objectKey].properties) {
-                    result[objectKey][propKey] = <DataViewObjectPropertyIdentifier> {
-                        objectName: objectKey,
-                        propertyName: propKey
-                    };
-                }
-            }
-
-            return result;
-        }
 
         private static DefaultMargin: IMargin = {
             top: 20,
@@ -662,8 +443,9 @@ namespace powerbi.visuals.samples {
         private static PopupTextPadding: number = 3;
         private static XAxisTickSpace: number = 15;
         private static XAxisTickHeight: number = 16;
-        private static MinimumTicksToRotate:  number = 3;
+        private static MinimumTicksToRotate: number = 3;
         private static AxisTickRotateAngle: number = -35;
+        private static topShift: number = 20;
 
         private static GetPopupValueTextProperties(text?: string, fontSizeValue = 12): TextProperties {
             return {
@@ -673,13 +455,13 @@ namespace powerbi.visuals.samples {
             };
         }
 
-         private static GetPopupTitleTextProperties(text?: string, fontSizeValue = 12): TextProperties {
-             return {
-                 text: text || "",
-                 fontFamily: "sans-serif",
-                 fontWeight: "bold",
-                 fontSize: fontSizeValue + "px",
-             };
+        private static GetPopupTitleTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+            return {
+                text: text || "",
+                fontFamily: "sans-serif",
+                fontWeight: "bold",
+                fontSize: fontSizeValue + "px",
+            };
         }
 
         private static GetPopupDescriptionTextProperties(text?: string, fontSizeValue = 12): TextProperties {
@@ -694,20 +476,20 @@ namespace powerbi.visuals.samples {
             return {
                 text: text || "",
                 fontFamily: "sans-serif",
-                fontSize:  fontSizeValue + "px",
+                fontSize: fontSizeValue + "px",
             };
         }
 
-        public static ConvertTextPropertiesToStyle(textProperties: TextProperties): Object {
+        public static ConvertTextPropertiesToStyle(textProperties: TextProperties): any {
             return {
-                 'font-family': textProperties.fontFamily,
-                 'font-weight': textProperties.fontWeight,
-                 'font-size': textProperties.fontSize
-             };
+                'font-family': textProperties.fontFamily,
+                'font-weight': textProperties.fontWeight,
+                'font-size': textProperties.fontSize
+            };
         }
 
         private static GetDateTimeFormatString(dateFormatType: PulseChartXAxisDateFormat, dateFormat: string): string {
-            switch(dateFormatType) {
+            switch (dateFormatType) {
                 case PulseChartXAxisDateFormat.DateOnly: return dateFormat;
                 case PulseChartXAxisDateFormat.TimeOnly: return "H:mm";
                 default: return "";
@@ -715,8 +497,8 @@ namespace powerbi.visuals.samples {
         }
 
         private static GetFullWidthOfDateFormat(dateFormat: string, textProperties: TextProperties): number {
-            textProperties.text = valueFormatter.create({ format: dateFormat }).format(new Date(2000,10,20,20,20,20));
-            return TextMeasurementService.measureSvgTextWidth(textProperties);
+            textProperties.text = valueFormatter.create({ format: dateFormat }).format(new Date(2000, 10, 20, 20, 20, 20));
+            return textMeasurementService.measureSvgTextWidth(textProperties);
         }
 
         private static DefaultSettings: PulseChartSettings = {
@@ -777,7 +559,7 @@ namespace powerbi.visuals.samples {
                 fontSize: 13,
                 fontColor: "#777777"
             },
-            formatStringProperty: PulseChart.Properties["general"]["formatString"]
+            formatStringProperty: null,//pulseChartProps["general"]["formatString"]
         };
 
         private static DefaultTooltipSettings: TooltipSettings = {
@@ -787,18 +569,21 @@ namespace powerbi.visuals.samples {
         };
 
         private static MaxGapCount: number = 100;
-        private static MinGapWidth = <[number]>_.object(<any>[[
-            PulseChartXAxisDateFormat.DateOnly, 60 * 1000 * 24], [
-            PulseChartXAxisDateFormat.TimeOnly, 60 * 1000],
-            ], undefined);
+
+        private static MinGapWidth = {
+            'Date only': 60 * 1000 * 24,
+            'Time only': 60 * 1000
+        }
+
+        private static DefaultAnimationDuration: number = 250;
 
         private static Chart: ClassAndSelector = createClassAndSelector('chart');
-        private static Line: ClassAndSelector  = createClassAndSelector('line');
+        private static Line: ClassAndSelector = createClassAndSelector('line');
         private static LineContainer: ClassAndSelector = createClassAndSelector('lineContainer');
         private static LineNode: ClassAndSelector = createClassAndSelector('lineNode');
         private static XAxisNode: ClassAndSelector = createClassAndSelector('xAxisNode');
-        private static Dot: ClassAndSelector  = createClassAndSelector('dot');
-        private static DotsContainer: ClassAndSelector  = createClassAndSelector('dotsContainer');
+        private static Dot: ClassAndSelector = createClassAndSelector('dot');
+        private static DotsContainer: ClassAndSelector = createClassAndSelector('dotsContainer');
         private static Tooltip: ClassAndSelector = createClassAndSelector('Tooltip');
         private static TooltipRect: ClassAndSelector = createClassAndSelector('tooltipRect');
         private static TooltipTriangle: ClassAndSelector = createClassAndSelector('tooltipTriangle');
@@ -814,38 +599,38 @@ namespace powerbi.visuals.samples {
         private static AnimationDot: ClassAndSelector = createClassAndSelector('animationDot');
 
         private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewCategoryColumn | DataViewValueColumn {
-            var filterFunc = (cols: DataViewCategoricalColumn[]) => cols.filter((x) => x.source && x.source.roles && x.source.roles[roleName])[0];
+            let filterFunc = (cols: DataViewCategoricalColumn[]) => cols.filter((x) => x.source && x.source.roles && x.source.roles[roleName])[0];
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
         }
 
-        public static converter(dataView: DataView, colors: IDataColorPalette, interactivityService: IInteractivityService): PulseChartData {
+        public static converter(dataView: DataView, host: IVisualHost, colors: IColorPalette, interactivityService: IInteractivityService): PulseChartData {
             if (!dataView
                 || !dataView.categorical
                 || !dataView.categorical.values
                 || !dataView.categorical.values[0]
                 || !dataView.categorical.values[0].values
                 || !dataView.categorical.categories) {
-                    return null;
+                return null;
             }
 
-            var columns: PulseChartDataRoles<DataViewCategoricalColumn> = <any>_.mapValues(PulseChart.RoleNames, (x,i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
-            var timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
+            let columns: PulseChartDataRoles<DataViewCategoricalColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
+            let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
             if (!timeStampColumn) {
                 return null;
             }
 
-            var isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
-            var settings: PulseChartSettings = PulseChart.parseSettings(dataView, colors, columns);
+            let isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
+            let settings: PulseChartSettings = PulseChart.parseSettings(dataView, colors, columns);
 
-            var categoryValues: any[] = timeStampColumn.values;
+            let categoryValues: any[] = timeStampColumn.values;
 
             if (!categoryValues || _.isEmpty(dataView.categorical.values) || !columns.Value || _.isEmpty(columns.Value.values)) {
                 return null;
             }
 
-            var minValuesValue = Math.min.apply(null, columns.Value.values), maxValuesValue = Math.max.apply(null, columns.Value.values);
-            var minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
+            let minValuesValue = Math.min.apply(null, columns.Value.values), maxValuesValue = Math.max.apply(null, columns.Value.values);
+            let minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
             settings.xAxis.dateFormat =
                 (maxCategoryValue - minCategoryValue < (24 * 60 * 60 * 1000)
                     && new Date(maxCategoryValue).getDate() === new Date(minCategoryValue).getDate())
@@ -859,68 +644,68 @@ namespace powerbi.visuals.samples {
             settings.yAxis.formatterOptions = {
                 value: minValuesValue,
                 value2: maxValuesValue,
-                format: ValueFormatter.getFormatString(columns.Value.source, PulseChart.DefaultSettings.formatStringProperty)
+                format: valueFormatter.getFormatString(columns.Value.source, PulseChart.DefaultSettings.formatStringProperty)
             };
 
             if (isScalar) {
-                settings.xAxis.formatterOptions.format = ValueFormatter.getFormatString(timeStampColumn.source,
+                settings.xAxis.formatterOptions.format = valueFormatter.getFormatString(timeStampColumn.source,
                     PulseChart.DefaultSettings.formatStringProperty);
             } else {
                 settings.xAxis.formatterOptions.format = PulseChart.GetDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
             }
 
-            var widthOfXAxisLabel = 70;
-            var widthOfTooltipValueLabel = isScalar ? 60 : PulseChart.GetFullWidthOfDateFormat(timeStampColumn.source.format, PulseChart.GetPopupValueTextProperties()) + 5;
-            var heightOfTooltipDescriptionTextLine = TextMeasurementService.measureSvgTextHeight(PulseChart.GetPopupDescriptionTextProperties("lj", settings.popup.fontSize));
-            var runnerCounterFormatString = columns.RunnerCounter && visuals.valueFormatter.getFormatString(columns.RunnerCounter.source, settings.formatStringProperty);
+            let widthOfXAxisLabel = 70;
+            let widthOfTooltipValueLabel = isScalar ? 60 : PulseChart.GetFullWidthOfDateFormat(timeStampColumn.source.format, PulseChart.GetPopupValueTextProperties()) + 5;
+            let heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(PulseChart.GetPopupDescriptionTextProperties("lj", settings.popup.fontSize));
+            let runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, settings.formatStringProperty);
             settings.popup.width = Math.max(widthOfTooltipValueLabel + 20, settings.popup.width);
 
-            var minSize: number = PulseChart.DefaultSettings.dots.minSize;
-            var maxSize: number = PulseChart.DefaultSettings.dots.maxSize;
+            let minSize: number = PulseChart.DefaultSettings.dots.minSize;
+            let maxSize: number = PulseChart.DefaultSettings.dots.maxSize;
             if (settings.dots) {
-                    minSize = settings.dots.minSize;
-                    maxSize = settings.dots.maxSize;
-                }
+                minSize = settings.dots.minSize;
+                maxSize = settings.dots.maxSize;
+            }
 
-            var eventSizeScale: D3.Scale.LinearScale = <D3.Scale.LinearScale> PulseChart.createScale(
+            let eventSizeScale: LinearScale = <LinearScale>PulseChart.createScale(
                 true,
                 columns.EventSize ? [d3.min(<number[]>columns.EventSize.values), d3.max(<number[]>columns.EventSize.values)] : [0, 0],
                 minSize,
                 maxSize);
 
-            var xAxisCardProperties: DataViewObject = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
+            let xAxisCardProperties: DataViewObject = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
 
-            var hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
+            let hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
 
-            var dataPointLabelSettings = PulseChartDataLabelUtils.getDefaultPulseChartLabelSettings();
-            var gapWidths = PulseChart.getGapWidths(categoryValues);
-            var maxGapWidth = Math.max.apply(null, gapWidths);
+            let dataPointLabelSettings = PulseChartDataLabelUtils.getDefaultPulseChartLabelSettings();
+            let gapWidths = PulseChart.getGapWidths(categoryValues);
+            let maxGapWidth = Math.max.apply(null, gapWidths);
 
-            var firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
-            var grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
-            var y_group0Values = grouped[firstGroupIndex]
+            let firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
+            let grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
+            let y_group0Values = grouped[firstGroupIndex]
                 && grouped[firstGroupIndex].values[firstValueMeasureIndex]
                 && grouped[firstGroupIndex].values[firstValueMeasureIndex].values;
-            var y_group1Values = grouped[secondGroupIndex]
+            let y_group1Values = grouped[secondGroupIndex]
                 && grouped[secondGroupIndex].values[firstValueMeasureIndex]
                 && grouped[secondGroupIndex].values[firstValueMeasureIndex].values;
 
-            var series: PulseChartSeries[] = [];
-            var dataPoints: PulseChartDataPoint[] = [];
+            let series: PulseChartSeries[] = [];
+            let dataPoints: PulseChartDataPoint[] = [];
 
-            for (var categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
-                var categoryValue = categoryValues[categoryIndex];
-                var value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-                var runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && columns.RunnerCounter.values[categoryIndex];
-                var identity = SelectionIdBuilder.builder()
-                        .withCategory(timeStampColumn, categoryIndex)
-                        .createSelectionId();
+            for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
+                let categoryValue = categoryValues[categoryIndex];
+                let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
+                let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && columns.RunnerCounter.values[categoryIndex];
+                let identity: ISelectionId = host.createSelectionIdBuilder()
+                    .withCategory(timeStampColumn, categoryIndex)
+                    .createSelectionId();
 
-                var minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / PulseChart.MaxGapCount,  PulseChart.MinGapWidth[settings.xAxis.dateFormat]);
-                var gapWidth: number = gapWidths[categoryIndex];
-                var isGap: boolean = settings.gaps.show
-                        && gapWidth > 0
-                        && gapWidth > (minGapWidth + (100 - settings.gaps.visibleGapsPercentage) * (maxGapWidth - minGapWidth) / 100);
+                let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / PulseChart.MaxGapCount, PulseChart.MinGapWidth[settings.xAxis.dateFormat]);
+                let gapWidth: number = gapWidths[categoryIndex];
+                let isGap: boolean = settings.gaps.show
+                    && gapWidth > 0
+                    && gapWidth > (minGapWidth + (100 - settings.gaps.visibleGapsPercentage) * (maxGapWidth - minGapWidth) / 100);
 
                 if (isGap && dataPoints.length > 0) {
                     series.push({
@@ -942,12 +727,12 @@ namespace powerbi.visuals.samples {
                     continue;
                 }
 
-                var popupInfo: PulseChartTooltipData = null;
-                var eventSize = (columns.EventSize && columns.EventSize.values && columns.EventSize.values[categoryIndex]) || 0;
+                let popupInfo: PulseChartTooltipData = null;
+                let eventSize: PrimitiveValue = (columns.EventSize && columns.EventSize.values && columns.EventSize.values[categoryIndex]) || 0;
 
                 if ((columns.EventTitle && columns.EventTitle.values && columns.EventTitle.values[categoryIndex]) ||
                     (columns.EventDescription && columns.EventDescription.values && columns.EventDescription.values[categoryIndex])) {
-                    var formattedValue = categoryValue;
+                    let formattedValue = categoryValue;
 
                     if (!isScalar && categoryValue) {
                         formattedValue = valueFormatter.create({ format: timeStampColumn.source.format }).format(categoryValue);
@@ -960,12 +745,12 @@ namespace powerbi.visuals.samples {
                     };
                 }
 
-                var dataPoint: PulseChartDataPoint = {
+                let dataPoint: PulseChartDataPoint = {
                     categoryValue: categoryValue,
                     value: value,
                     categoryIndex: categoryIndex,
                     seriesIndex: series.length,
-                    tooltipInfo: null,//tooltipInfo,
+                    tooltipInfo: null, // tooltipInfo,
                     popupInfo: popupInfo,
                     selected: false,
                     identity: identity,
@@ -976,7 +761,7 @@ namespace powerbi.visuals.samples {
                     y: <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0,
                     pointColor: settings.series.fill,
                     groupIndex: PulseChart.getGroupIndex(categoryIndex, grouped),
-                    eventSize: columns.EventSize ? eventSizeScale(eventSize) : 0,
+                    eventSize: columns.EventSize ? eventSizeScale(eventSize as number) : 0,
                     runnerCounterValue: runnerCounterValue,
                     runnerCounterFormatString: runnerCounterFormatString,
                     specificIdentity: undefined,
@@ -1002,22 +787,22 @@ namespace powerbi.visuals.samples {
             }
 
             xAxisCardProperties = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
-            var valueAxisProperties = PulseChartAxisPropertiesHelper.getValueAxisProperties(dataView.metadata);
+            let valueAxisProperties = PulseChartAxisPropertiesHelper.getValueAxisProperties(dataView.metadata);
 
-            var values = dataView.categorical.categories;
+            let values = dataView.categorical.categories;
 
             // Convert to DataViewMetadataColumn
-            var valuesMetadataArray: powerbi.DataViewMetadataColumn[] = [];
+            let valuesMetadataArray: powerbi.DataViewMetadataColumn[] = [];
             if (values) {
-                for (var i = 0; i < values.length; i++) {
+                for (let i = 0; i < values.length; i++) {
                     if (values[i] && values[i].source && values[i].source.displayName) {
                         valuesMetadataArray.push({ displayName: values[i].source.displayName });
                     }
                 }
             }
 
-            var axesLabels = converterHelper.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
-            var dots: PulseChartDataPoint[] = PulseChart.getDataPointsFromSeries(series);
+            let axesLabels = PulseChart.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
+            let dots: PulseChartDataPoint[] = PulseChart.getDataPointsFromSeries(series);
 
             if (interactivityService) {
                 interactivityService.applySelectionStateToData(dots);
@@ -1038,27 +823,54 @@ namespace powerbi.visuals.samples {
                 widthOfXAxisLabel: widthOfXAxisLabel,
                 widthOfTooltipValueLabel: widthOfTooltipValueLabel,
                 heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
-                runnerCounterHeight: TextMeasurementService.measureSvgTextHeight(
+                runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
                     PulseChart.GetRunnerCounterTextProperties("lj", settings.runnerCounter.fontSize))
             };
         }
 
+        private static createAxesLabels(categoryAxisProperties: DataViewObject,
+            valueAxisProperties: DataViewObject,
+            category: DataViewMetadataColumn,
+            values: DataViewMetadataColumn[]) {
+            let xAxisLabel = null;
+            let yAxisLabel = null;
+
+            if (categoryAxisProperties) {
+
+                // Take the value only if it's there
+                if (category && category.displayName) {
+                    xAxisLabel = category.displayName;
+                }
+            }
+
+            if (valueAxisProperties) {
+                let valuesNames: string[] = [];
+
+                if (values) {
+                    // Take the name from the values, and make it unique because there are sometimes duplications
+                    valuesNames = values.map(v => v ? v.displayName : '').filter((value, index, self) => value !== '' && self.indexOf(value) === index);
+                    yAxisLabel = valueFormatter.formatListAnd(valuesNames);
+                }
+            }
+            return { xAxisLabel: xAxisLabel, yAxisLabel: yAxisLabel };
+        }
+
         private static getDataPointsFromSeries(series: PulseChartSeries[]): PulseChartDataPoint[] {
-            var dataPointsArray:PulseChartDataPoint[][] = series.map((d: PulseChartSeries): PulseChartDataPoint[] => {
+            let dataPointsArray: PulseChartDataPoint[][] = series.map((d: PulseChartSeries): PulseChartDataPoint[] => {
                 return d.data.filter((d: PulseChartDataPoint) => !!d.popupInfo);
             });
             return <PulseChartDataPoint[]>_.flatten(dataPointsArray);
         }
 
-        private static createAxisY (
-            commonYScale: D3.Scale.LinearScale,
+        private static createAxisY(
+            commonYScale: LinearScale,
             height: number,
             formatterOptions: ValueFormatterOptions,
-            show: boolean = true): D3.Svg.Axis {
+            show: boolean = true): Axis {
 
-            var formatter = valueFormatter.create(formatterOptions);
-            var ticks: number = Math.max(2, Math.round(height / 40));
-            var yAxis: D3.Svg.Axis = d3.svg.axis()
+            let formatter = valueFormatter.create(formatterOptions);
+            let ticks: number = Math.max(2, Math.round(height / 40));
+            let yAxis: Axis = d3.svg.axis()
                 .scale(commonYScale)
                 .ticks(ticks)
                 .outerTickSize(0)
@@ -1069,27 +881,27 @@ namespace powerbi.visuals.samples {
         private static createAxisX(
             isScalar: boolean,
             series: PulseChartSeries[],
-            originalScale: D3.Scale.GenericScale<D3.Scale.TimeScale | D3.Scale.LinearScale>,
+            originalScale: GenericScale,
             formatterOptions: ValueFormatterOptions,
             dateFormat: PulseChartXAxisDateFormat,
             position: XAxisPosition,
             widthOfXAxisLabel: number): PulseChartXAxisProperties[] {
 
-            var scales = PulseChart.getXAxisScales(series, isScalar, originalScale);
-            var xAxisProperties = new Array<PulseChartXAxisProperties>(scales.length);
+            let scales = PulseChart.getXAxisScales(series, isScalar, originalScale);
+            let xAxisProperties = new Array<PulseChartXAxisProperties>(scales.length);
 
-            for (var i: number = 0, rotate = false; i < xAxisProperties.length; i++) {
-                var values = PulseChart.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
+            for (let i: number = 0, rotate = false; i < xAxisProperties.length; i++) {
+                let values = PulseChart.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
 
                 if (!rotate
-                   && position === XAxisPosition.Bottom
-                   && values.length < PulseChart.MinimumTicksToRotate) {
-                    var rotatedValues = PulseChart.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
+                    && position === XAxisPosition.Bottom
+                    && values.length < PulseChart.MinimumTicksToRotate) {
+                    let rotatedValues = PulseChart.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
                     if (rotatedValues.length > values.length) {
                         rotate = true;
                         i = -1;
                         continue;
-                     }
+                    }
                 }
 
                 xAxisProperties[i] = <PulseChartXAxisProperties>{ values: values, scale: scales[i], rotate: rotate };
@@ -1100,9 +912,9 @@ namespace powerbi.visuals.samples {
             formatterOptions.value2 = originalScale.domain()[1];
 
             xAxisProperties.forEach((properties: PulseChartXAxisProperties) => {
-                var values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
+                let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
 
-                var formatter = valueFormatter.create(formatterOptions);
+                let formatter = valueFormatter.create(formatterOptions);
                 properties.axis = d3.svg.axis()
                     .scale(properties.scale)
                     .tickValues(values)
@@ -1113,12 +925,12 @@ namespace powerbi.visuals.samples {
             return xAxisProperties;
         }
 
-        private static getXAxisScales (
+        private static getXAxisScales(
             series: PulseChartSeries[],
             isScalar: boolean,
-            originalScale: D3.Scale.GenericScale<D3.Scale.TimeScale | D3.Scale.LinearScale>): D3.Scale.GenericScale<D3.Scale.TimeScale | D3.Scale.LinearScale>[] {
+            originalScale: any): GenericScale[] {
             return series.map((seriesElement: PulseChartSeries) => {
-                var dataPoints: PulseChartDataPoint[] = seriesElement.data,
+                let dataPoints: PulseChartDataPoint[] = seriesElement.data,
                     minValue: number | Date = dataPoints[0].categoryValue,
                     maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue,
                     minX: number = originalScale(dataPoints[0].categoryValue),
@@ -1127,33 +939,33 @@ namespace powerbi.visuals.samples {
             });
         }
 
-        private static getXAxisValuesToDisplay (
-            scale: D3.Scale.TimeScale | D3.Scale.LinearScale,
+        private static getXAxisValuesToDisplay(
+            scale: TimeScale | LinearScale,
             rotate: boolean,
             isScalar: boolean,
             dateFormat: PulseChartXAxisDateFormat,
             widthOfXAxisLabel: number): (Date | number)[] {
-            var genScale = <D3.Scale.GenericScale<D3.Scale.TimeScale | D3.Scale.LinearScale>>scale;
+            let genScale = <any>scale;
 
-            var tickWidth = rotate
+            let tickWidth = rotate
                 ? PulseChart.XAxisTickHeight * (rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0)
                 : widthOfXAxisLabel;
-            var tickSpace = PulseChart.XAxisTickSpace;
+            let tickSpace = PulseChart.XAxisTickSpace;
 
             if (scale.range()[1] < tickWidth) {
                 return [];
             }
 
-            var minValue = scale.invert(scale.range()[0] + tickWidth/2);
-            var maxValue = scale.invert(scale.range()[1] - tickWidth/2);
-            var width = scale.range()[1] - scale.range()[0];
+            let minValue = scale.invert(scale.range()[0] + tickWidth / 2);
+            let maxValue = scale.invert(scale.range()[1] - tickWidth / 2);
+            let width = scale.range()[1] - scale.range()[0];
 
-            var maxTicks: number = Math.floor((width + tickSpace) / (tickWidth + tickSpace));
+            let maxTicks: number = Math.floor((width + tickSpace) / (tickWidth + tickSpace));
             if (rotate) {
                 maxTicks = Math.min(PulseChart.MinimumTicksToRotate, maxTicks);
             }
 
-            var values = [];
+            let values = [];
             if (isScalar) {
                 values = d3.range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
             } else {
@@ -1171,13 +983,13 @@ namespace powerbi.visuals.samples {
 
             maxTicks = Math.min(values.length, maxTicks);
 
-            var valuesIndexses = d3.scale.ordinal().domain(d3.range(maxTicks)).rangePoints([0, values.length - 1]).range();//randeRoundPoints is not defined
+            let valuesIndexses = d3.scale.ordinal().domain(<any>d3.range(maxTicks)).rangePoints([0, values.length - 1]).range(); // randeRoundPoints is not defined
             values = valuesIndexses.map(x => values[Math.round(x)]);
 
-            for(var i = 1; i < values.length; i++) {
-                var prevXValue = genScale(values[i - 1]);
-                var curXValue = genScale(values[i]);
-                if (curXValue - prevXValue < tickWidth + tickSpace/3) {
+            for (let i = 1; i < values.length; i++) {
+                let prevXValue = genScale(values[i - 1]);
+                let curXValue = genScale(values[i]);
+                if (curXValue - prevXValue < tickWidth + tickSpace / 3) {
                     values.splice(i--, 1);
                 }
             }
@@ -1186,23 +998,23 @@ namespace powerbi.visuals.samples {
         }
 
         private static getGroupIndex(index: number, grouped: DataViewValueColumnGroup[]): number {
-            for (var i: number = 0; i < grouped.length; i++) {
+            for (let i: number = 0; i < grouped.length; i++) {
                 if (grouped[i].values && grouped[i].values[0] &&
                     grouped[i].values[0].values[index] !== undefined &&
                     grouped[i].values[0].values[index] !== null) {
-                        return i;
-                    }
+                    return i;
+                }
             }
 
             return 0;
         }
 
         private static getGapWidths(values: Date[] | number[]): number[] {
-            var result: number[] = [];
-            for(var i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
+            let result: number[] = [];
+            for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
                 if (!prevVal || !values[i]) {
                     result.push(0);
-                } else  {
+                } else {
                     result.push(<number>values[i] - prevVal);
                 }
 
@@ -1212,8 +1024,8 @@ namespace powerbi.visuals.samples {
             return result;
         }
 
-        private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): D3.Scale.LinearScale | D3.Scale.TimeScale {
-            var scale: D3.Scale.LinearScale | D3.Scale.TimeScale;
+        private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
+            let scale: LinearScale | TimeScale;
 
             if (isScalar) {
                 scale = d3.scale.linear();
@@ -1222,7 +1034,7 @@ namespace powerbi.visuals.samples {
             }
 
             return scale
-                .domain(domain)
+                .domain(domain as any)
                 .range([minX, maxX]);
         }
 
@@ -1232,27 +1044,27 @@ namespace powerbi.visuals.samples {
         public size: IViewport;
         public handleSelectionTimeout: number;
 
-        private svg: D3.Selection;
-        private chart: D3.Selection;
-        private dots: D3.Selection;
-        private yAxis: D3.Selection;
-        private gaps: D3.Selection;
+        private svg: Selection<any>;
+        private chart: Selection<any>;
+        private dots: Selection<any>;
+        private yAxis: Selection<any>;
+        private gaps: Selection<any>;
 
-        private animationDot: D3.Selection;
-        private lineX: D3.Svg.Line;
-        private animator: IGenericAnimator;
+        private animationDot: Selection<any>;
+        private lineX: Line;
+        // private animator: IGenericAnimator;
         private animationHandler: PulseAnimator;
-        private colors: IDataColorPalette;
-        private rootSelection: D3.UpdateSelection;
-        private animationSelection: D3.UpdateSelection;
-        private lastSelectedPoint: SelectionId;
+        private colors: IColorPalette;
+        private rootSelection: UpdateSelection<any>;
+        private animationSelection: UpdateSelection<any>;
+        private lastSelectedPoint: ISelectionId;
 
         private interactivityService: IInteractivityService;
         private behavior: IPulseChartInteractiveBehavior;
-        public host: IVisualHostServices;
+        public host: IVisualHost;
 
         public get runnerCounterPlaybackButtonsHeight(): number {
-            return Math.max(PulseChart.PlaybackButtonsHeight, this.data && (this.data.runnerCounterHeight/2 + 17));
+            return Math.max(PulseChart.PlaybackButtonsHeight, this.data && (this.data.runnerCounterHeight / 2 + 17));
         }
 
         public get popupHeight(): number {
@@ -1263,23 +1075,19 @@ namespace powerbi.visuals.samples {
                 && this.data.settings.popup.height || 0;
         }
 
-        public constructor(options?: PulseChartConstructorOptions) {
-            if (options) {
-                if (options.svg) {
-                    this.svg = options.svg;
-                }
-            }
-
-            this.margin = PulseChart.DefaultMargin;
+        constructor(options: VisualConstructorOptions) {
+            this.init(options);
         }
 
-        public init(options: VisualInitOptions): void {
-            (<any>powerbi.formattingService).initialize();//Fixes the framework bug: "Cannot read property 'getFormatString' of undefined".
-            this.host = options.host;
-            this.interactivityService = visuals.createInteractivityService(options.host);
+
+        public init(options: VisualConstructorOptions): void {
+            this.margin = PulseChart.DefaultMargin;
+            // (<any>powerbi.formattingService).initialize();// Fixes the framework bug: "Cannot read property 'getFormatString' of undefined".
+            let host = this.host = options.host;
+            this.interactivityService = createInteractivityService(host);
             this.behavior = new PulseChartWebBehavior();
 
-            var svg: D3.Selection = this.svg = d3.select(options.element.get(0))
+            let svg: Selection<any> = this.svg = d3.select(options.element)
                 .append('svg')
                 .classed('pulseChart', true);
 
@@ -1293,11 +1101,8 @@ namespace powerbi.visuals.samples {
                 .attr('display', 'none');
 
             this.animationHandler = new PulseAnimator(this, svg);
-            var style: IVisualStyle = options.style;
 
-            this.colors = style && style.colorPalette
-                ? style.colorPalette.dataColors
-                : new DataColorPalette();
+            this.colors = host.colorPalette;
         }
 
         public update(options: VisualUpdateOptions): void {
@@ -1306,8 +1111,8 @@ namespace powerbi.visuals.samples {
             }
 
             this.viewport = $.extend({}, options.viewport);
-            var dataView: DataView = options.dataViews[0];
-            var pulseChartData: PulseChartData = PulseChart.converter(dataView, this.colors, this.interactivityService);
+            let dataView: DataView = options.dataViews[0];
+            let pulseChartData: PulseChartData = PulseChart.converter(dataView, this.host, this.colors, this.interactivityService);
 
             this.updateData(pulseChartData);
             if (!this.validateData(this.data)) {
@@ -1315,7 +1120,7 @@ namespace powerbi.visuals.samples {
                 return;
             }
 
-            var width = this.getChartWidth();
+            let width = this.getChartWidth();
             this.calculateXAxisProperties(width);
 
             if (this.data.xScale.ticks(undefined).length < 2) {
@@ -1323,7 +1128,7 @@ namespace powerbi.visuals.samples {
                 return;
             }
 
-            var height = this.getChartHeight(this.data.settings.xAxis.show
+            let height = this.getChartHeight(this.data.settings.xAxis.show
                 && this.data.series.some((series: PulseChartSeries) => series.xAxisProperties.rotate));
             this.calculateYAxisProperties(height);
 
@@ -1339,8 +1144,8 @@ namespace powerbi.visuals.samples {
                 return;
             }
 
-            var oldDataObj = this.getDataArrayToCompare(this.data);
-            var newDataObj = this.getDataArrayToCompare(data);
+            let oldDataObj = this.getDataArrayToCompare(this.data);
+            let newDataObj = this.getDataArrayToCompare(data);
             if (!_.isEqual(oldDataObj, newDataObj)) {
                 this.clearAll(false);
             }
@@ -1353,20 +1158,19 @@ namespace powerbi.visuals.samples {
                 return null;
             }
 
-            var dataPoints: PulseChartDataPoint[] = <PulseChartDataPoint[]>_.flatten(data.series.map(x => x.data));
-            return _.flatten(dataPoints.map(x =>
-            {
-               return x && _.flatten([
-                     [
-                         x.categoryValue,
-                         x.eventSize,
-                         x.groupIndex,
-                         x.runnerCounterValue,
-                         x.y,
-                         x.seriesIndex
-                     ],
-                     x.popupInfo && [x.popupInfo.description, x.popupInfo.title, x.popupInfo.value]
-                 ]);
+            let dataPoints: PulseChartDataPoint[] = <PulseChartDataPoint[]>_.flatten(data.series.map(x => x.data));
+            return _.flatten(dataPoints.map(x => {
+                return x && _.flatten([
+                    [
+                        x.categoryValue,
+                        x.eventSize,
+                        x.groupIndex,
+                        x.runnerCounterValue,
+                        x.y,
+                        x.seriesIndex
+                    ],
+                    x.popupInfo && [x.popupInfo.description, x.popupInfo.title, x.popupInfo.value]
+                ]);
             }));
         }
 
@@ -1383,25 +1187,25 @@ namespace powerbi.visuals.samples {
         }
 
         private getChartWidth(): number {
-            var marginRight: number = this.margin.right;
+            let marginRight: number = this.margin.right;
             if (this.data.settings.yAxis && this.data.settings.yAxis.show) {
                 marginRight += PulseChart.MaxWidthOfYAxis;
             }
 
-            var width: number = this.viewport.width - this.margin.left - marginRight;
+            let width: number = this.viewport.width - this.margin.left - marginRight;
             return Math.max(width, PulseChart.DefaultViewport.width);
         }
 
         private getChartHeight(xAxisRotated: boolean): number {
-            var marginBottom = 10 + (xAxisRotated
+            let marginBottom = 10 + (xAxisRotated
                 ? this.data.widthOfXAxisLabel * Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180))
                 : 3);
 
             if (!this.data.settings.popup.alwaysOnTop && this.popupHeight) {
-                marginBottom = Math.max(this.margin.bottom +  this.popupHeight, marginBottom);
+                marginBottom = Math.max(this.margin.bottom + this.popupHeight, marginBottom);
             }
 
-            var height: number = this.viewport.height
+            let height: number = this.viewport.height
                 - this.margin.top
                 - this.runnerCounterPlaybackButtonsHeight
                 - marginBottom
@@ -1411,8 +1215,11 @@ namespace powerbi.visuals.samples {
         }
 
         private updateElements(): void {
-            var chartMarginTop = this.margin.top + this.runnerCounterPlaybackButtonsHeight + this.popupHeight;
-            this.svg.attr(this.viewport);
+            let chartMarginTop = this.margin.top + this.runnerCounterPlaybackButtonsHeight + this.popupHeight;
+            this.svg.attr({
+                width: this.viewport.width,
+                height: this.viewport.height,
+            });
             this.svg.style('display', undefined);
             this.gaps.attr('transform', SVGUtil.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
             this.chart.attr('transform', SVGUtil.translate(this.margin.left, chartMarginTop));
@@ -1427,10 +1234,10 @@ namespace powerbi.visuals.samples {
                 0,
                 width);
 
-            var xAxisProperties: PulseChartXAxisProperties[] = PulseChart.createAxisX(
+            let xAxisProperties: PulseChartXAxisProperties[] = PulseChart.createAxisX(
                 this.data.isScalar,
                 this.data.series,
-                <D3.Scale.LinearScale> this.data.xScale,
+                <LinearScale>this.data.xScale,
                 $.extend({}, this.data.settings.xAxis.formatterOptions),
                 this.data.settings.xAxis.dateFormat,
                 this.data.settings.xAxis.position,
@@ -1444,9 +1251,9 @@ namespace powerbi.visuals.samples {
         public calculateYAxisProperties(height: number): void {
             this.data.yScales = this.getYAxisScales(height);
 
-            var domain: number[] = [];
-            this.data.yScales.forEach((scale: D3.Scale.LinearScale) => domain = domain.concat(scale.domain()));
-            this.data.commonYScale = <D3.Scale.LinearScale> PulseChart.createScale(
+            let domain: number[] = [];
+            this.data.yScales.forEach((scale: LinearScale) => domain = domain.concat(scale.domain()));
+            this.data.commonYScale = <LinearScale>PulseChart.createScale(
                 true,
                 [d3.max(domain), d3.min(domain)],
                 0,
@@ -1455,14 +1262,14 @@ namespace powerbi.visuals.samples {
             this.data.yAxis = PulseChart.createAxisY(this.data.commonYScale, height, this.data.settings.yAxis.formatterOptions);
         }
 
-        private getYAxisScales(height: number): D3.Scale.LinearScale[] {
-            var data: PulseChartData = this.data,
+        private getYAxisScales(height: number): LinearScale[] {
+            let data: PulseChartData = this.data,
                 stepOfHeight: number = height / data.grouped.length;
 
-            return <D3.Scale.LinearScale[]> data.grouped.map((group: DataViewValueColumnGroup, index: number) => {
-                var values: number[] = group.values[0].values.map(x => <number>x || 0);
+            return <LinearScale[]>data.grouped.map((group: DataViewValueColumnGroup, index: number) => {
+                let values: number[] = group.values[0].values.map(x => <number>x || 0);
 
-                var minValue: number = Number.MAX_VALUE,
+                let minValue: number = Number.MAX_VALUE,
                     maxValue: number = -Number.MAX_VALUE;
 
                 values.forEach((value: number) => {
@@ -1475,7 +1282,7 @@ namespace powerbi.visuals.samples {
                     }
                 });
                 if (maxValue === minValue) {
-                    var offset = maxValue === 0 ? 1 : Math.abs(maxValue/2);
+                    let offset = maxValue === 0 ? 1 : Math.abs(maxValue / 2);
                     maxValue += offset;
                     minValue -= offset;
                 }
@@ -1498,14 +1305,14 @@ namespace powerbi.visuals.samples {
         }
 
         public render(suppressAnimations: boolean) {
-            var duration = AnimatorCommon.GetAnimationDuration(this.animator, suppressAnimations);
-            var data = this.data;
+            let duration: number = PulseChart.DefaultAnimationDuration; // AnimatorCommon.GetAnimationDuration(this.animator, suppressAnimations);
+            let data = this.data;
             this.lastSelectedPoint = null;
 
-            var xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>data.xScale,
-                yScales: D3.Scale.LinearScale[] = <D3.Scale.LinearScale[]>data.yScales;
+            let xScale: LinearScale = <LinearScale>data.xScale,
+                yScales: LinearScale[] = <LinearScale[]>data.yScales;
 
-            this.lineX = d3.svg.line()
+            this.lineX = d3.svg.line<PulseChartDataPoint>()
                 .x((d: PulseChartDataPoint) => {
                     return xScale(d.categoryValue);
                 })
@@ -1517,8 +1324,8 @@ namespace powerbi.visuals.samples {
                 this.data.settings &&
                 this.data.settings.playback &&
                 this.data.settings.playback.color) {
-                    this.animationHandler.setControlsColor(this.data.settings.playback.color);
-                }
+                this.animationHandler.setControlsColor(this.data.settings.playback.color);
+            }
             this.animationHandler.render();
             this.animationHandler.setRunnerCounterValue();
 
@@ -1532,10 +1339,11 @@ namespace powerbi.visuals.samples {
         }
 
         private renderXAxis(data: PulseChartData, duration: number): void {
-            var axisNodeSelection: D3.Selection,
-                axisNodeUpdateSelection: D3.UpdateSelection,
-                //ticksSelection: D3.Selection,
-                axisBoxUpdateSelection: D3.UpdateSelection,
+            debugger;
+            let axisNodeSelection: Selection<any>,
+                axisNodeUpdateSelection: UpdateSelection<any>,
+                // ticksSelection: Selection<any>,
+                axisBoxUpdateSelection: UpdateSelection<any>,
                 color: string = PulseChart.DefaultSettings.xAxis.color,
                 fontColor: string = PulseChart.DefaultSettings.xAxis.fontColor;
 
@@ -1553,8 +1361,8 @@ namespace powerbi.visuals.samples {
                 .classed(PulseChart.XAxisNode.class, true);
 
             axisNodeUpdateSelection
-                .call((selection: D3.Selection) => {
-                    selection.forEach((selectionElement: Element, index: number) => {
+                .call((selection: Selection<any>) => {
+                    selection.each((selectionElement: Element, index: number) => {
                         d3.select(selectionElement[0])
                             .call(data.series[index].xAxisProperties.axis.orient('bottom'));
                     });
@@ -1578,13 +1386,13 @@ namespace powerbi.visuals.samples {
                 .style('display', this.data.settings.xAxis.position === XAxisPosition.Center ? 'inherit' : 'none')
                 .style('fill', this.data.settings.xAxis.backgroundColor);
 
-            var tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
+            let tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
             axisBoxUpdateSelection.attr({
-                    x: -(this.data.widthOfXAxisLabel / 2),
-                    y: tickRectY + "px",
-                    width: this.data.widthOfXAxisLabel,
-                    height: PulseChart.XAxisTickHeight + "px"
-                });
+                x: -(this.data.widthOfXAxisLabel / 2),
+                y: tickRectY + "px",
+                width: this.data.widthOfXAxisLabel,
+                height: PulseChart.XAxisTickHeight + "px"
+            });
 
             axisBoxUpdateSelection
                 .exit()
@@ -1595,12 +1403,12 @@ namespace powerbi.visuals.samples {
                 .style('display', this.data.settings.xAxis.show ? 'inherit' : 'none');
 
             axisNodeUpdateSelection.call(selection => {
-                var rotate = selection.datum().xAxisProperties.rotate;
-                var rotateCoeff = rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0;
-                var dy = tickRectY + 3;
+                let rotate = selection.datum().xAxisProperties.rotate;
+                let rotateCoeff = rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0;
+                let dy = tickRectY + 3;
                 selection.selectAll("text")
-                    .attr('transform', function(this: SVGTextElement) {
-                        return `translate(0, ${(dy + 9 + ($(this).width()/2) * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
+                    .attr('transform', function (element: SVGTextElement) {
+                        return `translate(0, ${(dy + 9 + ($(this).width() / 2) * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
                     })
                     .style('fill', fontColor)
                     .style('stroke', "none")
@@ -1610,14 +1418,14 @@ namespace powerbi.visuals.samples {
             axisNodeUpdateSelection.selectAll(".domain")
                 .style('stroke', color);
 
-            axisNodeUpdateSelection.selectAll(".domain").forEach((element: Element) => {
+            axisNodeUpdateSelection.selectAll(".domain").each((element: Element) => {
                 $(element).insertBefore($(element).parent().children().first());
             });
 
-            var xAxisTop: number = this.size.height;
-            switch(this.data.settings.xAxis.position) {
+            let xAxisTop: number = this.size.height;
+            switch (this.data.settings.xAxis.position) {
                 case XAxisPosition.Center:
-                    xAxisTop = xAxisTop/2;
+                    xAxisTop = xAxisTop / 2;
                     break;
                 case XAxisPosition.Bottom:
                     break;
@@ -1627,10 +1435,10 @@ namespace powerbi.visuals.samples {
         }
 
         private renderYAxis(data: PulseChartData, duration: number): void {
-            var yAxis: D3.Svg.Axis = data.yAxis,
+            let yAxis: Axis = data.yAxis,
                 isShow: boolean = false,
                 color: string = PulseChart.DefaultSettings.yAxis.color,
-                fontColor: string = PulseChart.DefaultSettings.yAxis.fontColor;;
+                fontColor: string = PulseChart.DefaultSettings.yAxis.fontColor;
 
             yAxis.orient('right');
 
@@ -1638,25 +1446,25 @@ namespace powerbi.visuals.samples {
                 this.data.settings &&
                 this.data.settings.yAxis &&
                 this.data.settings.yAxis.show) {
-                    isShow = true;
-                }
+                isShow = true;
+            }
 
             if (this.data &&
                 this.data.settings &&
                 this.data.settings.yAxis &&
                 this.data.settings.yAxis) {
-                    color = this.data.settings.yAxis.color;
-                    fontColor = this.data.settings.yAxis.fontColor;
-                }
+                color = this.data.settings.yAxis.color;
+                fontColor = this.data.settings.yAxis.fontColor;
+            }
 
             this.yAxis
                 .call(yAxis)
                 .attr('display', isShow ? 'inline' : 'none');
 
-             this.yAxis.selectAll('.domain, path, line').style('stroke', color);
-             this.yAxis.selectAll('text').style('fill', fontColor);
-             this.yAxis.selectAll('g.tick line')
-                 .attr('x1', -this.size.width);
+            this.yAxis.selectAll('.domain, path, line').style('stroke', color);
+            this.yAxis.selectAll('text').style('fill', fontColor);
+            this.yAxis.selectAll('g.tick line')
+                .attr('x1', -this.size.width);
         }
 
         public renderChart(): void {
@@ -1671,7 +1479,7 @@ namespace powerbi.visuals.samples {
                 .selectAll(PulseChart.LineNode.selector)
                 .data(series);
 
-            const lineNode: Selection = this.rootSelection
+            const lineNode: Selection<any> = this.rootSelection
                 .enter()
                 .append('g')
                 .classed(PulseChart.LineNode.class, true);
@@ -1704,14 +1512,14 @@ namespace powerbi.visuals.samples {
         }
 
         private drawLinesStatic(limit: number, isAnimated: boolean): void {
-             var node: ClassAndSelector = PulseChart.Line,
-                 nodeParent: ClassAndSelector = PulseChart.LineContainer,
-                 rootSelection: D3.UpdateSelection = this.rootSelection;
+            let node: ClassAndSelector = PulseChart.Line,
+                nodeParent: ClassAndSelector = PulseChart.LineContainer,
+                rootSelection: UpdateSelection<any> = this.rootSelection;
 
-             var selection: D3.UpdateSelection = rootSelection
-                 .filter((d, index) => !isAnimated || index < limit)
-                 .select(nodeParent.selector)
-                 .selectAll(node.selector).data(d => [d]);
+            let selection: UpdateSelection<any> = rootSelection
+                .filter((d, index) => !isAnimated || index < limit)
+                .select(nodeParent.selector)
+                .selectAll(node.selector).data(d => [d]);
 
             selection
                 .enter()
@@ -1725,16 +1533,16 @@ namespace powerbi.visuals.samples {
                     'stroke-width': (d: PulseChartSeries) => `${d.width}px`
                 });
 
-           selection.attr('d', d => this.lineX(d.data));
-           selection
+            selection.attr('d', d => this.lineX(d.data));
+            selection
                 .exit()
                 .remove();
         }
 
-        private drawLinesStaticBeforeAnimation(limit: number): void {
-             var node: ClassAndSelector = PulseChart.Line,
-                 nodeParent: ClassAndSelector = PulseChart.LineContainer,
-                 rootSelection: D3.UpdateSelection = this.rootSelection;
+        private drawLinesStaticBeforeAnimation(limit: number) {
+            let node: ClassAndSelector = PulseChart.Line,
+                nodeParent: ClassAndSelector = PulseChart.LineContainer,
+                rootSelection: UpdateSelection<any> = this.rootSelection;
 
             this.animationSelection = rootSelection.filter((d, index) => {
                 return index === limit;
@@ -1754,26 +1562,26 @@ namespace powerbi.visuals.samples {
 
             this.animationSelection
                 .attr('d', (d: PulseChartSeries) => {
-                    var flooredStart = this.animationHandler.flooredPosition.index;
+                    let flooredStart = this.animationHandler.flooredPosition.index;
 
                     if (flooredStart === 0) {
                         this.moveAnimationDot(d.data[0]);
                         return this.lineX([]);
                     } else {
-                        var dataReduced: PulseChartDataPoint[] = d.data.slice(0, flooredStart + 1);
+                        let dataReduced: PulseChartDataPoint[] = d.data.slice(0, flooredStart + 1);
                         this.moveAnimationDot(dataReduced[dataReduced.length - 1]);
                         return this.lineX(dataReduced);
                     }
-                 });
+                });
 
-           this.animationSelection
+            this.animationSelection
                 .exit()
                 .remove();
         }
 
-        private moveAnimationDot(d: PulseChartDataPoint): void {
-            var xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>this.data.xScale,
-                yScales: D3.Scale.LinearScale[] = <D3.Scale.LinearScale[]>this.data.yScales;
+        private moveAnimationDot(d: PulseChartDataPoint) {
+            let xScale: LinearScale = <LinearScale>this.data.xScale,
+                yScales: LinearScale[] = <LinearScale[]>this.data.yScales;
 
             this.animationDot
                 .attr("cx", xScale(d.x))
@@ -1781,7 +1589,7 @@ namespace powerbi.visuals.samples {
         }
 
         public playAnimation(delay: number = 0): void {
-            var flooredStart = this.animationHandler.flooredPosition.index;
+            let flooredStart = this.animationHandler.flooredPosition.index;
             this.showAnimationDot();
             this.animationSelection
                 .transition()
@@ -1790,7 +1598,7 @@ namespace powerbi.visuals.samples {
                 .ease("linear")
                 .attrTween('d', (d: PulseChartSeries, index: number) => this.getInterpolation(d.data, flooredStart))
                 .each("end", (series: PulseChartSeries) => {
-                    var position: PulseChartAnimationPosition = this.animationHandler.flooredPosition;
+                    let position: PulseChartAnimationPosition = this.animationHandler.flooredPosition;
                     this.handleSelection(position);
                     this.continueAnimation(position);
                 });
@@ -1816,10 +1624,10 @@ namespace powerbi.visuals.samples {
         }
 
         public findNextPoint(position: PulseChartAnimationPosition): PulseChartAnimationPosition {
-            for (var i: number = position.series; i < this.data.series.length; i++) {
-                var series: PulseChartSeries = this.data.series[i];
+            for (let i: number = position.series; i < this.data.series.length; i++) {
+                let series: PulseChartSeries = this.data.series[i];
 
-                for (var j: number = (i === position.series) ? Math.floor(position.index + 1) : 0; j < series.data.length; j++) {
+                for (let j: number = (i === position.series) ? Math.floor(position.index + 1) : 0; j < series.data.length; j++) {
                     if (series.data[j] && series.data[j].popupInfo) {
                         return {
                             series: i,
@@ -1833,10 +1641,10 @@ namespace powerbi.visuals.samples {
         }
 
         public findPrevPoint(position: PulseChartAnimationPosition): PulseChartAnimationPosition {
-            for (var i: number = position.series; i >= 0; i--) {
-                var series: PulseChartSeries = this.data.series[i];
+            for (let i: number = position.series; i >= 0; i--) {
+                let series: PulseChartSeries = this.data.series[i];
 
-                for (var j: number = (i === position.series) ? Math.ceil(position.index - 1) : series.data.length; j >= 0; j--) {
+                for (let j: number = (i === position.series) ? Math.ceil(position.index - 1) : series.data.length; j >= 0; j--) {
                     if (series.data[j] && series.data[j].popupInfo) {
                         return {
                             series: i,
@@ -1858,12 +1666,13 @@ namespace powerbi.visuals.samples {
         }
 
         public isAnimationIndexLast(position: PulseChartAnimationPosition): boolean {
-            var series: PulseChartSeries = this.data.series[position.series];
-            return (position.index >= (series.data.length - 1));
+            let index: number = position.index;
+            let series: PulseChartSeries = this.data.series[position.series];
+            return index >= (series.data.length - 1);
         }
 
         private drawLines(): void {
-            var positionSeries: number = this.animationHandler.position.series,
+            let positionSeries: number = this.animationHandler.position.series,
                 isAnimated: boolean = this.animationHandler.isAnimated;
 
             this.drawLinesStatic(positionSeries, isAnimated);
@@ -1877,14 +1686,14 @@ namespace powerbi.visuals.samples {
             if (!this.animationHandler.isPlaying) {
                 return;
             }
-            var size: number = PulseChart.DefaultSettings.dots.size;
+            let size: number = PulseChart.DefaultSettings.dots.size;
 
-           if (this.data &&
+            if (this.data &&
                 this.data.settings &&
                 this.data.settings.dots &&
                 this.data.settings.dots.size) {
-                    size = this.data.settings.dots.size;
-                }
+                size = this.data.settings.dots.size;
+            }
 
             this.animationDot
                 .attr('display', 'inline')
@@ -1893,48 +1702,48 @@ namespace powerbi.visuals.samples {
                 .attr("r", size);
         }
 
-        private hideAnimationDot() {
+        private hideAnimationDot(): void {
             this.animationDot.attr('display', 'none');
         }
 
-        private getInterpolation(data: PulseChartDataPoint[], start: number): (number) => string {
+        private getInterpolation(data: PulseChartDataPoint[], start: number): any {
             if (!this.data) {
                 return;
             }
 
-            var xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>this.data.xScale,
-                yScales: D3.Scale.LinearScale[] = <D3.Scale.LinearScale[]>this.data.yScales;
-            var stop: number = start + 1;
+            let xScale: LinearScale = <LinearScale>this.data.xScale,
+                yScales: LinearScale[] = <LinearScale[]>this.data.yScales;
+            let stop: number = start + 1;
 
             this.showAnimationDot();
 
-            var lineFunction: D3.Svg.Line = d3.svg.line()
-                .x(d => d.x)
-                .y(d => d.y)
+            let lineFunction: Line = d3.svg.line<PulseChartDataPoint>()
+                .x((d: PulseChartDataPoint) => d.x)
+                .y((d: PulseChartDataPoint) => d.y)
                 .interpolate("linear");
 
-            var interpolatedLine = data.slice(0, start + 1).map((d: PulseChartDataPoint): PulseChartPointXY => {
-                    return {
-                        x: xScale(d.x),
-                        y: yScales[d.groupIndex](d.y)
-                    };
+            let interpolatedLine = data.slice(0, start + 1).map((d: PulseChartDataPoint): PulseChartPointXY => {
+                return {
+                    x: xScale(d.x),
+                    y: yScales[d.groupIndex](d.y)
+                };
             });
 
-            var x0: number = xScale(data[start].x);
-            var x1: number = xScale(data[stop].x);
+            let x0: number = xScale(data[start].x);
+            let x1: number = xScale(data[stop].x);
 
-            var y0: number = yScales[data[start].groupIndex](data[start].y);
-            var y1: number = yScales[data[stop].groupIndex](data[stop].y);
+            let y0: number = yScales[data[start].groupIndex](data[start].y);
+            let y1: number = yScales[data[stop].groupIndex](data[stop].y);
 
-            var interpolateIndex: D3.Scale.LinearScale = d3.scale.linear()
+            let interpolateIndex: LinearScale = d3.scale.linear()
                 .domain([0, 1])
                 .range([start, stop]);
 
-            var interpolateX: D3.Scale.LinearScale = d3.scale.linear()
+            let interpolateX: LinearScale = d3.scale.linear()
                 .domain([0, 1])
                 .range([x0, x1]);
 
-            var interpolateY: D3.Scale.LinearScale = d3.scale.linear()
+            let interpolateY: LinearScale = d3.scale.linear()
                 .domain([0, 1])
                 .range([y0, y1]);
 
@@ -1942,19 +1751,19 @@ namespace powerbi.visuals.samples {
 
             return (t: number) => {
                 if (!this.animationHandler.isPlaying) {
-                    return lineFunction(interpolatedLine);
+                    return lineFunction(interpolatedLine as PulseChartDataPoint[]);
                 }
 
-                var x: number = interpolateX(t);
-                var y: number = interpolateY(t);
+                let x: number = interpolateX(t);
+                let y: number = interpolateY(t);
 
                 this.animationDot
-                        .attr("cx", x)
-                        .attr("cy", y);
+                    .attr("cx", x)
+                    .attr("cy", y);
 
                 interpolatedLine.push({ "x": x, "y": y });
                 this.animationHandler.position.index = interpolateIndex(t);
-                return lineFunction(interpolatedLine);
+                return lineFunction(interpolatedLine as PulseChartDataPoint[]);
             };
         }
 
@@ -1965,7 +1774,7 @@ namespace powerbi.visuals.samples {
             this.chart.selectAll(PulseChart.Tooltip.selector).remove();
         }
 
-        private getDatapointFromPosition(position: PulseChartAnimationPosition): PulseChartDataPoint{
+        private getDatapointFromPosition(position: PulseChartAnimationPosition): PulseChartDataPoint {
             if (!this.data ||
                 !this.data.series ||
                 !this.data.series[position.series] ||
@@ -1977,7 +1786,7 @@ namespace powerbi.visuals.samples {
         }
 
         public handleSelection(position: PulseChartAnimationPosition): void {
-            var dataPoint: PulseChartDataPoint = this.getDatapointFromPosition(position);
+            let dataPoint: PulseChartDataPoint = this.getDatapointFromPosition(position);
             if (dataPoint) {
                 this.behavior.setSelection(dataPoint);
             }
@@ -1988,9 +1797,9 @@ namespace powerbi.visuals.samples {
                 return;
             }
 
-            var dataPoint: PulseChartDataPoint = this.getDatapointFromPosition(position);
-            var animationPlayingIndex: number = this.animationHandler.animationPlayingIndex;
-            var isLastDataPoint: boolean = this.animationHandler.isPlaying && this.isAnimationSeriesAndIndexLast(position);
+            let dataPoint: PulseChartDataPoint = this.getDatapointFromPosition(position);
+            let animationPlayingIndex: number = this.animationHandler.animationPlayingIndex;
+            let isLastDataPoint: boolean = this.animationHandler.isPlaying && this.isAnimationSeriesAndIndexLast(position);
             if ((!dataPoint || !dataPoint.popupInfo) && (this.animationHandler.isPlaying)) {
                 if (isLastDataPoint) {
                     setTimeout(() => this.animationHandler.toEnd(), 0);
@@ -2029,7 +1838,7 @@ namespace powerbi.visuals.samples {
         }
 
         private get pauseDuration(): number {
-            return 1000 * ((this.data && this.data.settings  && this.data.settings.playback)
+            return 1000 * ((this.data && this.data.settings && this.data.settings.playback)
                 ? this.data.settings.playback.pauseDuration
                 : PulseChart.DefaultSettings.playback.pauseDuration);
         }
@@ -2045,18 +1854,18 @@ namespace powerbi.visuals.samples {
                 return;
             }
 
-            var xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>data.xScale,
-                yScales: D3.Scale.LinearScale[] = <D3.Scale.LinearScale[]>data.yScales,
+            let xScale: LinearScale = <LinearScale>data.xScale,
+                yScales: LinearScale[] = <LinearScale[]>data.yScales,
                 node: ClassAndSelector = PulseChart.Dot,
                 nodeParent: ClassAndSelector = PulseChart.DotsContainer,
-                rootSelection: D3.UpdateSelection = this.rootSelection,
+                rootSelection: UpdateSelection<any> = this.rootSelection,
                 dotColor: string = this.data.settings.dots.color,
                 dotSize: number = this.data.settings.dots.size,
                 isAnimated: boolean = this.animationHandler.isAnimated,
                 position: PulseChartAnimationPosition = this.animationHandler.position,
                 hasSelection: boolean = this.interactivityService.hasSelection();
 
-           var selection: D3.UpdateSelection = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
+            let selection: UpdateSelection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
                 .select(nodeParent.selector)
                 .selectAll(node.selector)
                 .data((d: PulseChartSeries, seriesIndex: number) => {
@@ -2088,7 +1897,7 @@ namespace powerbi.visuals.samples {
                 .remove();
 
             if (this.interactivityService) {
-                var behaviorOptions: PulseChartBehaviorOptions = {
+                let behaviorOptions: PulseChartBehaviorOptions = {
                     selection: selection,
                     clearCatcher: this.svg,
                     interactivityService: this.interactivityService,
@@ -2100,13 +1909,13 @@ namespace powerbi.visuals.samples {
         }
 
         private renderGaps(data: PulseChartData, duration: number): void {
-            var gaps: IRect[],
-                gapsSelection: D3.UpdateSelection,
-                gapsEnterSelection: D3.Selection,
-                gapNodeSelection: D3.UpdateSelection,
+            let gaps: IRect[],
+                gapsSelection: UpdateSelection<any>,
+                gapsEnterSelection: Selection<any>,
+                gapNodeSelection: UpdateSelection<any>,
                 series: PulseChartSeries[] = data.series,
                 isScalar: boolean = data.isScalar,
-                xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>data.xScale;
+                xScale: LinearScale = <LinearScale>data.xScale;
 
             gaps = [{
                 left: -4.5,
@@ -2114,11 +1923,11 @@ namespace powerbi.visuals.samples {
                 height: 10,
                 width: 3
             }, {
-                left: 1.5,
-                top: -5,
-                height: 10,
-                width: 3
-            }];
+                    left: 1.5,
+                    top: -5,
+                    height: 10,
+                    width: 3
+                }];
 
             gapsSelection = this.gaps.selectAll(PulseChart.Gap.selector)
                 .data(series.slice(0, series.length - 1));
@@ -2129,14 +1938,14 @@ namespace powerbi.visuals.samples {
 
             gapsSelection
                 .attr("transform", (seriesElement: PulseChartSeries, index: number) => {
-                    var x: number,
+                    let x: number,
                         middleOfGap: number = seriesElement.widthOfGap / 2,
                         categoryValue: number | Date = seriesElement.data[seriesElement.data.length - 1].categoryValue;
 
                     if (isScalar) {
                         x = xScale(middleOfGap + <number>categoryValue);
                     } else {
-                        x = xScale(new Date(middleOfGap + ((<Date>categoryValue).getTime())));
+                        x = xScale(<any>(new Date(middleOfGap + ((<Date>categoryValue).getTime()))));
                     }
 
                     return SVGUtil.translate(x, 0);
@@ -2176,25 +1985,25 @@ namespace powerbi.visuals.samples {
         }
 
         private drawTooltips(data: PulseChartData): void {
-            var xScale: D3.Scale.LinearScale = <D3.Scale.LinearScale>data.xScale,
-                yScales: D3.Scale.LinearScale[] = <D3.Scale.LinearScale[]>data.yScales,
+            let xScale: LinearScale = <LinearScale>data.xScale,
+                yScales: LinearScale[] = <LinearScale[]>data.yScales,
                 node: ClassAndSelector = PulseChart.Tooltip,
-                nodeParent: ClassAndSelector = PulseChart.TooltipContainer;
+                nodeParent: ClassAndSelector = PulseChart.TooltipContainer,
+                width: number = this.data.settings.popup.width,
+                height: number = this.data.settings.popup.height,
+                marginTop: number = PulseChart.DefaultTooltipSettings.marginTop;
 
-            var rootSelection: D3.UpdateSelection = this.rootSelection;
+            let rootSelection: UpdateSelection<any> = this.rootSelection;
 
-            var line: D3.Svg.Line = d3.svg.line()
-                .x(d => d.x)
-                .y(d => d.y);
+            let line: Line = d3.svg.line<PulseChartDataPoint>()
+                .x((d: PulseChartDataPoint) => d.x)
+                .y((d: PulseChartDataPoint) => d.y);
 
-            var marginTop: number = PulseChart.DefaultTooltipSettings.marginTop;
-            var width: number = this.data.settings.popup.width;
-            var height: number = this.data.settings.popup.height;
+            let tooltipShiftY = (y: number, groupIndex: number): number => {
+                return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
+            }
 
-            var topShift: number = 20;
-            var tooltipShiftY = (y: number, groupIndex: number) => this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + topShift) : this.size.height + marginTop;
-
-            var tooltipRoot: D3.UpdateSelection = rootSelection.select(nodeParent.selector).selectAll(node.selector)
+            let tooltipRoot: UpdateSelection<any> = rootSelection.select(nodeParent.selector).selectAll(node.selector)
                 .data(d => {
                     return _.filter(d.data, (value: PulseChartDataPoint) => this.isPopupShow(value));
                 });
@@ -2206,19 +2015,19 @@ namespace powerbi.visuals.samples {
 
             tooltipRoot
                 .attr("transform", (d: PulseChartDataPoint) => {
-                    var x: number = xScale(d.x) - width / 2;
-                    var y: number = tooltipShiftY(d.y, d.groupIndex);
+                    let x: number = xScale(d.x) - width / 2;
+                    let y: number = tooltipShiftY(d.y, d.groupIndex);
                     d.popupInfo.offsetX = Math.min(this.viewport.width - this.margin.right - width, Math.max(-this.margin.left, x)) - x;
                     return SVGUtil.translate(x + d.popupInfo.offsetX, y);
                 });
 
-            var tooltipRect: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipRect.selector).data(d => [d]);
+            let tooltipRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipRect.selector).data(d => [d]);
             tooltipRect.enter().append("path").classed(PulseChart.TooltipRect.class, true);
             tooltipRect
                 .attr("display", (d: PulseChartDataPoint) => d.popupInfo ? "inherit" : "none")
                 .style('fill', this.data.settings.popup.color)
                 .attr('d', (d: PulseChartDataPoint) => {
-                    var path = [
+                    let path = [
                         {
                             "x": -2,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
@@ -2236,15 +2045,15 @@ namespace powerbi.visuals.samples {
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
                         }
                     ];
-                    return line(path);
+                    return line(path as PulseChartDataPoint[]);
                 });
 
-            var tooltipTriangle: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selector).data(d => [d]);
+            let tooltipTriangle: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selector).data(d => [d]);
             tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.class, true);
             tooltipTriangle
                 .style('fill', this.data.settings.popup.color)
                 .attr('d', (d: PulseChartDataPoint) => {
-                    var path = [
+                    let path = [
                         {
                             "x": width / 2 - 5 - d.popupInfo.offsetX,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
@@ -2258,48 +2067,48 @@ namespace powerbi.visuals.samples {
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
                         },
                     ];
-                    return line(path);
+                    return line(path as PulseChartDataPoint[]);
                 })
                 .style('stroke-width', "1px");
 
-            var tooltipLine: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipLine.selector).data(d => [d]);
+            let tooltipLine: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipLine.selector).data(d => [d]);
             tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.class, true);
             tooltipLine
                 .style('fill', this.data.settings.popup.color)
                 .style('stroke', this.data.settings.popup.color)
                 .style('stroke-width', "1px")
                 .attr('d', (d: PulseChartDataPoint) => {
-                    var path = [
+                    let path = [
                         {
-                            "x": width/2 - d.popupInfo.offsetX,
+                            "x": width / 2 - d.popupInfo.offsetX,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ?
                                 yScales[d.groupIndex](d.y) + tooltipShiftY(d.y, d.groupIndex) - d.eventSize :
                                 yScales[d.groupIndex](d.y) - tooltipShiftY(d.y, d.groupIndex) + d.eventSize,
                         },
                         {
-                            "x": width/2 - d.popupInfo.offsetX,
-                            "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0, //end
+                            "x": width / 2 - d.popupInfo.offsetX,
+                            "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0, // end
                         }];
-                    return line(path);
+                    return line(path as PulseChartDataPoint[]);
                 });
 
-            var isShowTime: boolean = this.data.settings.popup.showTime;
-            var isShowTitle: boolean = this.data.settings.popup.showTitle;
+            let isShowTime: string = this.data.settings.popup.showTime ? undefined : "none";
+            let isShowTitle: string = this.data.settings.popup.showTitle ? undefined : "none";
 
-            var timeRect: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selector).data(d => [d]);
-            var timeDisplayStyle = { "display": isShowTime ? undefined : "none" };
+            let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selector).data(d => [d]);
+            // let timeDisplayStyle = { "display": isShowTime ? undefined : "none" };
             timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.class, true);
             timeRect
                 .style("fill", this.data.settings.popup.timeFill)
-                .style(timeDisplayStyle)
+                .style("display", isShowTime)
                 .attr('d', (d: PulseChartDataPoint) => {
-                    var path = [
+                    let path = [
                         {
                             "x": width - this.data.widthOfTooltipValueLabel - 2,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height)) : 0,
                         },
                         {
-                            "x": width - this.data.widthOfTooltipValueLabel  -2,
+                            "x": width - this.data.widthOfTooltipValueLabel - 2,
                             "y": this.isHigherMiddle(d.y, d.groupIndex)
                                 ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight))
                                 : PulseChart.DefaultTooltipSettings.timeHeight,
@@ -2315,27 +2124,27 @@ namespace powerbi.visuals.samples {
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height)) : 0,
                         }
                     ];
-                    return line(path);
+                    return line(path as PulseChartDataPoint[]);
                 });
 
-            var time: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipTime.selector).data(d => [d]);
+            let time: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTime.selector).data(d => [d]);
             time.enter().append("text").classed(PulseChart.TooltipTime.class, true);
             time
-                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()))
-                .style(timeDisplayStyle)
+                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()), null)
+                .style("display", isShowTime)
                 .style("fill", this.data.settings.popup.timeColor)
                 .attr("x", (d: PulseChartDataPoint) => width - this.data.widthOfTooltipValueLabel)
                 .attr("y", (d: PulseChartDataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
-                    ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight  + 3))
+                    ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight + 3))
                     : PulseChart.DefaultTooltipSettings.timeHeight - 3)
                 .text((d: PulseChartDataPoint) => d.popupInfo.value);
 
-            var titleDisplayStyle = { "display": isShowTitle ? undefined : "none" };
-            var title: D3.UpdateSelection = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
+            let titleDisplayStyle = { "display": isShowTitle ? undefined : "none" };
+            let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
             title.enter().append("text").classed(PulseChart.TooltipTitle.class, true);
             title
-                .style(titleDisplayStyle)
-                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties()))
+                .style("display", isShowTitle)
+                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties()), null)
                 .style("fill", this.data.settings.popup.fontColor)
                 .attr("x", (d: PulseChartDataPoint) => PulseChart.PopupTextPadding)
                 .attr("y", (d: PulseChartDataPoint) =>
@@ -2344,46 +2153,47 @@ namespace powerbi.visuals.samples {
                     if (!d.popupInfo) {
                         return "";
                     }
-                    var maxWidth = width - PulseChart.PopupTextPadding * 2 -
+                    let maxWidth = width - PulseChart.PopupTextPadding * 2 -
                         (isShowTime ? (this.data.widthOfTooltipValueLabel - PulseChart.PopupTextPadding) : 0) - 10;
-                    return TextMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupTitleTextProperties(d.popupInfo.title), maxWidth);
+                    return textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupTitleTextProperties(d.popupInfo.title), maxWidth);
                 });
 
-            var getDescriptionDimenstions = (d: PulseChartDataPoint): PulseChartElementDimensions => {
-                var shiftY: number = PulseChart.PopupTextPadding + this.data.settings.popup.fontSize;
+            let getDescriptionDimenstions = (d: PulseChartDataPoint): PulseChartElementDimensions => {
+                let shiftY: number = PulseChart.PopupTextPadding + this.data.settings.popup.fontSize;
 
-                var descriptionYOffset: number = shiftY + PulseChart.DefaultTooltipSettings.timeHeight;
+                let descriptionYOffset: number = shiftY + PulseChart.DefaultTooltipSettings.timeHeight;
                 if (d.popupInfo) {
-                    shiftY = ((isShowTitle && d.popupInfo.title) || (isShowTime && d.popupInfo.value)) ? descriptionYOffset: shiftY;
+                    shiftY = ((isShowTitle && d.popupInfo.title) || (isShowTime && d.popupInfo.value)) ? descriptionYOffset : shiftY;
                 }
 
                 return {
                     y: this.isHigherMiddle(d.y, d.groupIndex)
-                                    ? (-1 * (marginTop + height - shiftY))
-                                    : shiftY,
+                        ? (-1 * (marginTop + height - shiftY))
+                        : shiftY,
                     x: PulseChart.PopupTextPadding,
                     width: width - PulseChart.PopupTextPadding * 2,
                     height: height - shiftY,
                 };
             };
 
-            var description = tooltipRoot.selectAll(PulseChart.TooltipDescription.selector).data(d => [d]);
+            let description = tooltipRoot.selectAll(PulseChart.TooltipDescription.selector).data(d => [d]);
             description.enter().append("text").classed(PulseChart.TooltipDescription.class, true);
             description
-                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)))
+                .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)), null)
                 .style("fill", this.data.settings.popup.fontColor)
                 .text((d: PulseChartDataPoint) => d.popupInfo && d.popupInfo.description)
-                //.call(d => d.forEach(x => x[0] &&
-                //    TextMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
-                //    TextMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
-                .attr("y", function(this: SVGTextElement, d: PulseChartDataPoint) {
-                    var descriptionDimenstions: PulseChartElementDimensions = getDescriptionDimenstions(d);
-                    var el: SVGTextElement = <any>d3.select(this)[0][0];
-                    TextMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
+                // .call(d => d.forEach(x => x[0] &&
+                //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
+                //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
+                .attr("y", function (d: PulseChartDataPoint) {
+                    debugger;
+                    let descriptionDimenstions: PulseChartElementDimensions = getDescriptionDimenstions(d);
+                    let el: SVGTextElement = <any>d3.select(this)[0][0];
+                    textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
                     return 0;
                 })
-                .attr("transform", function(d: PulseChartDataPoint) {
-                    var descriptionDimenstions: PulseChartElementDimensions = getDescriptionDimenstions(d);
+                .attr("transform", function (d: PulseChartDataPoint) {
+                    let descriptionDimenstions: PulseChartElementDimensions = getDescriptionDimenstions(d);
                     return SVGUtil.translate(0, descriptionDimenstions.y);
                 });
             description.selectAll("tspan").attr("x", PulseChart.PopupTextPadding);
@@ -2402,7 +2212,7 @@ namespace powerbi.visuals.samples {
                 return groupIndex === 0;
             }
 
-            var domain: number[] = this.data.commonYScale.domain(),
+            let domain: number[] = this.data.commonYScale.domain(),
                 minValue: number = d3.min(domain),
                 middleValue = Math.abs((d3.max(domain) - minValue) / 2);
 
@@ -2424,8 +2234,8 @@ namespace powerbi.visuals.samples {
             return dataView.metadata.objects;
         }
 
-        private static parseSettings(dataView: DataView, colors: IDataColorPalette, columns: PulseChartDataRoles<DataViewCategoricalColumn>): PulseChartSettings {
-            var settings: PulseChartSettings = <PulseChartSettings>{},
+        private static parseSettings(dataView: DataView, colors: IColorPalette, columns: PulseChartDataRoles<DataViewCategoricalColumn>): PulseChartSettings {
+            let settings: PulseChartSettings = <PulseChartSettings>{},
                 objects: DataViewObjects = PulseChart.getObjectsFromDataView(dataView);
 
             settings.xAxis = this.getAxisXSettings(objects, colors);
@@ -2441,71 +2251,71 @@ namespace powerbi.visuals.samples {
             return settings;
         }
 
-        private static getPopupSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartPopupSettings {
-            var show = DataViewObjects.getValue<boolean>(
+        private static getPopupSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartPopupSettings {
+            let show = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["popup"]["show"],
+                pulseChartProps["popup"]["show"],
                 PulseChart.DefaultSettings.popup.show);
 
-            var alwaysOnTop: boolean =  DataViewObjects.getValue<boolean>(
+            let alwaysOnTop: boolean = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["popup"]["alwaysOnTop"],
+                pulseChartProps["popup"]["alwaysOnTop"],
                 PulseChart.DefaultSettings.popup.alwaysOnTop);
 
-            var width = Math.max(PulseChart.PopupMinWidth,
+            let width = Math.max(PulseChart.PopupMinWidth,
                 Math.min(PulseChart.PopupMaxWidth, DataViewObjects.getValue<number>(
-                objects,
-                PulseChart.Properties["popup"]["width"],
-                PulseChart.DefaultSettings.popup.width)));
+                    objects,
+                    pulseChartProps["popup"]["width"],
+                    PulseChart.DefaultSettings.popup.width)));
 
-            var height: number = Math.max(PulseChart.PopupMinHeight,
+            let height: number = Math.max(PulseChart.PopupMinHeight,
                 Math.min(PulseChart.PopupMaxHeight, DataViewObjects.getValue<number>(
-                objects,
-                PulseChart.Properties["popup"]["height"],
-                PulseChart.DefaultSettings.popup.height)));
+                    objects,
+                    pulseChartProps["popup"]["height"],
+                    PulseChart.DefaultSettings.popup.height)));
 
-            var colorHelper = new ColorHelper(
+            let colorHelper = new ColorHelper(
                 colors,
-                PulseChart.Properties["popup"]["color"],
+                pulseChartProps["popup"]["color"],
                 PulseChart.DefaultSettings.popup.color);
 
-            var color = colorHelper.getColorForMeasure(objects, "");
+            let color = colorHelper.getColorForMeasure(objects, "");
 
-            var fontSize = parseInt(DataViewObjects.getValue<any>(
+            let fontSize = parseInt(DataViewObjects.getValue<any>(
                 objects,
-                PulseChart.Properties["popup"]["fontSize"],
+                pulseChartProps["popup"]["fontSize"],
                 PulseChart.DefaultSettings.popup.fontSize), 10);
 
-            var fontColorHelper = new ColorHelper(
+            let fontColorHelper = new ColorHelper(
                 colors,
-                PulseChart.Properties["popup"]["fontColor"],
+                pulseChartProps["popup"]["fontColor"],
                 PulseChart.DefaultSettings.popup.fontColor);
 
-            var fontColor = fontColorHelper.getColorForMeasure(objects, "");
+            let fontColor = fontColorHelper.getColorForMeasure(objects, "");
 
-            var showTime =  DataViewObjects.getValue<boolean>(
+            let showTime = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["popup"]["showTime"],
+                pulseChartProps["popup"]["showTime"],
                 PulseChart.DefaultSettings.popup.showTime);
 
-            var showTitle =  DataViewObjects.getValue<boolean>(
+            let showTitle = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["popup"]["showTitle"],
+                pulseChartProps["popup"]["showTitle"],
                 PulseChart.DefaultSettings.popup.showTitle);
 
-            var timeColorHelper = new ColorHelper(
+            let timeColorHelper = new ColorHelper(
                 colors,
-                PulseChart.Properties["popup"]["timeColor"],
+                pulseChartProps["popup"]["timeColor"],
                 PulseChart.DefaultSettings.popup.timeColor);
 
-            var timeColor = timeColorHelper.getColorForMeasure(objects, "");
+            let timeColor = timeColorHelper.getColorForMeasure(objects, "");
 
-            var timeFillHelper = new ColorHelper(
+            let timeFillHelper = new ColorHelper(
                 colors,
-                PulseChart.Properties["popup"]["timeFill"],
+                pulseChartProps["popup"]["timeFill"],
                 PulseChart.DefaultSettings.popup.timeFill);
 
-            var timeFill = timeFillHelper.getColorForMeasure(objects, "");
+            let timeFill = timeFillHelper.getColorForMeasure(objects, "");
             return {
                 show: show,
                 alwaysOnTop: alwaysOnTop,
@@ -2521,33 +2331,33 @@ namespace powerbi.visuals.samples {
             };
         }
 
-        private static getDotsSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartDotsSettings {
-            var properties = PulseChart.Properties["dots"],
+        private static getDotsSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartDotsSettings {
+            let properties = pulseChartProps["dots"],
                 defaultSettings: PulseChartDotsSettings = PulseChart.DefaultSettings.dots;
 
-            var colorHelper = new ColorHelper(
+            let colorHelper = new ColorHelper(
                 colors,
                 properties["color"],
                 defaultSettings.color);
 
-            var color = colorHelper.getColorForMeasure(objects, "");
+            let color = colorHelper.getColorForMeasure(objects, "");
 
-            var minSize: number =  Math.max(0, Math.min(9999, DataViewObjects.getValue<number>(
+            let minSize: number = Math.max(0, Math.min(9999, DataViewObjects.getValue<number>(
                 objects,
                 properties["minSize"],
                 defaultSettings.minSize)));
 
-            var maxSize: number =  Math.max(minSize, Math.min(9999, DataViewObjects.getValue<number>(
+            let maxSize: number = Math.max(minSize, Math.min(9999, DataViewObjects.getValue<number>(
                 objects,
                 properties["maxSize"],
                 defaultSettings.maxSize)));
 
-            var size: number =  Math.max(minSize, Math.min(maxSize, DataViewObjects.getValue<number>(
+            let size: number = Math.max(minSize, Math.min(maxSize, DataViewObjects.getValue<number>(
                 objects,
                 properties["size"],
                 defaultSettings.size)));
 
-            var transparency: number = Math.max(0, Math.min(100, DataViewObjects.getValue<number>(
+            let transparency: number = Math.max(0, Math.min(100, DataViewObjects.getValue<number>(
                 objects,
                 properties["transparency"],
                 defaultSettings.transparency)));
@@ -2561,40 +2371,40 @@ namespace powerbi.visuals.samples {
             };
         }
 
-        private static getSeriesSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartSeriesSetting {
-            var width = Math.max(1, Math.min(100, DataViewObjects.getValue<number>(
+        private static getSeriesSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartSeriesSetting {
+            let width = Math.max(1, Math.min(100, DataViewObjects.getValue<number>(
                 objects,
-                PulseChart.Properties["series"]["width"],
+                pulseChartProps["series"]["width"],
                 PulseChart.DefaultSettings.series.width)));
 
-            var colorHelper = new ColorHelper(
+            let colorHelper = new ColorHelper(
                 colors,
-                PulseChart.Properties["series"]["fill"],
+                pulseChartProps["series"]["fill"],
                 PulseChart.DefaultSettings.series.fill);
 
-            var fill = colorHelper.getColorForMeasure(objects, "");
+            let fill = colorHelper.getColorForMeasure(objects, "");
 
-            /*var showByDefault = DataViewObjects.getValue<boolean>(
+            /*let showByDefault = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["series"]["showByDefault"],
+                pulseChartProps["series"]["showByDefault"],
                 PulseChart.DefaultSettings.series.showByDefault);*/
 
             return {
                 width,
                 fill,
-                //showByDefault
+                // showByDefault
             };
         }
 
         private static getGapsSettings(objects: DataViewObjects): PulseChartGapsSettings {
-            var show =  DataViewObjects.getValue<boolean>(
+            let show = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["gaps"]["show"],
+                pulseChartProps["gaps"]["show"],
                 PulseChart.DefaultSettings.gaps.show);
 
-            var visibleGapsPercentage = Math.max(1, Math.min(100, DataViewObjects.getValue<number>(
+            let visibleGapsPercentage = Math.max(1, Math.min(100, DataViewObjects.getValue<number>(
                 objects,
-                PulseChart.Properties["gaps"]["transparency"],
+                pulseChartProps["gaps"]["transparency"],
                 PulseChart.DefaultSettings.gaps.visibleGapsPercentage)));
             return {
                 show: show,
@@ -2602,29 +2412,29 @@ namespace powerbi.visuals.samples {
             };
         }
 
-        private static getAxisXSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartXAxisSettings {
-            var properties = PulseChart.Properties["xAxis"],
-            defaultSettings: PulseChartXAxisSettings = PulseChart.DefaultSettings.xAxis;
+        private static getAxisXSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartXAxisSettings {
+            let properties = pulseChartProps["xAxis"],
+                defaultSettings: PulseChartXAxisSettings = PulseChart.DefaultSettings.xAxis;
 
-            var color = new ColorHelper(colors,
+            let color = new ColorHelper(colors,
                 properties["color"],
                 defaultSettings.color).getColorForMeasure(objects, "");
 
-            var fontColor = new ColorHelper(colors,
+            let fontColor = new ColorHelper(colors,
                 properties["fontColor"],
                 defaultSettings.fontColor).getColorForMeasure(objects, "");
 
-            var show = DataViewObjects.getValue<boolean>(
+            let show = DataViewObjects.getValue<boolean>(
                 objects,
                 properties["show"],
                 defaultSettings.show);
 
-            var position = DataViewObjects.getValue<XAxisPosition>(
+            let position = DataViewObjects.getValue<XAxisPosition>(
                 objects,
                 properties["position"],
                 defaultSettings.position);
 
-            var backgroundColor = new ColorHelper(colors,
+            let backgroundColor = new ColorHelper(colors,
                 properties["backgroundColor"],
                 defaultSettings.backgroundColor).getColorForMeasure(objects, "");
 
@@ -2637,25 +2447,25 @@ namespace powerbi.visuals.samples {
             };
         }
 
-        private static getAxisYSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartYAxisSettings {
-            var properties = PulseChart.Properties["yAxis"],
+        private static getAxisYSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartYAxisSettings {
+            let properties = pulseChartProps["yAxis"],
                 defaultSettings: PulseChartYAxisSettings = PulseChart.DefaultSettings.yAxis;
 
-            var colorHelper = new ColorHelper(
+            let colorHelper = new ColorHelper(
                 colors,
                 properties["color"],
                 defaultSettings.color);
 
-            var color = colorHelper.getColorForMeasure(objects, "");
+            let color = colorHelper.getColorForMeasure(objects, "");
 
-            var fontColorHelper = new ColorHelper(
+            let fontColorHelper = new ColorHelper(
                 colors,
                 properties["fontColor"],
                 defaultSettings.fontColor);
 
-            var fontColor = fontColorHelper.getColorForMeasure(objects, "");
+            let fontColor = fontColorHelper.getColorForMeasure(objects, "");
 
-            var show = DataViewObjects.getValue<boolean>(
+            let show = DataViewObjects.getValue<boolean>(
                 objects,
                 properties["show"],
                 defaultSettings.show);
@@ -2667,9 +2477,9 @@ namespace powerbi.visuals.samples {
             };
         }
 
-        private static getPlaybackSettings(objects: DataViewObjects, colors: IDataColorPalette): PulseChartPlaybackSettings {
-            var playbackSettings: PulseChartPlaybackSettings = <PulseChartPlaybackSettings> {};
-            var properties = PulseChart.Properties["playback"],
+        private static getPlaybackSettings(objects: DataViewObjects, colors: IColorPalette): PulseChartPlaybackSettings {
+            let playbackSettings: PulseChartPlaybackSettings = <PulseChartPlaybackSettings>{};
+            let properties = pulseChartProps["playback"],
                 defaultSettings: PulseChartPlaybackSettings = PulseChart.DefaultSettings.playback;
 
             playbackSettings.autoplay = DataViewObjects.getValue<boolean>(
@@ -2677,33 +2487,35 @@ namespace powerbi.visuals.samples {
                 properties["autoplay"],
                 defaultSettings.autoplay);
 
-            playbackSettings.playSpeed = Math.max(1, Math.min(99999,  DataViewObjects.getValue<number>(
+            playbackSettings.playSpeed = Math.max(1, Math.min(99999, DataViewObjects.getValue<number>(
                 objects,
                 properties["playSpeed"],
                 defaultSettings.playSpeed)));
 
-            playbackSettings.pauseDuration =  Math.max(0, Math.min(9999, DataViewObjects.getValue<number>(
+            playbackSettings.pauseDuration = Math.max(0, Math.min(9999, DataViewObjects.getValue<number>(
                 objects,
                 properties["pauseDuration"],
                 defaultSettings.pauseDuration)));
 
-            playbackSettings.autoplayPauseDuration =  Math.max(1, Math.min(9999, DataViewObjects.getValue<number>(
+            playbackSettings.autoplayPauseDuration = Math.max(1, Math.min(9999, DataViewObjects.getValue<number>(
                 objects,
                 properties["autoplayPauseDuration"],
                 defaultSettings.autoplayPauseDuration)));
 
-            var colorHelper = new ColorHelper(
+            let colorHelper = new ColorHelper(
                 colors,
                 properties["color"],
                 defaultSettings.color);
 
             playbackSettings.color = colorHelper.getColorForMeasure(objects, "");
 
-            var position:string = DataViewObjects.getValue<string>(objects, properties["position"], "");
+            let position: string = DataViewObjects.getValue<string>(objects, properties["position"], "");
             if (position.length > 3) {
                 try {
                     playbackSettings.position = JSON.parse(position);
-                } catch(ex) {}
+                } catch (ex) {
+
+                }
             }
 
             playbackSettings.position = playbackSettings.position || defaultSettings.position;
@@ -2713,33 +2525,33 @@ namespace powerbi.visuals.samples {
 
         private static getRunnerCounterSettings(
             objects: DataViewObjects,
-            colors: IDataColorPalette,
+            colors: IColorPalette,
             columns: PulseChartDataRoles<DataViewCategoricalColumn>): PulseChartRunnerCounterSettings {
 
-            var show: boolean =  DataViewObjects.getValue<boolean>(
+            let show: boolean = DataViewObjects.getValue<boolean>(
                 objects,
-                PulseChart.Properties["runnerCounter"]["show"],
+                pulseChartProps["runnerCounter"]["show"],
                 PulseChart.DefaultSettings.runnerCounter.show);
 
-            var label: string = DataViewObjects.getValue<string>(
+            let label: string = DataViewObjects.getValue<string>(
                 objects,
-                PulseChart.Properties["runnerCounter"]["label"],
+                pulseChartProps["runnerCounter"]["label"],
                 columns.RunnerCounter && columns.RunnerCounter.source && columns.RunnerCounter.source.displayName
-                    || PulseChart.DefaultSettings.runnerCounter.label);
+                || PulseChart.DefaultSettings.runnerCounter.label);
 
-            var position = DataViewObjects.getValue<RunnerCounterPosition>(
+            let position = DataViewObjects.getValue<RunnerCounterPosition>(
                 objects,
-                PulseChart.Properties["runnerCounter"]["position"],
+                pulseChartProps["runnerCounter"]["position"],
                 PulseChart.DefaultSettings.runnerCounter.position);
 
-            var fontSize = parseInt(DataViewObjects.getValue<any>(
+            let fontSize = parseInt(DataViewObjects.getValue<any>(
                 objects,
-                PulseChart.Properties["runnerCounter"]["fontSize"],
+                pulseChartProps["runnerCounter"]["fontSize"],
                 PulseChart.DefaultSettings.runnerCounter.fontSize), 10);
 
-            var fontColor = new ColorHelper(
+            let fontColor = new ColorHelper(
                 colors,
-                PulseChart.Properties["runnerCounter"]["fontColor"],
+                pulseChartProps["runnerCounter"]["fontColor"],
                 PulseChart.DefaultSettings.runnerCounter.fontColor)
                 .getColorForMeasure(objects, "");
 
@@ -2768,54 +2580,45 @@ namespace powerbi.visuals.samples {
         }
 
         public clearChart(): void {
-           this.onClearSelection();
-           this.hideAnimationDot();
-           this.chart.selectAll(PulseChart.Line.selector).remove();
-           this.chart.selectAll(PulseChart.Dot.selector).remove();
+            this.onClearSelection();
+            this.hideAnimationDot();
+            this.chart.selectAll(PulseChart.Line.selector).remove();
+            this.chart.selectAll(PulseChart.Dot.selector).remove();
         }
 
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-            var enumeration = new ObjectEnumerationBuilder();
             switch (options.objectName) {
                 case "general": {
-                    this.readGeneralInstance(enumeration);
-                    break;
+                    return this.readGeneralInstance();
                 }
                 case "popup": {
-                    this.readPopupInstance(enumeration);
-                    break;
+                    return this.readPopupInstance();
                 }
                 case "dots": {
-                    this.readDotsInstance(enumeration);
-                    break;
+                    return this.readDotsInstance();
                 }
                 case "xAxis": {
-                    this.xAxisInstance(enumeration);
-                    break;
+                    return this.xAxisInstance();
                 }
                 case "yAxis": {
-                    this.yAxisInstance(enumeration);
-                    break;
+                    return this.yAxisInstance();
                 }
                 case "series": {
-                    this.readSeriesInstance(enumeration);
-                    break;
+                    return this.readSeriesInstance();
                 }
                 case "gaps": {
-                    this.readGapsInstance(enumeration);
-                    break;
+                    return this.readGapsInstance();
                 }
                 case "playback": {
-                    this.readPlaybackInstance(enumeration);
-                    break;
+                    return this.readPlaybackInstance();
                 }
                 case "runnerCounter": {
-                    this.readRunnerCounterInstance(enumeration);
-                    break;
+                    return this.readRunnerCounterInstance();
+                }
+                default: {
+                    return [];
                 }
             }
-
-            return enumeration.complete();
         }
 
         private getSettings(name: string): any {
@@ -2825,8 +2628,8 @@ namespace powerbi.visuals.samples {
             return PulseChart.DefaultSettings[name];
         }
 
-        private readGeneralInstance(enumeration: ObjectEnumerationBuilder): void {
-            var instance: VisualObjectInstance = {
+        private readGeneralInstance(): VisualObjectInstance[] {
+            let instance: VisualObjectInstance = {
                 objectName: "general",
                 displayName: "general",
                 selector: null,
@@ -2834,13 +2637,13 @@ namespace powerbi.visuals.samples {
                 }
             };
 
-            enumeration.pushInstance(instance);
+            return [instance];
         }
 
-        private readPopupInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartPopupSettings = this.getSettings("popup");
+        private readPopupInstance(): VisualObjectInstance[] {
+            let settings: PulseChartPopupSettings = this.getSettings("popup");
 
-            var popup: VisualObjectInstance = {
+            let instance: VisualObjectInstance = {
                 objectName: "popup",
                 displayName: "popup",
                 selector: null,
@@ -2859,13 +2662,13 @@ namespace powerbi.visuals.samples {
                 }
             };
 
-            enumeration.pushInstance(popup);
+            return [instance];
         }
 
-        private readDotsInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartDotsSettings = this.getSettings("dots");
+        private readDotsInstance(): VisualObjectInstance[] {
+            let settings: PulseChartDotsSettings = this.getSettings("dots");
 
-            var instance: VisualObjectInstance = {
+            let instance: VisualObjectInstance = {
                 objectName: "dots",
                 displayName: "Dots",
                 selector: null,
@@ -2878,13 +2681,13 @@ namespace powerbi.visuals.samples {
                 }
             };
 
-            enumeration.pushInstance(instance);
+            return [instance];
         }
 
-        private xAxisInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartXAxisSettings = this.getSettings("xAxis");
+        private xAxisInstance(): VisualObjectInstance[] {
+            let settings: PulseChartXAxisSettings = this.getSettings("xAxis");
 
-            enumeration.pushInstance({
+            let instance: VisualObjectInstance = {
                 objectName: "xAxis",
                 displayName: "xAxis",
                 selector: null,
@@ -2895,13 +2698,15 @@ namespace powerbi.visuals.samples {
                     fontColor: settings.fontColor,
                     backgroundColor: settings.backgroundColor
                 }
-            });
+            };
+
+            return [instance];
         }
 
-        private yAxisInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartYAxisSettings = this.getSettings("yAxis");
+        private yAxisInstance(): VisualObjectInstance[] {
+            let settings: PulseChartYAxisSettings = this.getSettings("yAxis");
 
-            enumeration.pushInstance({
+            let instance: VisualObjectInstance = {
                 objectName: "yAxis",
                 displayName: "yAxis",
                 selector: null,
@@ -2910,45 +2715,47 @@ namespace powerbi.visuals.samples {
                     fontColor: settings.fontColor,
                     show: settings.show
                 }
-            });
+            };
+
+            return [instance];
         }
 
-        private readSeriesInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartSeriesSetting = this.getSettings("series");
+        private readSeriesInstance(): VisualObjectInstance[] {
+            let settings: PulseChartSeriesSetting = this.getSettings("series");
 
-            var series: VisualObjectInstance = {
+            let instance: VisualObjectInstance = {
                 objectName: "series",
                 displayName: "series",
                 selector: null,
                 properties: {
                     fill: settings.fill,
                     width: settings.width,
-                    //showByDefault: settings.showByDefault
+                    // showByDefault: settings.showByDefault
                 }
             };
 
-            enumeration.pushInstance(series);
+            return [instance];
         }
 
-        private readGapsInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartGapsSettings = this.getSettings("gaps");
+        private readGapsInstance(): VisualObjectInstance[] {
+            let settings: PulseChartGapsSettings = this.getSettings("gaps");
 
-            var gaps: VisualObjectInstance = {
+            let instance: VisualObjectInstance = {
                 objectName: "gaps",
                 selector: null,
                 properties: {
                     show: settings.show,
-                    transparency: settings.visibleGapsPercentage //visibleGapsPercentage
+                    transparency: settings.visibleGapsPercentage // visibleGapsPercentage
                 }
             };
 
-            enumeration.pushInstance(gaps);
+            return [instance];
         }
 
-        private readPlaybackInstance(enumeration: ObjectEnumerationBuilder): void {
-            var settings: PulseChartPlaybackSettings = this.getSettings("playback");
+        private readPlaybackInstance(): VisualObjectInstance[] {
+            let settings: PulseChartPlaybackSettings = this.getSettings("playback");
 
-            enumeration.pushInstance({
+             let instance: VisualObjectInstance = {
                 objectName: "playback",
                 displayName: "playback",
                 selector: null,
@@ -2959,22 +2766,24 @@ namespace powerbi.visuals.samples {
                     autoplayPauseDuration: settings.autoplayPauseDuration,
                     color: settings.color,
                 }
-            });
+            };
+
+            return [instance];
         }
 
-        private readRunnerCounterInstance(enumeration: ObjectEnumerationBuilder): void {
-            var runnerCounterSettings: PulseChartRunnerCounterSettings = this.getSettings("runnerCounter");
+        private readRunnerCounterInstance(): VisualObjectInstance[] {
+            let runnerCounterSettings: PulseChartRunnerCounterSettings = this.getSettings("runnerCounter");
 
-            var instance: VisualObjectInstance = {
-                    objectName: "runnerCounter",
-                    selector: null,
-                    properties: {
-                    }
-                };
+            let instance: VisualObjectInstance = {
+                objectName: "runnerCounter",
+                selector: null,
+                properties: {
+                }
+            };
 
             if (this.data &&
-               this.data.columns &&
-               this.data.columns.RunnerCounter) {
+                this.data.columns &&
+                this.data.columns.RunnerCounter) {
                 instance.properties = {
                     show: runnerCounterSettings.show,
                     label: runnerCounterSettings.label,
@@ -2983,696 +2792,16 @@ namespace powerbi.visuals.samples {
                     fontColor: runnerCounterSettings.fontColor
                 };
 
-                enumeration.pushInstance(instance);
+                return [instance];
             }
+
+            return [];
         }
 
         public destroy(): void {
             this.data = null;
             this.clearAll(true);
         }
-    }
 
-    enum PulseAnimatorStates {
-        Ready,
-        Play,
-        Paused,
-        Stopped,
-    }
-
-    export class PulseAnimator {
-        private chart: PulseChart;
-        private svg: D3.Selection;
-        private animationPlay: D3.Selection;
-        private animationPause: D3.Selection;
-        private animationReset: D3.Selection;
-        private animationToEnd: D3.Selection;
-        private animationPrev: D3.Selection;
-        private animationNext: D3.Selection;
-        private runnerCounter: D3.Selection;
-        private runnerCounterText: D3.Selection;
-
-        private static AnimationPlay: ClassAndSelector = createClassAndSelector('animationPlay');
-        private static AnimationPause: ClassAndSelector = createClassAndSelector('animationPause');
-        private static AnimationReset: ClassAndSelector = createClassAndSelector('animationReset');
-        private static AnimationToEnd: ClassAndSelector = createClassAndSelector('animationToEnd');
-        private static AnimationPrev: ClassAndSelector = createClassAndSelector('animationPrev');
-        private static AnimationNext: ClassAndSelector = createClassAndSelector('animationNext');
-        private static ControlsContainer: ClassAndSelector = createClassAndSelector('ControlsContainer');
-        private static RunnerCounter: ClassAndSelector = createClassAndSelector('runnerCounter');
-        private animatorState: PulseAnimatorStates;
-
-        public static get AnimationMinPosition(): PulseChartAnimationPosition {
-            return { series: 0, index: 0 };
-        }
-
-        //private static ControlsDuration = 250;
-        private static DimmedOpacity = 0.25;
-        private static DefaultOpacity = 1;
-        private static DefaultControlsColor = "#777";
-
-        private container: D3.Selection;
-        public animationPlayingIndex: number = 0;
-
-        private runnerCounterValue: any;
-        private runnerCounterTopLeftPosition: number = 180;
-        private get runnerCounterPosition(): RunnerCounterPosition {
-            return this.chart.data.settings.runnerCounter.position;
-        }
-        private get maxTextWidthOfRunnerCounterValue(): number {
-            var top = this.runnerCounterPosition === RunnerCounterPosition.TopLeft || this.runnerCounterPosition === RunnerCounterPosition.TopRight;
-            return this.chart.viewport.width - (top ? this.runnerCounterTopLeftPosition : 0);
-        }
-
-        private color: string;
-        private isAutoPlayed: boolean = false;
-
-        public get isAnimated(): boolean {
-            return (this.animatorState === PulseAnimatorStates.Paused) ||
-                    (this.animatorState === PulseAnimatorStates.Play) ||
-                    (this.animatorState === PulseAnimatorStates.Stopped);
-        }
-
-        public get isPlaying(): boolean {
-            return this.animatorState === PulseAnimatorStates.Play;
-        }
-
-        public get isPaused(): boolean {
-            return this.animatorState === PulseAnimatorStates.Paused;
-        }
-
-        public get isStopped(): boolean {
-            return this.animatorState === PulseAnimatorStates.Stopped;
-        }
-
-        constructor(chart: PulseChart, svg: D3.Selection) {
-            this.chart = chart;
-            this.svg = svg;
-
-            this.setDefaultValues();
-
-            var container = this.container = this.svg
-                .append('g')
-                .classed(PulseAnimator.ControlsContainer.class, true)
-                .style('display', 'none');
-
-            this.animationPlay = container.append('g').classed(PulseAnimator.AnimationPlay.class, true);
-            this.animationPlay
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationPlay
-                .call(pulseChartUtils.AddOnTouchClick, () => this.play());
-
-            this.animationPlay
-                .append("path")
-                .attr("d", "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3 17v-10l9 5.146-9 4.854z");
-
-            this.animationPause = container.append('g').classed(PulseAnimator.AnimationPause.class, true);
-            this.animationPause
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationPause
-                .call(pulseChartUtils.AddOnTouchClick, () => this.stop());
-
-            this.animationPause
-                .append("path")
-                .attr("d", "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3v-10h3v10zm5-10h-3v10h3v-10z");
-
-            this.animationReset = container.append('g').classed(PulseAnimator.AnimationReset.class, true);
-            this.animationReset
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationReset
-                .call(pulseChartUtils.AddOnTouchClick, () => this.reset());
-
-            this.animationReset
-                .append("path")
-                .attr("d", "M22 12c0 5.514-4.486 10-10 10s-10-4.486-10-10 4.486-10 10-10 10 4.486 10 10zm-22 0c0 6.627 5.373 12 12 12s12-5.373 12-12-5.373-12-12-12-12 5.373-12 12zm13 0l5-4v8l-5-4zm-5 0l5-4v8l-5-4zm-2 4h2v-8h-2v8z");
-
-            /* Prev */
-            this.animationPrev = container.append('g').classed(PulseAnimator.AnimationPrev.class, true);
-            this.animationPrev
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationPrev
-                .call(pulseChartUtils.AddOnTouchClick, () => this.prev());
-
-            this.animationPrev
-                .append("path")
-                .attr("d", "M9.5 12l7.5-4.5v9l-7.5-4.5zm-4.5 0l6.5 4v-1.634l-3.943-2.366 3.943-2.366v-1.634l-6.5 4zm17 0c0 5.514-4.486 10-10 10s-10-4.486-10-10 4.486-10 10-10 10 4.486 10 10zm-22 0c0 6.627 5.373 12 12 12s12-5.373 12-12-5.373-12-12-12-12 5.373-12 12z");
-
-            /* Next */
-            this.animationNext = container.append('g').classed(PulseAnimator.AnimationNext.class, true);
-            this.animationNext
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationNext
-                .call(pulseChartUtils.AddOnTouchClick, () => this.next());
-
-            this.animationNext
-                .append("path")
-                .attr("d", "M7 16.5v-9l7.5 4.5-7.5 4.5zm5.5-8.5v1.634l3.943 2.366-3.943 2.366v1.634l6.5-4-6.5-4zm-.5-6c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12z")
-                .attr("rotate", 180);
-
-            /* ToEnd */
-            this.animationToEnd = container.append('g').classed(PulseAnimator.AnimationToEnd.class, true);
-            this.animationToEnd
-                .append("circle")
-                .attr("cx", 12)
-                .attr("cy", 12)
-                .attr("r", 10)
-                .attr("fill", "transparent");
-            this.animationToEnd
-                .call(pulseChartUtils.AddOnTouchClick, () => this.toEnd());
-
-            this.animationToEnd
-                .append("path")
-                .attr("d", "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-6 16v-8l5 4-5 4zm5 0v-8l5 4-5 4zm7-8h-2v8h2v-8z");
-
-            this.runnerCounter = container.append('g').classed(PulseAnimator.RunnerCounter.class, true);
-            this.runnerCounterText = this.runnerCounter.append('text');
-            this.setControlsColor(PulseAnimator.DefaultControlsColor);
-        }
-
-        private setDefaultValues() {
-            this.position = PulseAnimator.AnimationMinPosition;
-            this.animatorState = PulseAnimatorStates.Ready;
-            this.runnerCounterValue = null;
-        }
-
-        public render(): void {
-            this.renderControls();
-            this.disableControls();
-
-            if (!this.chart.isAutoPlay) {
-                this.isAutoPlayed = true;
-                if (this.savedPosition) {
-                    this.savedPosition = null;
-                }
-            }
-
-            if (this.chart.isAutoPlay && this.isAutoPlayed
-                && this.animatorState === PulseAnimatorStates.Play
-                && !this.isPositionWasSaved
-                && !_.isEqual(this.autoPlayPosition, this.savedPosition)) {
-                this.chart.stopAnimation();
-                this.isAutoPlayed = false;
-                this.isPositionWasSaved = true;
-                this.animatorState = PulseAnimatorStates.Ready;
-            }
-
-            if (this.animatorState === PulseAnimatorStates.Play) {
-                this.play();
-            } else if (this.chart.isAutoPlay && !this.isAutoPlayed && (this.animatorState === PulseAnimatorStates.Ready)) {
-                //console.log("loaded " + JSON.stringify(this.savedPosition));
-                this.autoPlayPosition = this.savedPosition;
-                this.isAutoPlayed = true;
-                if (this.savedPosition
-                    && this.savedPosition.series < this.chart.data.series.length
-                    && this.savedPosition.index < this.chart.data.series[this.savedPosition.series].data.length) {
-                    this.position = this.savedPosition;
-                }
-
-                this.play(this.chart.autoplayPauseDuration);
-            } else {
-                this.chart.renderChart();
-            }
-        }
-
-        public setControlsColor(color: string): void {
-            this.color = color;
-        }
-
-        private renderControls(): void {
-            this.show();
-
-            this.animationPlay
-                .attr('transform', SVGUtil.translate(0, 0))
-                .attr("fill", this.color);
-
-            this.animationPause
-                .attr('transform', SVGUtil.translate(30, 0))
-                .attr("fill", this.color);
-
-            this.animationReset
-                .attr('transform', SVGUtil.translate(60, 0))
-                .attr("fill", this.color);
-
-            this.animationPrev
-                .attr('transform', SVGUtil.translate(90, 0))
-                .attr("fill", this.color);
-
-            this.animationNext
-                .attr('transform', SVGUtil.translate(120, 0))
-                .attr("fill", this.color);
-
-            this.animationToEnd
-                .attr('transform', SVGUtil.translate(150, 0))
-                .attr("fill", this.color);
-
-            this.runnerCounter
-                .attr('fill', this.color)
-                .attr('transform',
-                    SVGUtil.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
-                        ? this.runnerCounterTopLeftPosition
-                        : this.chart.viewport.width - 2,
-                    this.chart.data.runnerCounterHeight/2 + 7));
-            this.runnerCounterText
-                .style('text-anchor', this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end" );
-
-            if (this.chart.data && this.chart.data.settings) {
-                    this.runnerCounterText.style(PulseChart.ConvertTextPropertiesToStyle(
-                            PulseChart.GetRunnerCounterTextProperties(null, this.chart.data.settings.runnerCounter.fontSize)));
-                    this.runnerCounterText.style('fill', this.chart.data.settings.runnerCounter.fontColor);
-            }
-
-            this.drawCounterValue();
-        }
-
-        private static setControlVisiblity(element: D3.Selection, isVisible:  boolean, isDisabled: boolean = false):  void {
-            element
-                .style('opacity', isVisible ? PulseAnimator.DefaultOpacity : PulseAnimator.DimmedOpacity);
-            if (isVisible) {
-                element.attr('display', "inline");
-            } else if (isDisabled) {
-                element.attr('display', "none");
-            }
-        }
-
-        private disableControls(): void {
-            var showRunner = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
-            PulseAnimator.setControlVisiblity(this.animationReset, true);
-            PulseAnimator.setControlVisiblity(this.animationToEnd, true);
-
-            switch (this.animatorState) {
-                case PulseAnimatorStates.Play:
-                    PulseAnimator.setControlVisiblity(this.animationPlay, false);
-
-                    PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                    PulseAnimator.setControlVisiblity(this.animationNext, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPause, true);
-                    PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
-                    break;
-                case PulseAnimatorStates.Paused:
-                    PulseAnimator.setControlVisiblity(this.animationPlay, true);
-                    PulseAnimator.setControlVisiblity(this.animationPause, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                    PulseAnimator.setControlVisiblity(this.animationNext, true);
-
-                    PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
-                    break;
-                case PulseAnimatorStates.Stopped:
-                    PulseAnimator.setControlVisiblity(this.animationPlay, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                    PulseAnimator.setControlVisiblity(this.animationNext, true);
-
-                    PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPause, false);
-                    break;
-                case PulseAnimatorStates.Ready:
-                    PulseAnimator.setControlVisiblity(this.animationPlay, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPrev, false);
-                    PulseAnimator.setControlVisiblity(this.animationNext, false);
-
-                    PulseAnimator.setControlVisiblity(this.animationPause, false);
-                    PulseAnimator.setControlVisiblity(this.runnerCounter, false, true);
-                    break;
-                default:
-                    PulseAnimator.setControlVisiblity(this.animationPlay, true);
-
-                    PulseAnimator.setControlVisiblity(this.animationPrev, false);
-                    PulseAnimator.setControlVisiblity(this.animationNext, false);
-
-                    PulseAnimator.setControlVisiblity(this.animationPause, false);
-                    PulseAnimator.setControlVisiblity(this.runnerCounter, false, true);
-                    break;
-             }
-        }
-
-        public show(): void {
-            this.container.style('display', 'inline');
-        }
-
-        public setRunnerCounterValue(index?: number): void {
-            var dataPoint: PulseChartDataPoint = this.chart.data
-                && this.chart.data.series
-                && this.chart.data.series[this.position.series]
-                && this.chart.data.series[this.position.series].data
-                && this.chart.data.series[this.position.series].data[$.isNumeric(index) ? index : this.flooredPosition.index];
-
-            var runnerCounterValue: string = (dataPoint && dataPoint.runnerCounterValue != null)
-                ? dataPoint.runnerCounterValue
-                : "";
-
-            if (dataPoint && dataPoint.runnerCounterFormatString) {
-                var runnerCounterformatter = visuals.valueFormatter.create({ format: dataPoint.runnerCounterFormatString });
-                runnerCounterValue = runnerCounterformatter.format(runnerCounterValue);
-            }
-
-            this.runnerCounterValue = this.chart.data.settings.runnerCounter.label + " " + runnerCounterValue;
-            this.drawCounterValue();
-        }
-
-        private drawCounterValue(): void {
-            var progressText = `${this.runnerCounterValue}`;
-            this.runnerCounterText.text(progressText);
-            TextMeasurementService.svgEllipsis(<any>this.runnerCounterText.node(), this.maxTextWidthOfRunnerCounterValue);
-        }
-
-        public play(delay: number = 0, renderDuringPlaying: boolean = false): void {
-            if (this.animatorState === PulseAnimatorStates.Play && !renderDuringPlaying) {
-                return;
-            }
-
-            if (this.animatorState === PulseAnimatorStates.Ready) {
-                this.animationPlayingIndex++;
-                this.chart.clearChart();
-            }
-
-            if (this.chart.isAnimationIndexLast(this.position)) {
-                this.playNext();
-                return;
-            }
-
-            if (this.animatorState === PulseAnimatorStates.Paused) {
-                this.chart.onClearSelection();
-            }
-
-            this.animatorState = PulseAnimatorStates.Play;
-            this.chart.renderChart();
-            this.chart.playAnimation(delay);
-            this.disableControls();
-        }
-
-        public playNext(): void {
-            this.pause();
-
-            if (this.chart.isAnimationSeriesLast(this.position)) {
-                this.setDefaultValues();
-                this.chart.onClearSelection();
-            } else {
-                this.position = {
-                    series: this.position.series + 1,
-                    index: PulseAnimator.AnimationMinPosition.index,
-                };
-                this.play();
-            }
-        }
-
-        public pause(): void {
-            if (this.animatorState === PulseAnimatorStates.Play) {
-                this.animatorState = PulseAnimatorStates.Paused;
-                this.chart.pauseAnimation();
-            }
-
-            this.disableControls();
-        }
-
-        public reset(): void {
-            this.clearTimeouts();
-            this.chart.stopAnimation();
-            this.chart.onClearSelection();
-            this.chart.clearChart();
-
-            this.setDefaultValues();
-            this.animatorState = PulseAnimatorStates.Stopped;
-
-            this.disableControls();
-            this.savedPosition = null;
-        }
-
-        private next(): void {
-            if (!this.isAnimated) {
-                return;
-            }
-
-            this.stop();
-
-            var newPosition: PulseChartAnimationPosition = this.chart.findNextPoint(this.position);
-            if (newPosition) {
-                this.position = newPosition;
-                this.chart.handleSelection(this.position);
-            } else {
-                this.toEnd();
-            }
-        }
-
-        private prev(): void {
-            if (!this.isAnimated) {
-                return;
-            }
-
-            this.stop();
-            var newPosition: PulseChartAnimationPosition = this.chart.findPrevPoint(this.position);
-            if (newPosition) {
-                this.position = newPosition;
-                this.chart.handleSelection(this.position);
-            } else {
-                this.reset();
-            }
-        }
-
-        public toEnd(): void {
-            this.savedPosition = null;
-            this.chart.stopAnimation();
-            this.chart.onClearSelection();
-            this.chart.clearChart();
-            this.setDefaultValues();
-            this.disableControls();
-            this.chart.renderChart();
-        }
-
-        public stop(): void {
-            if (!this.isAnimated) {
-                return;
-            }
-
-            this.drawCounterValue();
-            this.savedPosition = this.position;
-            this.chart.stopAnimation();
-            this.animatorState = PulseAnimatorStates.Stopped;
-
-            this.disableControls();
-        }
-
-        private positionValue: PulseChartAnimationPosition;
-
-        public set position(position: PulseChartAnimationPosition) {
-            this.positionValue = position;
-        }
-
-        public get position(): PulseChartAnimationPosition {
-            return this.positionValue;
-        }
-
-        public get flooredPosition(): PulseChartAnimationPosition {
-            return this.position && { series: this.position.series, index: Math.floor(this.position.index) };
-        }
-
-        private isPositionWasSaved: boolean = false;
-        private autoPlayPosition: PulseChartAnimationPosition;
-        public set savedPosition(position: PulseChartAnimationPosition) {
-            if (!this.chart.isAutoPlay) {
-                position = null;
-            }
-
-            if (this.chart.data && this.chart.data.settings && this.chart.data.settings.playback) {
-                //console.log("saved " + JSON.stringify(position));
-                this.isPositionWasSaved = true;
-                if (this.chart.data && this.chart.data.settings && this.chart.data.settings.playback) {
-                    this.chart.data.settings.playback.position = position;
-                }
-
-                this.chart.host.persistProperties(<VisualObjectInstancesToPersist>{
-                        merge: [{
-                        objectName: "playback",
-                        selector: null,
-                        properties: { position: position && JSON.stringify(position) || "" }
-                    }]});
-                this.chart.host.onSelect({ visualObjects: [] });
-            }
-        }
-
-        public get savedPosition(): PulseChartAnimationPosition {
-            return this.chart.data
-                && this.chart.data.settings
-                && this.chart.data.settings.playback
-                && this.chart.data.settings.playback.position;
-        }
-
-        public clear(): void {
-            if (this.isAnimated) {
-                this.chart.stopAnimation();
-            }
-
-            this.setDefaultValues();
-            this.container.style('display', 'none');
-        }
-
-        public clearTimeouts(): void {
-            clearTimeout(this.chart.handleSelectionTimeout);
-        }
-    }
-
-    export class PulseChartWebBehavior implements IPulseChartInteractiveBehavior {
-        private selection: D3.Selection;
-        private selectionHandler: ISelectionHandler;
-        private interactivityService: IInteractivityService;
-        private hasHighlights: boolean;
-        private onSelectCallback;
-
-        public bindEvents(options: PulseChartBehaviorOptions, selectionHandler: ISelectionHandler): void {
-            var clearCatcher = options.clearCatcher;
-            var selection = this.selection = options.selection;
-            this.onSelectCallback = options.onSelectCallback;
-            this.selectionHandler = selectionHandler;
-            this.interactivityService = options.interactivityService;
-            this.hasHighlights = options.hasHighlights;
-
-            selection.call(pulseChartUtils.AddOnTouchClick, function (d: SelectableDataPoint) {
-                selectionHandler.handleSelection(d, d3.event.ctrlKey);
-            });
-
-            clearCatcher.call(pulseChartUtils.AddOnTouchClick, function () {
-                selectionHandler.handleClearSelection();
-            });
-        }
-
-        public setSelection(d: SelectableDataPoint): void {
-            this.selectionHandler.handleSelection(d, false);
-        }
-
-        public renderSelection(hasSelection: boolean): void {
-            if (this.onSelectCallback) {
-                this.onSelectCallback();
-            }
-        }
-    }
-
-    export module pulseChartUtils {
-        export var DimmedOpacity: number = 0.5;
-        export var DefaultOpacity: number = 1.0;
-
-        export function getFillOpacity(selected: boolean, highlight: boolean, hasSelection: boolean, hasPartialHighlights: boolean): number {
-            if ((hasPartialHighlights && !highlight) || (hasSelection && !selected)) {
-                return DimmedOpacity;
-            }
-            return DefaultOpacity;
-        }
-
-        export function AddOnTouchClick(selection: D3.Selection, callback: (data: any, index: number) => any): D3.Selection {
-            var preventDefaultCallback = (data: any, index: number): void => {
-                d3.event.preventDefault();
-                d3.event.stopPropagation();
-                callback(data, index);
-            };
-            return selection
-                .on("click", preventDefaultCallback)
-                .on("touchstart", preventDefaultCallback);
-        }
-    }
-
-    export module PulseChartDataLabelUtils {
-        export function getDefaultPulseChartLabelSettings(): PulseChartChartDataLabelsSettings {
-            return {
-                show: false,
-                position: 1,/*PointLabelPosition.Above,*/
-                displayUnits: 0,
-                precision: defaultLabelPrecision,
-                labelColor: defaultLabelColor,
-                fontSize: DefaultFontSizeInPt,
-                labelDensity: defaultLabelDensity,
-            };
-        }
-    }
-
-    export module PulseChartAxisPropertiesHelper {
-        export function getCategoryAxisProperties(dataViewMetadata: DataViewMetadata, axisTitleOnByDefault?: boolean): DataViewObject {
-            var toReturn: DataViewObject = {};
-
-            if (!dataViewMetadata) {
-                return toReturn;
-            }
-
-            if (dataViewMetadata.objects) {
-                var categoryAxisObject: DataViewObject = dataViewMetadata.objects['categoryAxis'];
-
-                if (categoryAxisObject) {
-                    toReturn = {
-                        show: categoryAxisObject['show'],
-                        axisType: categoryAxisObject['axisType'],
-                        axisScale: categoryAxisObject['axisScale'],
-                        start: categoryAxisObject['start'],
-                        end: categoryAxisObject['end'],
-                        showAxisTitle: categoryAxisObject['showAxisTitle'] == null ? axisTitleOnByDefault : categoryAxisObject['showAxisTitle'],
-                        axisStyle: categoryAxisObject['axisStyle'],
-                        labelColor: categoryAxisObject['labelColor'],
-                        labelDisplayUnits: categoryAxisObject['labelDisplayUnits'],
-                        labelPrecision: categoryAxisObject['labelPrecision'],
-                        duration: categoryAxisObject['duration'],
-                    };
-                }
-            }
-
-            return toReturn;
-        }
-
-        export function getValueAxisProperties(dataViewMetadata: DataViewMetadata, axisTitleOnByDefault?: boolean): DataViewObject {
-            var toReturn: DataViewObject = {};
-
-            if (!dataViewMetadata) {
-                return toReturn;
-            }
-
-            if (dataViewMetadata.objects) {
-                var valueAxisObject: DataViewObject = dataViewMetadata.objects['valueAxis'];
-                if (valueAxisObject) {
-                    toReturn = {
-                        show: valueAxisObject['show'],
-                        position: valueAxisObject['position'],
-                        axisScale: valueAxisObject['axisScale'],
-                        start: valueAxisObject['start'],
-                        end: valueAxisObject['end'],
-                        showAxisTitle: valueAxisObject['showAxisTitle'] == null ? axisTitleOnByDefault : valueAxisObject['showAxisTitle'],
-                        axisStyle: valueAxisObject['axisStyle'],
-                        labelColor: valueAxisObject['labelColor'],
-                        labelDisplayUnits: valueAxisObject['labelDisplayUnits'],
-                        labelPrecision: valueAxisObject['labelPrecision'],
-                        secShow: valueAxisObject['secShow'],
-                        secPosition: valueAxisObject['secPosition'],
-                        secAxisScale: valueAxisObject['secAxisScale'],
-                        secStart: valueAxisObject['secStart'],
-                        secEnd: valueAxisObject['secEnd'],
-                        secShowAxisTitle: valueAxisObject['secShowAxisTitle'],
-                        secAxisStyle: valueAxisObject['secAxisStyle'],
-                        secLabelColor: valueAxisObject['secLabelColor'],
-                        secLabelDisplayUnits: valueAxisObject['secLabelDisplayUnits'],
-                        secLabelPrecision: valueAxisObject['secLabelPrecision'],
-                    };
-                }
-            }
-
-            return toReturn;
-        }
     }
 }

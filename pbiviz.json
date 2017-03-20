@@ -6,7 +6,7 @@
     "visualClassName": "PulseChart",
     "version": "2.0.1",
     "description": "Pulse chart shows a line chart annotated with key events.  Each events can be selected to filter and cross highlight other visuals to reveal insights or help tell a story.  Pulse chart supports animation so you can load your report and watch it play through key events, without user interaction. This visualization is perfect for story telling with data, especially the Power BI publish to web feature. Use it anywhere you need to draw attention to events that shaped a trend.",
-		"supportUrl": "http://community.powerbi.com",
+    "supportUrl": "http://community.powerbi.com",
     "gitHubUrl": "https://github.com/Microsoft/powerbi-visuals-pulsechart"
   },
   "apiVersion": "1.4.0",
@@ -21,17 +21,18 @@
     "node_modules/jquery/dist/jquery.min.js",
     "node_modules/lodash/lodash.min.js",
     "node_modules/d3/d3.js",
-    "node_modules/powerbi-visuals-utils-typeutils/lib/index.js",
     "node_modules/globalize/lib/globalize.js",
     "node_modules/globalize/lib/cultures/globalize.culture.en-US.js",
+    "node_modules/powerbi-visuals-utils-typeutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-svgutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-formattingutils/lib/index.js",
+    "node_modules/powerbi-visuals-utils-colorutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-interactivityutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-chartutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-dataviewutils/lib/index.js",
     "node_modules/powerbi-visuals-utils-tooltiputils/lib/index.js"
   ],
-  "style": "style/lineDotChart.less",
+  "style": "style/pulseChart.less",
   "capabilities": "capabilities.json"
 }

@@ -35,6 +35,7 @@
 
 // Power BI Extensibility
 /// <reference path="../node_modules/powerbi-visuals-utils-dataviewutils/lib/index.d.ts" />
+/// <reference path="../node_modules/powerbi-visuals-utils-colorutils/lib/index.d.ts" />
 /// <reference path="../node_modules/powerbi-visuals-utils-typeutils/lib/index.d.ts" />
 /// <reference path="../node_modules/powerbi-visuals-utils-svgutils/lib/index.d.ts" />
 /// <reference path="../node_modules/powerbi-visuals-utils-interactivityutils/lib/index.d.ts" />
