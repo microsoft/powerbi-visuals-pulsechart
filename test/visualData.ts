@@ -2,7 +2,7 @@
  *  Power BI Visualizations
  *
  *  Copyright (c) Microsoft Corporation
- *  All rights reserved. 
+ *  All rights reserved.
  *  MIT License
  *
  *  Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -11,14 +11,14 @@
  *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  *  copies of the Software, and to permit persons to whom the Software is
  *  furnished to do so, subject to the following conditions:
- *   
- *  The above copyright notice and this permission notice shall be included in 
+ *
+ *  The above copyright notice and this permission notice shall be included in
  *  all copies or substantial portions of the Software.
- *   
- *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
- *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
- *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
- *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+ *
+ *  THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
@@ -27,62 +27,74 @@
 /// <reference path="_references.ts" />
 
 module powerbi.extensibility.visual.test {
+
     // powerbi.extensibility.utils.type
     import ValueType = powerbi.extensibility.utils.type.ValueType;
 
     // powerbi.extensibility.utils.test
-    import getRandomNumber = powerbi.extensibility.utils.test.helpers.getRandomNumber;
-    import CustomizeColumnFn = powerbi.extensibility.utils.test.dataViewBuilder.CustomizeColumnFn;
     import TestDataViewBuilder = powerbi.extensibility.utils.test.dataViewBuilder.TestDataViewBuilder;
     import helpers = powerbi.extensibility.utils.test.helpers;
+    import testHelpers = powerbi.extensibility.visual.test.helpers;
 
-    export function getRandomUniqueNumbers(count: number, min: number = 0, max: number = 1): number[] {
-        let result: number[] = [];
-        for (let i = 0; i < count; i++) {
-            result.push(getRandomNumber(min, max, result));
-        }
-
-        return result;
-    }
-
-    export function getRandomUniqueDates(count: number, start: Date, end: Date): Date[] {
-        return getRandomUniqueNumbers(count, start.getTime(), end.getTime()).map(x => new Date(x));
-    }
-
-    export function getRandomUniqueSortedDates(count: number, start: Date, end: Date): Date[] {
-        return getRandomUniqueDates(count, start, end).sort((a, b) => a.getTime() - b.getTime());
-    }
-
-    export class LineDotChartData extends TestDataViewBuilder {
-        public static ColumnDate: string = "Date";
+    export class PulseChartData extends TestDataViewBuilder {
+        public static ColumnTimestamp: string = "Timestamp";
         public static ColumnValue: string = "Value";
-
-        public valuesDate: Date[] = getRandomUniqueSortedDates(
-            50,
-            new Date(2014, 9, 12, 3, 9, 50),
-            new Date(2016, 3, 1, 2, 43, 3));
-        public valuesValue = helpers.getRandomNumbers(this.valuesDate.length, 0, 5361);
-
+        public static ColumnEventTitle: string = "Event Title";
+        public static ColumnEventDescription: string = "Event Description";
+        public valuesTimestamp =  testHelpers.getRandomUniqueSortedDates(100, new Date(2014, 0, 1), new Date(2015, 5, 10));
+        public valuesValue: number[] = helpers.getRandomNumbers(this.valuesTimestamp.length, 100, 1000);
+        public valuesEvents: any[] = this.generateEvents(this.valuesValue.length, 5);
         public getDataView(columnNames?: string[]): powerbi.DataView {
             return this.createCategoricalDataViewBuilder([
                 {
                     source: {
-                        displayName: LineDotChartData.ColumnDate,
+                        displayName: PulseChartData.ColumnTimestamp,
+                        format: "G",
                         type: ValueType.fromDescriptor({ dateTime: true }),
-                        roles: { Date: true }
+                        roles: { Timestamp: true }
                     },
-                    values: this.valuesDate
+                    values: this.valuesTimestamp
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventTitle,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventTitle: true }
+                    },
+                    values: this.valuesEvents.map(x => x && x.title)
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventDescription,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventDescription: true }
+                    },
+                    values: this.valuesEvents.map(x => x && x.description)
                 }
             ], [
                     {
                         source: {
-                            displayName: "Values",
+                            displayName: PulseChartData.ColumnValue,
                             type: ValueType.fromDescriptor({ integer: true }),
-                            roles: { Values: true }
+                            roles: { Value: true }
                         },
                         values: this.valuesValue
                     }
                 ], columnNames).build();
+        }
+        private generateEvents(valuesCount: number, eventCount: number): any[] {
+            let startIndex = valuesCount / eventCount;
+            let eventIndexesSpace = (valuesCount - startIndex) / eventCount;
+            let eventIndexes = d3.range(eventCount).map(x => startIndex + x * eventIndexesSpace);
+            let events = d3.range(valuesCount).map(x =>
+                eventIndexes.some(index => index === x)
+                    ? {
+                        title: testHelpers.getRandomWord(6, 12),
+                        description: testHelpers.getRandomText(20, 4, 12)
+                    }
+                    : null);
+
+            return events;
         }
     }
 }

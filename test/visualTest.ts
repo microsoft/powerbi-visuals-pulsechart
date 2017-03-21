@@ -27,182 +27,183 @@
 /// <reference path="_references.ts"/>
 
 namespace powerbi.extensibility.visual.test {
-    import LineDotChartData = powerbi.extensibility.visual.test.LineDotChartData;
-    import LineDotChartBuilder = powerbi.extensibility.visual.test.LineDotChartBuilder;
+    import PulseChartData = powerbi.extensibility.visual.test.PulseChartData;
+    import PulseChartBuilder = powerbi.extensibility.visual.test.PulseChartBuilder;
+
+    // powerbi.extensibility.utils.test
     import helpers = powerbi.extensibility.utils.test.helpers;
-    import colorHelper = powerbi.extensibility.utils.test.helpers.color;
-    import RgbColor = powerbi.extensibility.utils.test.helpers.color.RgbColor;
-    import MockISelectionId = powerbi.extensibility.utils.test.mocks.MockISelectionId;
-    import createSelectionId = powerbi.extensibility.utils.test.mocks.createSelectionId;
-    import fromPointToPixel = powerbi.extensibility.utils.type.PixelConverter.fromPointToPixel;
-    import getRandomHexColor = powerbitests.customVisuals.getRandomHexColor;
 
     // powerbi.extensibility.utils.formatting
-    import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
+    const DefaultTimeout: number = 300;
 
-    // LineDotChart1460463831201
-    import ColumnNames = powerbi.extensibility.visual.LineDotChart1460463831201.ColumnNames;
-    import LineDotPoint = powerbi.extensibility.visual.LineDotChart1460463831201.LineDotPoint;
-    import LineDotChartViewModel = powerbi.extensibility.visual.LineDotChart1460463831201.LineDotChartViewModel;
-
-    describe("LineDotChartTests", () => {
-        let visualBuilder: LineDotChartBuilder,
-            defaultDataViewBuilder: LineDotChartData,
-            dataView: DataView;
+    describe("PulseChartTests", () => {
+        let visualBuilder: PulseChartBuilder,
+            defaultDataViewBuilder: PulseChartData,
+            dataView: DataView,
+            setSettings;
 
         beforeEach(() => {
-            visualBuilder = new LineDotChartBuilder(1000, 500);
-            defaultDataViewBuilder = new LineDotChartData();
-
+            visualBuilder = new PulseChartBuilder(1000, 500);
+            defaultDataViewBuilder = new PulseChartData();
             dataView = defaultDataViewBuilder.getDataView();
         });
 
         describe("DOM tests", () => {
-            it("main element was created", () => {
-                expect(visualBuilder.mainElement.get(0)).toBeDefined();
-            });
 
+            it("main element was created", () => {
+                () => expect(visualBuilder.mainElement.get(0)).toBeDefined();
+            });
             it("update", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    expect(visualBuilder.mainElement.find(".axis").length).not.toBe(0);
-                    expect(visualBuilder.mainElement.find(".tick").length).not.toBe(0);
-                    expect(visualBuilder.mainElement.find(".lineDotChart__playBtn").get(0)).toBeDefined();
-                    expect(visualBuilder.mainElement.find(".legends").get(0)).toBeDefined();
-
+                    expect(visualBuilder.mainElement.children("g.y.axis").children("g.tick").get(0)).toBeDefined();
+                    expect(visualBuilder.animationDot.get(0)).toBeDefined();
+                    expect(visualBuilder.lineContainer.children("path.line").get(0)).toBeDefined();
+                    expect(visualBuilder.tooltipContainer.get(0)).toBeDefined();
                     done();
-                });
-            });
-        });
-
-        describe("Resize test", () => {
-            it("Counter", (done) => {
-                visualBuilder.viewport.width = 300;
-
-                dataView.metadata.objects = {
-                    misc: {
-                        isAnimated: true,
-                        duration: 20,
-                        isStopped: false
-                    },
-                    counteroptions: {
-                        counterTitle: "Counter: "
-                    }
-                };
-
-                visualBuilder.updateFlushAllD3Transitions(dataView);
-
-                helpers.renderTimeout(() => {
-                    expect(visualBuilder.counterTitle).toBeInDOM();
-                    done();
-                });
-            });
-        });
-
-        describe("Format settings test", () => {
-            beforeEach(() => {
-                dataView.metadata.objects = {
-                    misc: {
-                        isAnimated: false
-                    }
-                };
+                }, DefaultTimeout);
             });
 
-            describe("Line", () => {
-                it("color", () => {
-                    let color: string = getRandomHexColor();
-                    (dataView.metadata.objects as any).lineoptions = { fill: colorHelper.getSolidColorStructuralObject(color) };
-                    visualBuilder.updateFlushAllD3Transitions(dataView);
-                    colorHelper.assertColorsMatch(visualBuilder.linePath.css('stroke'), color);
-                });
-            });
-
-            describe("Dot", () => {
-                it("color", () => {
-                    let color: string = getRandomHexColor();
-
+            describe("popup", () => {
+                beforeEach(() => {
                     dataView.metadata.objects = {
-                        dotoptions: {
-                            color: colorHelper.getSolidColorStructuralObject(color)
+                        popup: {
+                            show: true
                         }
                     };
+                });
+
+                it("click", (done) => {
                     visualBuilder.updateFlushAllD3Transitions(dataView);
-                    visualBuilder.dots.toArray().map($).forEach(e =>
-                        colorHelper.assertColorsMatch(e.attr('fill'), color));
+                    expect(visualBuilder.tooltipContainer.first().get(0)).toBeDefined();
+                    const clickPoint: JQuery = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
+                    clickPoint.d3Click(5, 5);
+                    setTimeout(() => {
+                        expect(visualBuilder.tooltipContainerTooltip.first().get(0)).toBeDefined();
+                        done();
+                    }, DefaultTimeout);
                 });
             });
 
-            describe("Validate params", () => {
-                it("Dots", () => {
+            describe("xAxis", () => {
+                it("duplicate values", (done) => {
+                    visualBuilder.viewport.width = 2000;
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        let tickTextValues = visualBuilder.xAxisNodeTick.children("text").toArray().map($).map(x => x.text());
+                        for (let i = 0; i < tickTextValues.length - 1; i++) {
+                            expect(tickTextValues[i]).not.toEqual(tickTextValues[i + 1]);
+                        }
 
+                        done();
+                    }, DefaultTimeout);
+                });
+            });
+
+            describe("playback", () => {
+                it("autoplay position set", (done) => {
                     dataView.metadata.objects = {
-                        dotoptions: {
-                            dotSizeMin: -6,
-                            dotSizeMax: 678
+                        playback: {
+                            autoplay: true,
+                            position: {
+                                series: 0,
+                                index: dataView.categorical.categories[0].values.length / 2
+                            }
                         }
                     };
-                    visualBuilder.updateFlushAllD3Transitions(dataView);
-                    visualBuilder.dots.toArray().map($).forEach(e => {
-                        expect(e.attr("r")).toBeGreaterThan(-1);
-                        expect(e.attr("r")).toBeLessThan(101);
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        let pathElem = visualBuilder.lineContainer.children("path.line");
+                        let chartWidth = visualBuilder.chart[0].getBoundingClientRect().width;
+                        let pathWidth = pathElem[0].getBoundingClientRect().width;
+
+                        expect(pathWidth).toBeGreaterThan(chartWidth / 5);
+
+                        done();
+                    }, 2000);
+                });
+
+                it("popup is hidden when pressing play during pause", (done) => {
+                    let eventIndex = dataView.categorical.categories[1].values
+                        .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[0].index;
+                    dataView.metadata.objects = {
+                        playback: {
+                            autoplay: true,
+                            position: {
+                                series: 0,
+                                index: eventIndex - 1
+                            }
+                        }
+                    };
+
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        visualBuilder.animationNext.d3Click(5, 5);
+                        helpers.renderTimeout(() => {
+                            let popup = visualBuilder.tooltipContainerTooltip.first();
+                            expect(popup.get(0)).toBeDefined();
+                            visualBuilder.animationPlay.d3Click(5, 5);
+                            helpers.renderTimeout(() => {
+                                let popup = visualBuilder.tooltipContainerTooltip.first();
+                                expect(popup.get(0)).not.toBeDefined();
+                                done();
+                            }, DefaultTimeout);
+                        }, DefaultTimeout);
+                    }, DefaultTimeout);
+                });
+
+                it("popup is vissible when pressing next", (done) => {
+                    let eventIndex = dataView.categorical.categories[1].values
+                        .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[1].index;
+                    dataView.metadata.objects = {
+                        playback: {
+                            autoplay: true,
+                            position: {
+                                series: 0,
+                                index: eventIndex
+                            }
+                        }
+                    };
+
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        visualBuilder.animationNext.d3Click(5, 5);
+                        helpers.renderTimeout(() => {
+                            let popup = visualBuilder.tooltipContainerTooltip.first();
+                            expect(popup.get(0)).toBeDefined();
+                            done();
+                        }, DefaultTimeout);
+                    }, DefaultTimeout);
+                });
+
+                it("popup is visible when pressing prev", (done) => {
+                    let eventIndex = dataView.categorical.categories[1].values
+                        .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[2].index;
+                    dataView.metadata.objects = {
+                        playback: {
+                            autoplay: true,
+                            position: {
+                                series: 0,
+                                index: eventIndex
+                            }
+                        }
+                    };
+
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        visualBuilder.updateRenderTimeout(dataView, () => {
+                            visualBuilder.animationNext.d3Click(5, 5);
+                            helpers.renderTimeout(() => {
+                                helpers.renderTimeout(() => {
+                                    visualBuilder.animationNext.d3Click(5, 5);
+                                    helpers.renderTimeout(() => {
+                                        visualBuilder.animationPrev.d3Click(5, 5);
+                                        helpers.renderTimeout(() => {
+                                            let popup = visualBuilder.tooltipContainerTooltip.first();
+                                            expect(popup.get(0)).toBeDefined();
+                                            done();
+                                        }, DefaultTimeout);
+                                    }, DefaultTimeout);
+                                }, DefaultTimeout);
+                            }, DefaultTimeout);
+                        });
+
                     });
                 });
-            });
-
-        });
-
-        describe("getTooltipDataItems", () => {
-            const columnNames: ColumnNames = {
-                category: "Power BI - category",
-                values: "Power BI - values"
-            };
-
-            const defaultFormattedValue: string = " - Power BI - formatted value";
-
-            beforeEach(() => {
-                const valueFormatter: IValueFormatter = {
-                    format: (value: any) => `${value}${defaultFormattedValue}`
-                } as IValueFormatter;
-
-                const data: LineDotChartViewModel = {
-                    columnNames: Object.assign(columnNames),
-                    dateColumnFormatter: valueFormatter,
-                    dataValueFormatter: valueFormatter,
-                } as LineDotChartViewModel;
-
-                visualBuilder.visualInstance.data = data;
-            });
-
-            it("should return an empty array if the given data point is undefined", () => {
-                const actualResult: VisualTooltipDataItem[]
-                    = visualBuilder.visualInstance.getTooltipDataItems(undefined);
-
-                expect(actualResult.length).toBe(0);
-            });
-
-            it("the date should be formatted", () => {
-                const dataPoint: LineDotPoint = {
-                    dateValue: {
-                        date: new Date(2008, 1, 1)
-                    }
-                } as LineDotPoint;
-
-                const actualResult: VisualTooltipDataItem[]
-                    = visualBuilder.visualInstance.getTooltipDataItems(dataPoint);
-
-                expect(actualResult[0].value).toMatch(defaultFormattedValue);
-            });
-
-            it("the value should be formatted", () => {
-                const dataPoint: LineDotPoint = {
-                    dateValue: {
-                        value: 2017
-                    }
-                } as LineDotPoint;
-
-                const actualResult: VisualTooltipDataItem[]
-                    = visualBuilder.visualInstance.getTooltipDataItems(dataPoint);
-
-                expect(actualResult[1].value).toMatch(defaultFormattedValue);
             });
         });
     });

@@ -32,76 +32,60 @@ module powerbi.extensibility.visual {
     // powerbi
     import DataView = powerbi.DataView;
     import IViewport = powerbi.IViewport;
-    import IVisualHost = powerbi.extensibility.visual.IVisualHost;
-    import converterHelper = powerbi.extensibility.utils.dataview.converterHelper;
 
-    import DataViewObject = powerbi.extensibility.utils.dataview.DataViewObject;
-    import DataViewObjects = powerbi.extensibility.utils.dataview.DataViewObjects;
-    import DataViewValueColumn = powerbi.DataViewValueColumn;
-    import VisualObjectInstance = powerbi.VisualObjectInstance;
-    import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
-    import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
-    import DataViewObjectPropertyIdentifier = powerbi.DataViewObjectPropertyIdentifier;
-    import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
-
-    // powerbi.extensibility
-    import IColorPalette = powerbi.extensibility.IColorPalette;
-    import VisualTooltipDataItem = powerbi.extensibility.VisualTooltipDataItem;
-
-    // powerbi.extensibility.visual
-    import IVisual = powerbi.extensibility.visual.IVisual;
-    import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
-    import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
+    // powerbi.extensibility.utils.dataview
+    import DataViewObject = utils.dataview.DataViewObject;
+    import DataViewObjects = utils.dataview.DataViewObjects;
 
     // powerbi.extensibility.utils.svg
-    import IRect = powerbi.extensibility.utils.svg.IRect;
-    import SVGUtil = powerbi.extensibility.utils.svg;
-    import IMargin = powerbi.extensibility.utils.svg.IMargin;
-    import translate = powerbi.extensibility.utils.svg.translate;
-    import ClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.ClassAndSelector;
-    import createClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.createClassAndSelector;
+    import IRect = utils.svg.IRect;
+    import SVGUtil = utils.svg;
+    import IMargin = utils.svg.IMargin;
+    import translate = utils.svg.translate;
+    import ClassAndSelector = utils.svg.CssConstants.ClassAndSelector;
+    import createClassAndSelector = utils.svg.CssConstants.createClassAndSelector;
 
     // powerbi.extensibility.utils.formatting
-    import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
-    import ValueFormatterOptions = powerbi.extensibility.utils.formatting.ValueFormatterOptions;
-    import TextProperties = powerbi.extensibility.utils.formatting.TextProperties;
-    import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
-    import textMeasurementService = powerbi.extensibility.utils.formatting.textMeasurementService;
+    import valueFormatter = utils.formatting.valueFormatter;
+    import ValueFormatterOptions = utils.formatting.ValueFormatterOptions;
+    import TextProperties = utils.formatting.TextProperties;
+    import IValueFormatter = utils.formatting.IValueFormatter;
+    import textMeasurementService = utils.formatting.textMeasurementService;
 
     // powerbi.extensibility.utils.interactivity
-    import appendClearCatcher = powerbi.extensibility.utils.interactivity.appendClearCatcher;
-    import SelectableDataPoint = powerbi.extensibility.utils.interactivity.SelectableDataPoint;
-    import IInteractiveBehavior = powerbi.extensibility.utils.interactivity.IInteractiveBehavior;
-    import IInteractivityService = powerbi.extensibility.utils.interactivity.IInteractivityService;
-    import createInteractivityService = powerbi.extensibility.utils.interactivity.createInteractivityService;
+    import appendClearCatcher = utils.interactivity.appendClearCatcher;
+    import SelectableDataPoint = utils.interactivity.SelectableDataPoint;
+    import IInteractiveBehavior = utils.interactivity.IInteractiveBehavior;
+    import IInteractivityService = utils.interactivity.IInteractivityService;
+    import createInteractivityService = utils.interactivity.createInteractivityService;
 
     // powerbi.extensibility.utils.tooltip
-    import TooltipEventArgs = powerbi.extensibility.utils.tooltip.TooltipEventArgs;
-    import ITooltipServiceWrapper = powerbi.extensibility.utils.tooltip.ITooltipServiceWrapper;
-    import TooltipEnabledDataPoint = powerbi.extensibility.utils.tooltip.TooltipEnabledDataPoint;
-    import createTooltipServiceWrapper = powerbi.extensibility.utils.tooltip.createTooltipServiceWrapper;
+    import TooltipEventArgs = utils.tooltip.TooltipEventArgs;
+    import ITooltipServiceWrapper = utils.tooltip.ITooltipServiceWrapper;
+    import TooltipEnabledDataPoint = utils.tooltip.TooltipEnabledDataPoint;
+    import createTooltipServiceWrapper = utils.tooltip.createTooltipServiceWrapper;
 
     // powerbi.extensibility.utils.color
-    import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
+    import ColorHelper = utils.color.ColorHelper;
 
     // powerbi.extensibility.utils.chart
-    import LegendModule = powerbi.extensibility.utils.chart.legend;
-    import ILegend = powerbi.extensibility.utils.chart.legend.ILegend;
-    import LegendData = powerbi.extensibility.utils.chart.legend.LegendData;
-    import LegendDataModule = powerbi.extensibility.utils.chart.legend.data;
-    import LegendIcon = powerbi.extensibility.utils.chart.legend.LegendIcon;
-    import legendProps = powerbi.extensibility.utils.chart.legend.legendProps;
-    import legendPosition = powerbi.extensibility.utils.chart.legend.position;
-    import createLegend = powerbi.extensibility.utils.chart.legend.createLegend;
-    import LegendPosition = powerbi.extensibility.utils.chart.legend.LegendPosition;
-    import ILabelLayout = powerbi.extensibility.utils.chart.dataLabel.ILabelLayout;
-    import DataLabelManager = powerbi.extensibility.utils.chart.dataLabel.DataLabelManager;
-    import LabelEnabledDataPoint = powerbi.extensibility.utils.chart.dataLabel.LabelEnabledDataPoint;
+    import LegendModule = utils.chart.legend;
+    import ILegend = utils.chart.legend.ILegend;
+    import LegendData = utils.chart.legend.LegendData;
+    import LegendDataModule = utils.chart.legend.data;
+    import LegendIcon = utils.chart.legend.LegendIcon;
+    import legendProps = utils.chart.legend.legendProps;
+    import legendPosition = utils.chart.legend.position;
+    import createLegend = utils.chart.legend.createLegend;
+    import LegendPosition = utils.chart.legend.LegendPosition;
+    import ILabelLayout = utils.chart.dataLabel.ILabelLayout;
+    import DataLabelManager = utils.chart.dataLabel.DataLabelManager;
+    import LabelEnabledDataPoint = utils.chart.dataLabel.LabelEnabledDataPoint;
 
-    // powerbi.extensibility.utils.chart
-    import AxisHelper = powerbi.extensibility.utils.chart.axis;
-    import axisScale = powerbi.extensibility.utils.chart.axis.scale;
-    import IAxisProperties = powerbi.extensibility.utils.chart.axis.IAxisProperties;
+    // utils.chart
+    import AxisHelper = utils.chart.axis;
+    import axisScale = utils.chart.axis.scale;
+    import IAxisProperties = utils.chart.axis.IAxisProperties;
 
     // powerbi.visuals
     import ISelectionId = powerbi.visuals.ISelectionId;
@@ -113,16 +97,6 @@ module powerbi.extensibility.visual {
     export interface TimeScale extends d3.time.Scale<any, any> { }
 
     type GenericScale = TimeScale | LinearScale;
-    export interface Datum { };
-    export interface Primitive { };
-
-    export type StyleProperties = { [key: string]: Primitive | ((datum: Datum, index: number, outerIndex: number) => Primitive) }
-
-    export interface PulseBehaviorOptions {
-        layerOptions?: any[];
-        clearCatcher: Selection<any>;
-    }
-
     export interface TooltipSettings {
         dataPointColor: string;
         marginTop: number;
@@ -355,24 +329,11 @@ module powerbi.extensibility.visual {
         runnerCounterHeight: number;
     }
 
-    export interface PulseChartProperty {
-        [propertyName: string]: DataViewObjectPropertyIdentifier;
-    }
-
-    export interface PulseChartProperties {
-        [objectName: string]: PulseChartProperty;
-    }
-
     export interface PulseChartXAxisProperties {
         values: (Date | number)[];
         scale: TimeScale;
         axis: Axis;
         rotate: boolean;
-    }
-
-    export interface PulseChartPoint {
-        x: number;
-        value: Date | number;
     }
 
     export interface PulseChartDataRoles<T> {
@@ -559,7 +520,7 @@ module powerbi.extensibility.visual {
                 fontSize: 13,
                 fontColor: "#777777"
             },
-            formatStringProperty: null,//pulseChartProps["general"]["formatString"]
+            formatStringProperty: null, // pulseChartProps["general"]["formatString"]
         };
 
         private static DefaultTooltipSettings: TooltipSettings = {
@@ -573,7 +534,7 @@ module powerbi.extensibility.visual {
         private static MinGapWidth = {
             'Date only': 60 * 1000 * 24,
             'Time only': 60 * 1000
-        }
+        };
 
         private static DefaultAnimationDuration: number = 250;
 
@@ -854,7 +815,6 @@ module powerbi.extensibility.visual {
             }
             return { xAxisLabel: xAxisLabel, yAxisLabel: yAxisLabel };
         }
-
         private static getDataPointsFromSeries(series: PulseChartSeries[]): PulseChartDataPoint[] {
             let dataPointsArray: PulseChartDataPoint[][] = series.map((d: PulseChartSeries): PulseChartDataPoint[] => {
                 return d.data.filter((d: PulseChartDataPoint) => !!d.popupInfo);
@@ -1078,7 +1038,6 @@ module powerbi.extensibility.visual {
         constructor(options: VisualConstructorOptions) {
             this.init(options);
         }
-
 
         public init(options: VisualConstructorOptions): void {
             this.margin = PulseChart.DefaultMargin;
@@ -1339,7 +1298,6 @@ module powerbi.extensibility.visual {
         }
 
         private renderXAxis(data: PulseChartData, duration: number): void {
-            debugger;
             let axisNodeSelection: Selection<any>,
                 axisNodeUpdateSelection: UpdateSelection<any>,
                 // ticksSelection: Selection<any>,
@@ -1418,7 +1376,8 @@ module powerbi.extensibility.visual {
             axisNodeUpdateSelection.selectAll(".domain")
                 .style('stroke', color);
 
-            axisNodeUpdateSelection.selectAll(".domain").each((element: Element) => {
+            axisNodeUpdateSelection.selectAll(".domain")
+            .each((element: Element) => {
                 $(element).insertBefore($(element).parent().children().first());
             });
 
@@ -2001,7 +1960,7 @@ module powerbi.extensibility.visual {
 
             let tooltipShiftY = (y: number, groupIndex: number): number => {
                 return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
-            }
+            };
 
             let tooltipRoot: UpdateSelection<any> = rootSelection.select(nodeParent.selector).selectAll(node.selector)
                 .data(d => {
@@ -2186,7 +2145,6 @@ module powerbi.extensibility.visual {
                 //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
                 //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
                 .attr("y", function (d: PulseChartDataPoint) {
-                    debugger;
                     let descriptionDimenstions: PulseChartElementDimensions = getDescriptionDimenstions(d);
                     let el: SVGTextElement = <any>d3.select(this)[0][0];
                     textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
@@ -2563,7 +2521,6 @@ module powerbi.extensibility.visual {
                 fontColor: fontColor
             };
         }
-
         private clearAll(hide: boolean): void {
             this.gaps.selectAll(PulseChart.Gap.selector).remove();
 
@@ -2578,14 +2535,12 @@ module powerbi.extensibility.visual {
 
             this.clearChart();
         }
-
         public clearChart(): void {
             this.onClearSelection();
             this.hideAnimationDot();
             this.chart.selectAll(PulseChart.Line.selector).remove();
             this.chart.selectAll(PulseChart.Dot.selector).remove();
         }
-
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
             switch (options.objectName) {
                 case "general": {

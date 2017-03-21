@@ -412,7 +412,7 @@ module powerbi.extensibility.visual {
                 && this.chart.data.series
                 && this.chart.data.series[this.position.series]
                 && this.chart.data.series[this.position.series].data
-                && this.chart.data.series[this.position.series].data[$.isNumeric(index) ? index : this.flooredPosition.index];
+                && this.chart.data.series[this.position.series].data[_.isNumber(index) ? index : this.flooredPosition.index];
 
             let runnerCounterValue: string = (dataPoint && dataPoint.runnerCounterValue != null)
                 ? dataPoint.runnerCounterValue

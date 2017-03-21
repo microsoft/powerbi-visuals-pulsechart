@@ -26,9 +26,17 @@
 
 /// <reference path="_references.ts"/>
 
-namespace powerbitests.customVisuals {
+module powerbi.extensibility.visual.test.helpers {
+    const EnglishAlphabetLowerCase = "abcdefghijklmnopqrstuwxyz";
+    const EnglishAlphabetUpperCase = "ABCDEFGHIJKLMNOPQRSTUWXYZ";
     import helpers = powerbi.extensibility.utils.test.helpers;
-
+    export function getRandomWords(
+        wordCount: number,
+        minLength: number,
+        maxLength: number,
+        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string[] {
+        return _.range(wordCount).map(x => getRandomWord(minLength, maxLength, alphabet));
+    }
     export function getHexColorFromNumber(value: number) {
         let hex: string = value.toString(16).toUpperCase();
         return "#" + (hex.length === 6 ? hex : _.range(0, 6 - hex.length, 0).join("") + hex);
@@ -39,9 +47,37 @@ namespace powerbitests.customVisuals {
     export function getRandomHexColor(): string {
         return getHexColorFromNumber(getRandomInteger(0, 16777215 + 1));
     }
-
     export function getRandomHexColors(count: number): string[] {
         return _.range(count).map(x => getRandomHexColor());
     }
+    export function getRandomUniqueNumbers(count: number, min: number = 0, max: number = 1): number[] {
+        let result: number[] = [];
+        for (let i = 0; i < count; i++) {
+            result.push(helpers.getRandomNumber(min, max, result));
+        }
 
+        return result;
+    }
+    export function getRandomUniqueDates(count: number, start: Date, end: Date): Date[] {
+        return getRandomUniqueNumbers(count, start.getTime(), end.getTime()).map(x => new Date(x));
+    }
+    export function getRandomUniqueSortedDates(count: number, start: Date, end: Date): Date[] {
+        return getRandomUniqueDates(count, start, end).sort((a, b) => a.getTime() - b.getTime());
+    }
+    export function getRandomWord(
+        minLength: number,
+        maxLength: number,
+        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
+        let alphabetLength = alphabet.length;
+        let length = getRandomInteger(minLength, maxLength);
+        let strings = <string[]>_.range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
+        return strings.join('');
+    }
+    export function getRandomText(
+        wordCount: number,
+        minLength: number,
+        maxLength: number,
+        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
+        return getRandomWords(wordCount, minLength, maxLength, alphabet).join(' ');
+    }
 }
