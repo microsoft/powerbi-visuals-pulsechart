@@ -59,9 +59,9 @@ module powerbi.extensibility.visual {
         private static AnimationNext: ClassAndSelector = createClassAndSelector('animationNext');
         private static ControlsContainer: ClassAndSelector = createClassAndSelector('ControlsContainer');
         private static RunnerCounter: ClassAndSelector = createClassAndSelector('runnerCounter');
-        private animatorState: PulseAnimatorStates;
+        private animatorState: AnimatorStates;
 
-        public static get AnimationMinPosition(): PulseChartAnimationPosition {
+        public static get AnimationMinPosition(): AnimationPosition {
             return { series: 0, index: 0 };
         }
 
@@ -97,21 +97,21 @@ module powerbi.extensibility.visual {
         }
 
         public get isAnimated(): boolean {
-            return (this.animatorState === PulseAnimatorStates.Paused) ||
-                (this.animatorState === PulseAnimatorStates.Play) ||
-                (this.animatorState === PulseAnimatorStates.Stopped);
+            return (this.animatorState === AnimatorStates.Paused) ||
+                (this.animatorState === AnimatorStates.Play) ||
+                (this.animatorState === AnimatorStates.Stopped);
         }
 
         public get isPlaying(): boolean {
-            return this.animatorState === PulseAnimatorStates.Play;
+            return this.animatorState === AnimatorStates.Play;
         }
 
         public get isPaused(): boolean {
-            return this.animatorState === PulseAnimatorStates.Paused;
+            return this.animatorState === AnimatorStates.Paused;
         }
 
         public get isStopped(): boolean {
-            return this.animatorState === PulseAnimatorStates.Stopped;
+            return this.animatorState === AnimatorStates.Stopped;
         }
 
         constructor(chart: PulseChart, svg: Selection<any>) {
@@ -243,7 +243,7 @@ module powerbi.extensibility.visual {
 
         private setDefaultValues(): void {
             this.position = PulseAnimator.AnimationMinPosition;
-            this.animatorState = PulseAnimatorStates.Ready;
+            this.animatorState = AnimatorStates.Ready;
             this.runnerCounterValue = null;
         }
 
@@ -259,18 +259,18 @@ module powerbi.extensibility.visual {
             }
 
             if (this.chart.isAutoPlay && this.isAutoPlayed
-                && this.animatorState === PulseAnimatorStates.Play
+                && this.animatorState === AnimatorStates.Play
                 && !this.isPositionWasSaved
                 && !_.isEqual(this.autoPlayPosition, this.savedPosition)) {
                 this.chart.stopAnimation();
                 this.isAutoPlayed = false;
                 this.isPositionWasSaved = true;
-                this.animatorState = PulseAnimatorStates.Ready;
+                this.animatorState = AnimatorStates.Ready;
             }
 
-            if (this.animatorState === PulseAnimatorStates.Play) {
+            if (this.animatorState === AnimatorStates.Play) {
                 this.play();
-            } else if (this.chart.isAutoPlay && !this.isAutoPlayed && (this.animatorState === PulseAnimatorStates.Ready)) {
+            } else if (this.chart.isAutoPlay && !this.isAutoPlayed && (this.animatorState === AnimatorStates.Ready)) {
                 this.autoPlayPosition = this.savedPosition;
                 this.isAutoPlayed = true;
                 if (this.savedPosition
@@ -354,7 +354,7 @@ module powerbi.extensibility.visual {
             PulseAnimator.setControlVisiblity(this.animationToEnd, true);
 
             switch (this.animatorState) {
-                case PulseAnimatorStates.Play:
+                case AnimatorStates.Play:
                     PulseAnimator.setControlVisiblity(this.animationPlay, false);
 
                     PulseAnimator.setControlVisiblity(this.animationPrev, true);
@@ -363,7 +363,7 @@ module powerbi.extensibility.visual {
                     PulseAnimator.setControlVisiblity(this.animationPause, true);
                     PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
                     break;
-                case PulseAnimatorStates.Paused:
+                case AnimatorStates.Paused:
                     PulseAnimator.setControlVisiblity(this.animationPlay, true);
                     PulseAnimator.setControlVisiblity(this.animationPause, true);
 
@@ -372,7 +372,7 @@ module powerbi.extensibility.visual {
 
                     PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
                     break;
-                case PulseAnimatorStates.Stopped:
+                case AnimatorStates.Stopped:
                     PulseAnimator.setControlVisiblity(this.animationPlay, true);
 
                     PulseAnimator.setControlVisiblity(this.animationPrev, true);
@@ -382,7 +382,7 @@ module powerbi.extensibility.visual {
 
                     PulseAnimator.setControlVisiblity(this.animationPause, false);
                     break;
-                case PulseAnimatorStates.Ready:
+                case AnimatorStates.Ready:
                     PulseAnimator.setControlVisiblity(this.animationPlay, true);
 
                     PulseAnimator.setControlVisiblity(this.animationPrev, false);
@@ -408,7 +408,7 @@ module powerbi.extensibility.visual {
         }
 
         public setRunnerCounterValue(index?: number): void {
-            let dataPoint: PulseChartDataPoint = this.chart.data
+            let dataPoint: DataPoint = this.chart.data
                 && this.chart.data.series
                 && this.chart.data.series[this.position.series]
                 && this.chart.data.series[this.position.series].data
@@ -434,11 +434,11 @@ module powerbi.extensibility.visual {
         }
 
         public play(delay: number = 0, renderDuringPlaying: boolean = false): void {
-            if (this.animatorState === PulseAnimatorStates.Play && !renderDuringPlaying) {
+            if (this.animatorState === AnimatorStates.Play && !renderDuringPlaying) {
                 return;
             }
 
-            if (this.animatorState === PulseAnimatorStates.Ready) {
+            if (this.animatorState === AnimatorStates.Ready) {
                 this.animationPlayingIndex++;
                 this.chart.clearChart();
             }
@@ -448,11 +448,11 @@ module powerbi.extensibility.visual {
                 return;
             }
 
-            if (this.animatorState === PulseAnimatorStates.Paused) {
+            if (this.animatorState === AnimatorStates.Paused) {
                 this.chart.onClearSelection();
             }
 
-            this.animatorState = PulseAnimatorStates.Play;
+            this.animatorState = AnimatorStates.Play;
             this.chart.renderChart();
             this.chart.playAnimation(delay);
             this.disableControls();
@@ -474,8 +474,8 @@ module powerbi.extensibility.visual {
         }
 
         public pause(): void {
-            if (this.animatorState === PulseAnimatorStates.Play) {
-                this.animatorState = PulseAnimatorStates.Paused;
+            if (this.animatorState === AnimatorStates.Play) {
+                this.animatorState = AnimatorStates.Paused;
                 this.chart.pauseAnimation();
             }
 
@@ -489,7 +489,7 @@ module powerbi.extensibility.visual {
             this.chart.clearChart();
 
             this.setDefaultValues();
-            this.animatorState = PulseAnimatorStates.Stopped;
+            this.animatorState = AnimatorStates.Stopped;
 
             this.disableControls();
             this.savedPosition = null;
@@ -502,7 +502,7 @@ module powerbi.extensibility.visual {
 
             this.stop();
 
-            const newPosition: PulseChartAnimationPosition = this.chart.findNextPoint(this.position);
+            const newPosition: AnimationPosition = this.chart.findNextPoint(this.position);
             if (newPosition) {
                 this.position = newPosition;
                 this.chart.handleSelection(this.position);
@@ -517,7 +517,7 @@ module powerbi.extensibility.visual {
             }
 
             this.stop();
-            const newPosition: PulseChartAnimationPosition = this.chart.findPrevPoint(this.position);
+            const newPosition: AnimationPosition = this.chart.findPrevPoint(this.position);
             if (newPosition) {
                 this.position = newPosition;
                 this.chart.handleSelection(this.position);
@@ -544,29 +544,29 @@ module powerbi.extensibility.visual {
             this.drawCounterValue();
             this.savedPosition = this.position;
             this.chart.stopAnimation();
-            this.animatorState = PulseAnimatorStates.Stopped;
+            this.animatorState = AnimatorStates.Stopped;
 
             this.disableControls();
         }
 
-        private positionValue: PulseChartAnimationPosition;
+        private positionValue: AnimationPosition;
 
-        public set position(position: PulseChartAnimationPosition) {
+        public set position(position: AnimationPosition) {
             this.positionValue = position;
         }
 
-        public get position(): PulseChartAnimationPosition {
+        public get position(): AnimationPosition {
             return this.positionValue;
         }
 
-        public get flooredPosition(): PulseChartAnimationPosition {
+        public get flooredPosition(): AnimationPosition {
             return this.position && { series: this.position.series, index: Math.floor(this.position.index) };
         }
 
         private isPositionWasSaved: boolean = false;
-        private autoPlayPosition: PulseChartAnimationPosition;
+        private autoPlayPosition: AnimationPosition;
 
-        public set savedPosition(position: PulseChartAnimationPosition) {
+        public set savedPosition(position: AnimationPosition) {
             if (!this.chart.isAutoPlay) {
                 position = null;
             }
@@ -589,7 +589,7 @@ module powerbi.extensibility.visual {
             }
         }
 
-        public get savedPosition(): PulseChartAnimationPosition {
+        public get savedPosition(): AnimationPosition {
             return this.chart.data
                 && this.chart.data.settings
                 && this.chart.data.settings.playback

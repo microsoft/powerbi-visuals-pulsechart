@@ -52,7 +52,7 @@ module powerbi.extensibility.visual {
     }
 
     export module PulseChartDataLabelUtils {
-        export function getDefaultPulseChartLabelSettings(): PulseChartChartDataLabelsSettings {
+        export function getDefaultPulseChartLabelSettings(): ChartDataLabelsSettings {
             return {
                 show: false,
                 position: 1, /* PointLabelPosition.Above, */

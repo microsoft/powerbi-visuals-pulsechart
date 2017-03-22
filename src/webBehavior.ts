@@ -35,14 +35,14 @@ module powerbi.extensibility.visual {
     import IInteractivityService = powerbi.extensibility.utils.interactivity.IInteractivityService;
     import ISelectionHandler = powerbi.extensibility.utils.interactivity.ISelectionHandler;
 
-    export class PulseChartWebBehavior implements IPulseChartInteractiveBehavior {
+    export class PulseChartWebBehavior implements IInteractiveBehavior {
         private selection: Selection<any>;
         private selectionHandler: ISelectionHandler;
         private interactivityService: IInteractivityService;
         private hasHighlights: boolean;
         private onSelectCallback: any;
 
-        public bindEvents(options: PulseChartBehaviorOptions, selectionHandler: ISelectionHandler): void {
+        public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
             let clearCatcher: Selection<any> = options.clearCatcher;
             let selection: Selection<any> = this.selection = options.selection;
             this.onSelectCallback = options.onSelectCallback;

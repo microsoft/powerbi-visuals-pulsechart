@@ -401,12 +401,6 @@
                             }
                         }
                     }
-                },
-                "position": {
-                    "displayName": "Position",
-                    "type": {
-                        "text": true
-                    }
                 }
             }
         },
