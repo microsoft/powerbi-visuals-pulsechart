@@ -17,8 +17,8 @@ module powerbi.extensibility.visual {
     }
 
     export enum XAxisDateFormat {
-        DateOnly,
-        TimeOnly
+        DateOnly = 60 * 1000 * 24,
+        TimeOnly = 60 * 1000
     }
     export enum XAxisPosition {
         Center,

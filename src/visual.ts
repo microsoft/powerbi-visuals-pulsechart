@@ -156,11 +156,6 @@ module powerbi.extensibility.visual {
 
         private static MaxGapCount: number = 100;
 
-        private static MinGapWidth = {
-            'Date only': 60 * 1000 * 24,
-            'Time only': 60 * 1000
-        };
-
         private static DefaultAnimationDuration: number = 250;
 
         private static Chart: ClassAndSelector = createClassAndSelector('chart');
@@ -207,7 +202,7 @@ module powerbi.extensibility.visual {
             }
 
             let isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
-            let settings = this.parseSettings(dataView);
+            let settings = PulseChart.parseSettings(dataView);
 
             let categoryValues: any[] = timeStampColumn.values;
 
@@ -286,7 +281,7 @@ module powerbi.extensibility.visual {
                     .withCategory(timeStampColumn, categoryIndex)
                     .createSelectionId();
 
-                let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / PulseChart.MaxGapCount, PulseChart.MinGapWidth[settings.xAxis.dateFormat]);
+                let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / PulseChart.MaxGapCount, <number>settings.xAxis.dateFormat);
                 let gapWidth: number = gapWidths[categoryIndex];
                 let isGap: boolean = settings.gaps.show
                     && gapWidth > 0
