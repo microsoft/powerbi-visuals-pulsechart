@@ -670,7 +670,6 @@ module powerbi.extensibility.visual {
         }
 
         public update(options: VisualUpdateOptions): void {
-            debugger;
             if (!options || !options.dataViews || !options.dataViews[0]) {
                 return;
             }
