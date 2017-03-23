@@ -1226,7 +1226,6 @@ module powerbi.extensibility.visual {
         }
 
         private showAnimationDot(): void {
-            debugger;
             if (!this.animationHandler.isPlaying) {
                 return;
             }
@@ -1522,7 +1521,9 @@ module powerbi.extensibility.visual {
                 nodeParent: ClassAndSelector = PulseChart.TooltipContainer,
                 width: number = this.data.settings.popup.width,
                 height: number = this.data.settings.popup.height,
-                marginTop: number = PulseChart.DefaultTooltipSettings.marginTop;
+                marginTop: number = PulseChart.DefaultTooltipSettings.marginTop,
+                isShowTime: boolean = this.data.settings.popup.showTime,
+                isShowTitle: boolean = this.data.settings.popup.showTitle;;
 
             let rootSelection: UpdateSelection<any> = this.rootSelection;
 
@@ -1623,11 +1624,8 @@ module powerbi.extensibility.visual {
                     return line(path as DataPoint[]);
                 });
 
-            let isShowTime: string = this.data.settings.popup.showTime ? undefined : "none";
-            let isShowTitle: string = this.data.settings.popup.showTitle ? undefined : "none";
-
             let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selector).data(d => [d]);
-            // let timeDisplayStyle = { "display": isShowTime ? undefined : "none" };
+            let timeDisplayStyle = { "display": isShowTime ? undefined : "none" };
             timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.class, true);
             timeRect
                 .style("fill", this.data.settings.popup.timeFill)
