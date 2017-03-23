@@ -646,7 +646,6 @@ module powerbi.extensibility.visual {
 
         public init(options: VisualConstructorOptions): void {
             this.margin = PulseChart.DefaultMargin;
-            // (<any>powerbi.formattingService).initialize();// Fixes the framework bug: "Cannot read property "getFormatString" of undefined".
             let host = this.host = options.host;
             this.interactivityService = createInteractivityService(host);
             this.behavior = new PulseChartWebBehavior();
@@ -925,7 +924,6 @@ module powerbi.extensibility.visual {
             axisBoxUpdateSelection
                 .enter()
                 .insert("rect", "text");
-            debugger;
             axisBoxUpdateSelection
                 .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
                 .style("fill", this.data.settings.xAxis.backgroundColor);
@@ -1228,14 +1226,15 @@ module powerbi.extensibility.visual {
         }
 
         private showAnimationDot(): void {
+            debugger;
             if (!this.animationHandler.isPlaying) {
                 return;
             }
             let size: number = this.data.settings.dots.size;
 
             this.animationDot
-                .attr("display", "inline")
-                .attr("fill", this.data.settings.dots.color)
+                .style("display", "inline")
+                .style("fill", this.data.settings.dots.color)
                 .style("opacity", this.dotOpacity)
                 .attr("r", size);
         }
