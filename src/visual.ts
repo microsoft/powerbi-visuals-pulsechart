@@ -53,7 +53,7 @@ module powerbi.extensibility.visual {
     import ITooltipServiceWrapper = utils.tooltip.ITooltipServiceWrapper;
     import createTooltipServiceWrapper = utils.tooltip.createTooltipServiceWrapper;
 
-        // utils.chart
+    // utils.chart
     import AxisHelper = utils.chart.axis;
 
     // powerbi.visuals
@@ -906,20 +906,17 @@ module powerbi.extensibility.visual {
                 color: string = data.settings.xAxis.color,
                 fontColor: string = data.settings.xAxis.fontColor;
             axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selector);
+            axisNodeSelection.selectAll("*").remove();
             axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
             axisNodeUpdateSelection
                 .enter()
                 .insert("g", `g.${PulseChart.LineContainer.class}`)
                 .classed(PulseChart.XAxisNode.class, true);
-
             axisNodeUpdateSelection
                 .each(function (series: Series) {
                     d3.select(this).call(series.xAxisProperties.axis.orient("bottom"));
-                })
-                .exit()
-                .remove();
-
+                });
             axisBoxUpdateSelection = axisNodeUpdateSelection
                 .selectAll(".tick")
                 .selectAll(".axisBox")
@@ -928,7 +925,7 @@ module powerbi.extensibility.visual {
             axisBoxUpdateSelection
                 .enter()
                 .insert("rect", "text");
-
+            debugger;
             axisBoxUpdateSelection
                 .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
                 .style("fill", this.data.settings.xAxis.backgroundColor);
@@ -955,7 +952,8 @@ module powerbi.extensibility.visual {
                 let dy = tickRectY + 3;
                 selection.selectAll("text")
                     .attr("transform", function (element: SVGTextElement): string {
-                        return `translate(0, ${(dy + 9 + (this.clientWidth / 2) * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
+                        let node = <SVGTextElement>this;
+                        return `translate(0, ${(dy + 9 + node.getBoundingClientRect().width * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
                     })
                     .style("fill", fontColor)
                     .style("stroke", "none")
