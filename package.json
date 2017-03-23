@@ -29,7 +29,7 @@
     "coveralls": "2.12.0",
     "jasmine": "2.5.3",
     "jasmine-jquery": "2.1.1",
-    "jquery": "3.2.1",
+    "jquery": "3.1.1",
     "karma": "1.5.0",
     "karma-chrome-launcher": "2.0.0",
     "karma-coverage": "1.1.1",
@@ -44,14 +44,17 @@
     "typescript": "2.1.4"
   },
   "dependencies": {
+    "jquery": "3.1.1",
     "d3": "3.5.5",
     "globalize": "0.1.0-a2",
-    "jquery": "3.2.1",
-    "lodash": "4.17.4",
-    "moment": "2.18.0",
+    "lodash": "4.16.2",
+    "powerbi-visuals-utils-typeutils": "0.2.1",
+    "powerbi-visuals-utils-svgutils": "0.2.1",
     "powerbi-visuals-utils-chartutils": "0.3.0",
     "powerbi-visuals-utils-colorutils": "0.2.1",
     "powerbi-visuals-utils-dataviewutils": "1.0.1",
-    "powerbi-visuals-utils-tooltiputils": "0.3.0"
+    "powerbi-visuals-utils-tooltiputils": "0.3.0",
+    "powerbi-visuals-utils-formattingutils": "0.2.2",
+    "powerbi-visuals-utils-interactivityutils": "0.3.0"
   }
 }

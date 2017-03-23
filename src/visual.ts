@@ -53,7 +53,7 @@ module powerbi.extensibility.visual {
     import ITooltipServiceWrapper = utils.tooltip.ITooltipServiceWrapper;
     import createTooltipServiceWrapper = utils.tooltip.createTooltipServiceWrapper;
 
-    // utils.chart
+        // utils.chart
     import AxisHelper = utils.chart.axis;
 
     // powerbi.visuals
@@ -82,10 +82,6 @@ module powerbi.extensibility.visual {
             height: 50
         };
         private static PlaybackButtonsHeight = 26;
-        private static PopupMinHeight: number = 20;
-        private static PopupMinWidth: number = 20;
-        private static PopupMaxHeight: number = 200;
-        private static PopupMaxWidth: number = 2000;
         private static MaxWidthOfYAxis: number = 50;
         private static PopupTextPadding: number = 3;
         private static XAxisTickSpace: number = 15;
@@ -93,6 +89,13 @@ module powerbi.extensibility.visual {
         private static MinimumTicksToRotate: number = 3;
         private static AxisTickRotateAngle: number = -35;
         private static topShift: number = 20;
+        private static MaxGapCount: number = 100;
+        private static DefaultAnimationDuration: number = 250;
+        private static DefaultTooltipSettings: TooltipSettings = {
+            dataPointColor: "#808181",
+            marginTop: 20,
+            timeHeight: 15,
+        };
 
         private static GetPopupValueTextProperties(text?: string, fontSizeValue = 12): TextProperties {
             return {
@@ -129,9 +132,9 @@ module powerbi.extensibility.visual {
 
         public static ConvertTextPropertiesToStyle(textProperties: TextProperties): any {
             return {
-                'font-family': textProperties.fontFamily,
-                'font-weight': textProperties.fontWeight,
-                'font-size': textProperties.fontSize
+                "font-family": textProperties.fontFamily,
+                "font-weight": textProperties.fontWeight,
+                "font-size": textProperties.fontSize
             };
         }
 
@@ -148,37 +151,27 @@ module powerbi.extensibility.visual {
             return textMeasurementService.measureSvgTextWidth(textProperties);
         }
 
-        private static DefaultTooltipSettings: TooltipSettings = {
-            dataPointColor: "#808181",
-            marginTop: 20,
-            timeHeight: 15,
-        };
-
-        private static MaxGapCount: number = 100;
-
-        private static DefaultAnimationDuration: number = 250;
-
-        private static Chart: ClassAndSelector = createClassAndSelector('chart');
-        private static Line: ClassAndSelector = createClassAndSelector('line');
-        private static LineContainer: ClassAndSelector = createClassAndSelector('lineContainer');
-        private static LineNode: ClassAndSelector = createClassAndSelector('lineNode');
-        private static XAxisNode: ClassAndSelector = createClassAndSelector('xAxisNode');
-        private static Dot: ClassAndSelector = createClassAndSelector('dot');
-        private static DotsContainer: ClassAndSelector = createClassAndSelector('dotsContainer');
-        private static Tooltip: ClassAndSelector = createClassAndSelector('Tooltip');
-        private static TooltipRect: ClassAndSelector = createClassAndSelector('tooltipRect');
-        private static TooltipTriangle: ClassAndSelector = createClassAndSelector('tooltipTriangle');
+        private static Chart: ClassAndSelector = createClassAndSelector("chart");
+        private static Line: ClassAndSelector = createClassAndSelector("line");
+        private static LineContainer: ClassAndSelector = createClassAndSelector("lineContainer");
+        private static LineNode: ClassAndSelector = createClassAndSelector("lineNode");
+        private static XAxisNode: ClassAndSelector = createClassAndSelector("xAxisNode");
+        private static Dot: ClassAndSelector = createClassAndSelector("dot");
+        private static Dots: ClassAndSelector = createClassAndSelector("dots");
+        private static DotsContainer: ClassAndSelector = createClassAndSelector("dotsContainer");
+        private static Tooltip: ClassAndSelector = createClassAndSelector("Tooltip");
+        private static TooltipRect: ClassAndSelector = createClassAndSelector("tooltipRect");
+        private static TooltipTriangle: ClassAndSelector = createClassAndSelector("tooltipTriangle");
         private static Gaps: ClassAndSelector = createClassAndSelector("gaps");
         private static Gap: ClassAndSelector = createClassAndSelector("gap");
         private static GapNode: ClassAndSelector = createClassAndSelector("gapNode");
-        private static TooltipLine: ClassAndSelector = createClassAndSelector('tooltipLine');
-        private static TooltipTime: ClassAndSelector = createClassAndSelector('tooltipTime');
-        private static TooltipTimeRect: ClassAndSelector = createClassAndSelector('tooltipTimeRect');
-        private static TooltipTitle: ClassAndSelector = createClassAndSelector('tooltipTitle');
-        private static TooltipDescription: ClassAndSelector = createClassAndSelector('tooltipDescription');
-        private static TooltipContainer: ClassAndSelector = createClassAndSelector('tooltipContainer');
-        private static AnimationDot: ClassAndSelector = createClassAndSelector('animationDot');
-
+        private static TooltipLine: ClassAndSelector = createClassAndSelector("tooltipLine");
+        private static TooltipTime: ClassAndSelector = createClassAndSelector("tooltipTime");
+        private static TooltipTimeRect: ClassAndSelector = createClassAndSelector("tooltipTimeRect");
+        private static TooltipTitle: ClassAndSelector = createClassAndSelector("tooltipTitle");
+        private static TooltipDescription: ClassAndSelector = createClassAndSelector("tooltipDescription");
+        private static TooltipContainer: ClassAndSelector = createClassAndSelector("tooltipContainer");
+        private static AnimationDot: ClassAndSelector = createClassAndSelector("animationDot");
         private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewCategoryColumn | DataViewValueColumn {
             let filterFunc = (cols: DataViewCategoricalColumn[]) => cols.filter((x) => x.source && x.source.roles && x.source.roles[roleName])[0];
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
@@ -193,7 +186,6 @@ module powerbi.extensibility.visual {
                 || !dataView.categorical.categories) {
                 return null;
             }
-
             let columns: DataRoles<DataViewCategoricalColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
             let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
@@ -417,7 +409,7 @@ module powerbi.extensibility.visual {
 
             if (categoryAxisProperties) {
 
-                // Take the value only if it's there
+                // Take the value only if it"s there
                 if (category && category.displayName) {
                     xAxisLabel = category.displayName;
                 }
@@ -428,7 +420,7 @@ module powerbi.extensibility.visual {
 
                 if (values) {
                     // Take the name from the values, and make it unique because there are sometimes duplications
-                    valuesNames = values.map(v => v ? v.displayName : '').filter((value, index, self) => value !== '' && self.indexOf(value) === index);
+                    valuesNames = values.map(v => v ? v.displayName : "").filter((value, index, self) => value !== "" && self.indexOf(value) === index);
                     yAxisLabel = valueFormatter.formatListAnd(valuesNames);
                 }
             }
@@ -440,7 +432,6 @@ module powerbi.extensibility.visual {
             });
             return <DataPoint[]>_.flatten(dataPointsArray);
         }
-
         private static createAxisY(
             commonYScale: LinearScale,
             height: number,
@@ -456,7 +447,6 @@ module powerbi.extensibility.visual {
                 .tickFormat(formatter.format);
             return yAxis;
         }
-
         private static createAxisX(
             isScalar: boolean,
             series: Series[],
@@ -497,13 +487,12 @@ module powerbi.extensibility.visual {
                 properties.axis = d3.svg.axis()
                     .scale(properties.scale)
                     .tickValues(values)
-                    .tickFormat(formatter.format)
-                    .outerTickSize(0);
+                    .outerTickSize(0)
+                    .tickFormat(formatter.format);
             });
 
             return xAxisProperties;
         }
-
         private static getXAxisScales(
             series: Series[],
             isScalar: boolean,
@@ -517,7 +506,6 @@ module powerbi.extensibility.visual {
                 return PulseChart.createScale(isScalar, [minValue, maxValue], minX, maxX);
             });
         }
-
         private static getXAxisValuesToDisplay(
             scale: TimeScale | LinearScale,
             rotate: boolean,
@@ -575,7 +563,6 @@ module powerbi.extensibility.visual {
 
             return values;
         }
-
         private static getGroupIndex(index: number, grouped: DataViewValueColumnGroup[]): number {
             for (let i: number = 0; i < grouped.length; i++) {
                 if (grouped[i].values && grouped[i].values[0] &&
@@ -587,7 +574,6 @@ module powerbi.extensibility.visual {
 
             return 0;
         }
-
         private static getGapWidths(values: Date[] | number[]): number[] {
             let result: number[] = [];
             for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
@@ -602,7 +588,6 @@ module powerbi.extensibility.visual {
 
             return result;
         }
-
         private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
             let scale: LinearScale | TimeScale;
 
@@ -661,23 +646,23 @@ module powerbi.extensibility.visual {
 
         public init(options: VisualConstructorOptions): void {
             this.margin = PulseChart.DefaultMargin;
-            // (<any>powerbi.formattingService).initialize();// Fixes the framework bug: "Cannot read property 'getFormatString' of undefined".
+            // (<any>powerbi.formattingService).initialize();// Fixes the framework bug: "Cannot read property "getFormatString" of undefined".
             let host = this.host = options.host;
             this.interactivityService = createInteractivityService(host);
             this.behavior = new PulseChartWebBehavior();
 
             let svg: Selection<any> = this.svg = d3.select(options.element)
-                .append('svg')
-                .classed('pulseChart', true);
+                .append("svg")
+                .classed("pulseChart", true);
 
-            this.gaps = svg.append('g').classed(PulseChart.Gaps.class, true);
-            this.yAxis = svg.append('g').attr('class', 'y axis');
-            this.chart = svg.append('g').attr('class', PulseChart.Chart.class);
-            this.dots = svg.append('g').attr('class', 'dots');
+            this.gaps = svg.append("g").classed(PulseChart.Gaps.class, true);
+            this.yAxis = svg.append("g").classed("y", true).classed("axis", true);
+            this.chart = svg.append("g").classed(PulseChart.Chart.class, true);
+            this.dots = svg.append("g").classed(PulseChart.Dots.class, true);
             this.animationDot = this.dots
-                .append('circle')
+                .append("circle")
                 .classed(PulseChart.AnimationDot.class, true)
-                .attr('display', 'none');
+                .style("display", "none");
 
             this.animationHandler = new PulseAnimator(this, svg);
 
@@ -685,10 +670,11 @@ module powerbi.extensibility.visual {
         }
 
         public update(options: VisualUpdateOptions): void {
+            debugger;
             if (!options || !options.dataViews || !options.dataViews[0]) {
                 return;
             }
-            this.viewport = $.extend({}, options.viewport);
+            this.viewport = options.viewport;
             let dataView: DataView = options.dataViews[0];
             let pulseChartData: ChartData = PulseChart.converter(dataView, this.host, this.colors, this.interactivityService);
 
@@ -757,7 +743,7 @@ module powerbi.extensibility.visual {
                 return false;
             }
 
-            if (data.categories.some(x => !(x instanceof Date || $.isNumeric(x)))) {
+            if (data.categories.some(x => !(x instanceof Date || _.isNumber(x)))) {
                 return false;
             }
 
@@ -798,11 +784,11 @@ module powerbi.extensibility.visual {
                 width: this.viewport.width,
                 height: this.viewport.height,
             });
-            this.svg.style('display', undefined);
-            this.gaps.attr('transform', SVGUtil.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
-            this.chart.attr('transform', SVGUtil.translate(this.margin.left, chartMarginTop));
-            this.yAxis.attr('transform', SVGUtil.translate(this.size.width + this.margin.left, chartMarginTop));
-            this.dots.attr('transform', SVGUtil.translate(this.margin.left, chartMarginTop));
+            this.svg.style("display", undefined);
+            this.gaps.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
+            this.chart.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop));
+            this.yAxis.attr("transform", SVGUtil.translate(this.size.width + this.margin.left, chartMarginTop));
+            this.dots.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop));
         }
 
         public calculateXAxisProperties(width: number) {
@@ -816,7 +802,7 @@ module powerbi.extensibility.visual {
                 this.data.isScalar,
                 this.data.series,
                 <LinearScale>this.data.xScale,
-                $.extend({}, this.data.settings.xAxis.formatterOptions),
+                _.assign({}, this.data.settings.xAxis.formatterOptions),
                 this.data.settings.xAxis.dateFormat,
                 this.data.settings.xAxis.position,
                 this.data.widthOfXAxisLabel);
@@ -917,7 +903,6 @@ module powerbi.extensibility.visual {
         private renderXAxis(data: ChartData, duration: number): void {
             let axisNodeSelection: Selection<any>,
                 axisNodeUpdateSelection: UpdateSelection<any>,
-                // ticksSelection: Selection<any>,
                 axisBoxUpdateSelection: UpdateSelection<any>,
                 color: string = data.settings.xAxis.color,
                 fontColor: string = data.settings.xAxis.fontColor;
@@ -926,18 +911,13 @@ module powerbi.extensibility.visual {
 
             axisNodeUpdateSelection
                 .enter()
-                .insert("g", "g." + PulseChart.LineContainer.class)
+                .insert("g", `g.${PulseChart.LineContainer.class}`)
                 .classed(PulseChart.XAxisNode.class, true);
 
             axisNodeUpdateSelection
-                .call((selection: Selection<any>) => {
-                    selection.each((selectionElement: Element, index: number) => {
-                        d3.select(selectionElement[0])
-                            .call(data.series[index].xAxisProperties.axis.orient('bottom'));
-                    });
-                });
-
-            axisNodeUpdateSelection
+                .each(function (series: Series) {
+                    d3.select(this).call(series.xAxisProperties.axis.orient("bottom"));
+                })
                 .exit()
                 .remove();
 
@@ -948,12 +928,12 @@ module powerbi.extensibility.visual {
 
             axisBoxUpdateSelection
                 .enter()
-                .insert("rect", "text")
-                .classed("axisBox", true);
+                .insert("rect", "text");
 
             axisBoxUpdateSelection
-                .style('display', this.data.settings.xAxis.position === XAxisPosition.Center ? 'inherit' : 'none')
-                .style('fill', this.data.settings.xAxis.backgroundColor);
+                .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
+                .style("fill", this.data.settings.xAxis.backgroundColor);
+
 
             let tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
             axisBoxUpdateSelection.attr({
@@ -966,31 +946,29 @@ module powerbi.extensibility.visual {
             axisBoxUpdateSelection
                 .exit()
                 .remove();
-
             axisNodeUpdateSelection
-                .style('stroke', this.data.settings.xAxis.position === XAxisPosition.Center ? color : "none")
-                .style('display', this.data.settings.xAxis.show ? 'inherit' : 'none');
+                .style("stroke", this.data.settings.xAxis.position === XAxisPosition.Center ? color : "none")
+                .style("display", this.data.settings.xAxis.show ? "inherit" : "none");
 
             axisNodeUpdateSelection.call(selection => {
                 let rotate = selection.datum().xAxisProperties.rotate;
                 let rotateCoeff = rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0;
                 let dy = tickRectY + 3;
                 selection.selectAll("text")
-                    .attr('transform', function (element: SVGTextElement) {
-                        return `translate(0, ${(dy + 9 + ($(this).width() / 2) * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
+                    .attr("transform", function (element: SVGTextElement): string {
+                        return `translate(0, ${(dy + 9 + (this.clientWidth / 2) * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
                     })
-                    .style('fill', fontColor)
-                    .style('stroke', "none")
-                    .attr('dy', -9);
+                    .style("fill", fontColor)
+                    .style("stroke", "none")
+                    .attr("dy", -9);
             });
 
             axisNodeUpdateSelection.selectAll(".domain")
-                .style('stroke', color);
-
-            axisNodeUpdateSelection.selectAll(".domain")
-            .each((element: Element) => {
-                $(element).insertBefore($(element).parent().children().first());
-            });
+                .each(function () {
+                    let node = <Node>this;
+                    node.parentElement.insertBefore(node, node.parentNode.firstChild);
+                })
+                .style("stroke", color);
 
             let xAxisTop: number = this.size.height;
             switch (this.data.settings.xAxis.position) {
@@ -1001,7 +979,7 @@ module powerbi.extensibility.visual {
                     break;
             }
 
-            axisNodeUpdateSelection.attr('transform', SVGUtil.translate(0, xAxisTop));
+            axisNodeUpdateSelection.attr("transform", SVGUtil.translate(0, xAxisTop));
         }
 
         private renderYAxis(data: ChartData, duration: number): void {
@@ -1010,7 +988,7 @@ module powerbi.extensibility.visual {
                 color: string = data.settings.yAxis.color,
                 fontColor: string = data.settings.yAxis.fontColor;
 
-            yAxis.orient('right');
+            yAxis.orient("right");
 
             if (this.data &&
                 this.data.settings &&
@@ -1029,12 +1007,12 @@ module powerbi.extensibility.visual {
 
             this.yAxis
                 .call(yAxis)
-                .attr('display', isShow ? 'inline' : 'none');
+                .attr("display", isShow ? "inline" : "none");
 
-            this.yAxis.selectAll('.domain, path, line').style('stroke', color);
-            this.yAxis.selectAll('text').style('fill', fontColor);
-            this.yAxis.selectAll('g.tick line')
-                .attr('x1', -this.size.width);
+            this.yAxis.selectAll(".domain, path, line").style("stroke", color);
+            this.yAxis.selectAll("text").style("fill", fontColor);
+            this.yAxis.selectAll("g.tick line")
+                .attr("x1", -this.size.width);
         }
 
         public renderChart(): void {
@@ -1051,19 +1029,19 @@ module powerbi.extensibility.visual {
 
             const lineNode: Selection<any> = this.rootSelection
                 .enter()
-                .append('g')
+                .append("g")
                 .classed(PulseChart.LineNode.class, true);
 
             lineNode
-                .append('g')
+                .append("g")
                 .classed(PulseChart.LineContainer.class, true);
 
             lineNode
-                .append('g')
+                .append("g")
                 .classed(PulseChart.TooltipContainer.class, true);
 
             lineNode
-                .append('g')
+                .append("g")
                 .classed(PulseChart.DotsContainer.class, true);
 
             if (this.animationHandler.isAnimated) {
@@ -1093,17 +1071,17 @@ module powerbi.extensibility.visual {
 
             selection
                 .enter()
-                .append('path')
+                .append("path")
                 .classed(node.class, true);
 
             selection
                 .style({
-                    'fill': "none",
-                    'stroke': (d: Series) => d.color,
-                    'stroke-width': (d: Series) => `${d.width}px`
+                    "fill": "none",
+                    "stroke": (d: Series) => d.color,
+                    "stroke-width": (d: Series) => `${d.width}px`
                 });
 
-            selection.attr('d', d => this.lineX(d.data));
+            selection.attr("d", d => this.lineX(d.data));
             selection
                 .exit()
                 .remove();
@@ -1120,18 +1098,18 @@ module powerbi.extensibility.visual {
 
             this.animationSelection
                 .enter()
-                .append('path')
+                .append("path")
                 .classed(node.class, true);
 
             this.animationSelection
                 .style({
-                    'fill': "none",
-                    'stroke': (d: Series) => d.color,
-                    'stroke-width': (d: Series) => `${d.width}px`
+                    "fill": "none",
+                    "stroke": (d: Series) => d.color,
+                    "stroke-width": (d: Series) => `${d.width}px`
                 });
 
             this.animationSelection
-                .attr('d', (d: Series) => {
+                .attr("d", (d: Series) => {
                     let flooredStart = this.animationHandler.flooredPosition.index;
 
                     if (flooredStart === 0) {
@@ -1166,7 +1144,7 @@ module powerbi.extensibility.visual {
                 .delay(delay)
                 .duration(this.animationDuration)
                 .ease("linear")
-                .attrTween('d', (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
+                .attrTween("d", (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
                 .each("end", (series: Series) => {
                     let position: AnimationPosition = this.animationHandler.flooredPosition;
                     this.handleSelection(position);
@@ -1259,14 +1237,14 @@ module powerbi.extensibility.visual {
             let size: number = this.data.settings.dots.size;
 
             this.animationDot
-                .attr('display', 'inline')
+                .attr("display", "inline")
                 .attr("fill", this.data.settings.dots.color)
                 .style("opacity", this.dotOpacity)
                 .attr("r", size);
         }
 
         private hideAnimationDot(): void {
-            this.animationDot.attr('display', 'none');
+            this.animationDot.attr("display", "none");
         }
 
         private getInterpolation(data: DataPoint[], start: number): any {
@@ -1480,11 +1458,11 @@ module powerbi.extensibility.visual {
                 height: 10,
                 width: 3
             }, {
-                    left: 1.5,
-                    top: -5,
-                    height: 10,
-                    width: 3
-                }];
+                left: 1.5,
+                top: -5,
+                height: 10,
+                width: 3
+            }];
 
             gapsSelection = this.gaps.selectAll(PulseChart.Gap.selector)
                 .data(series.slice(0, series.length - 1));
@@ -1582,8 +1560,8 @@ module powerbi.extensibility.visual {
             tooltipRect.enter().append("path").classed(PulseChart.TooltipRect.class, true);
             tooltipRect
                 .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
-                .style('fill', this.data.settings.popup.color)
-                .attr('d', (d: DataPoint) => {
+                .style("fill", this.data.settings.popup.color)
+                .attr("d", (d: DataPoint) => {
                     let path = [
                         {
                             "x": -2,
@@ -1608,8 +1586,8 @@ module powerbi.extensibility.visual {
             let tooltipTriangle: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selector).data(d => [d]);
             tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.class, true);
             tooltipTriangle
-                .style('fill', this.data.settings.popup.color)
-                .attr('d', (d: DataPoint) => {
+                .style("fill", this.data.settings.popup.color)
+                .attr("d", (d: DataPoint) => {
                     let path = [
                         {
                             "x": width / 2 - 5 - d.popupInfo.offsetX,
@@ -1626,15 +1604,15 @@ module powerbi.extensibility.visual {
                     ];
                     return line(path as DataPoint[]);
                 })
-                .style('stroke-width', "1px");
+                .style("stroke-width", "1px");
 
             let tooltipLine: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipLine.selector).data(d => [d]);
             tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.class, true);
             tooltipLine
-                .style('fill', this.data.settings.popup.color)
-                .style('stroke', this.data.settings.popup.color)
-                .style('stroke-width', "1px")
-                .attr('d', (d: DataPoint) => {
+                .style("fill", this.data.settings.popup.color)
+                .style("stroke", this.data.settings.popup.color)
+                .style("stroke-width", "1px")
+                .attr("d", (d: DataPoint) => {
                     let path = [
                         {
                             "x": width / 2 - d.popupInfo.offsetX,
@@ -1658,7 +1636,7 @@ module powerbi.extensibility.visual {
             timeRect
                 .style("fill", this.data.settings.popup.timeFill)
                 .style("display", isShowTime)
-                .attr('d', (d: DataPoint) => {
+                .attr("d", (d: DataPoint) => {
                     let path = [
                         {
                             "x": width - this.data.widthOfTooltipValueLabel - 2,
@@ -1788,7 +1766,7 @@ module powerbi.extensibility.visual {
             }
 
             if (hide) {
-                this.svg.style('display', "none");
+                this.svg.style("display", "none");
             }
 
             this.clearChart();
