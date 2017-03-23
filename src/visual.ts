@@ -1522,8 +1522,8 @@ module powerbi.extensibility.visual {
                 width: number = this.data.settings.popup.width,
                 height: number = this.data.settings.popup.height,
                 marginTop: number = PulseChart.DefaultTooltipSettings.marginTop,
-                isShowTime: boolean = this.data.settings.popup.showTime,
-                isShowTitle: boolean = this.data.settings.popup.showTitle;;
+                showTimeDisplayProperty: string = this.data.settings.popup.showTime ? "inherit" : "none",
+                showTitleDisplayProperty: string = this.data.settings.popup.showTitle ? "inherit" : "none";
 
             let rootSelection: UpdateSelection<any> = this.rootSelection;
 
@@ -1625,11 +1625,10 @@ module powerbi.extensibility.visual {
                 });
 
             let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selector).data(d => [d]);
-            let timeDisplayStyle = { "display": isShowTime ? undefined : "none" };
             timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.class, true);
             timeRect
                 .style("fill", this.data.settings.popup.timeFill)
-                .style("display", isShowTime)
+                .style("display", showTimeDisplayProperty)
                 .attr("d", (d: DataPoint) => {
                     let path = [
                         {
@@ -1660,7 +1659,7 @@ module powerbi.extensibility.visual {
             time.enter().append("text").classed(PulseChart.TooltipTime.class, true);
             time
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()), null)
-                .style("display", isShowTime)
+                .style("display", showTimeDisplayProperty)
                 .style("fill", this.data.settings.popup.timeColor)
                 .attr("x", (d: DataPoint) => width - this.data.widthOfTooltipValueLabel)
                 .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
@@ -1668,11 +1667,10 @@ module powerbi.extensibility.visual {
                     : PulseChart.DefaultTooltipSettings.timeHeight - 3)
                 .text((d: DataPoint) => d.popupInfo.value);
 
-            let titleDisplayStyle = { "display": isShowTitle ? undefined : "none" };
             let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
             title.enter().append("text").classed(PulseChart.TooltipTitle.class, true);
             title
-                .style("display", isShowTitle)
+                .style("display", showTitleDisplayProperty)
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties()), null)
                 .style("fill", this.data.settings.popup.fontColor)
                 .attr("x", (d: DataPoint) => PulseChart.PopupTextPadding)
@@ -1683,7 +1681,7 @@ module powerbi.extensibility.visual {
                         return "";
                     }
                     let maxWidth = width - PulseChart.PopupTextPadding * 2 -
-                        (isShowTime ? (this.data.widthOfTooltipValueLabel - PulseChart.PopupTextPadding) : 0) - 10;
+                        (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - PulseChart.PopupTextPadding) : 0) - 10;
                     return textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupTitleTextProperties(d.popupInfo.title), maxWidth);
                 });
 
@@ -1692,7 +1690,7 @@ module powerbi.extensibility.visual {
 
                 let descriptionYOffset: number = shiftY + PulseChart.DefaultTooltipSettings.timeHeight;
                 if (d.popupInfo) {
-                    shiftY = ((isShowTitle && d.popupInfo.title) || (isShowTime && d.popupInfo.value)) ? descriptionYOffset : shiftY;
+                    shiftY = ((showTitleDisplayProperty && d.popupInfo.title) || (showTimeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
                 }
 
                 return {
@@ -1711,10 +1709,11 @@ module powerbi.extensibility.visual {
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)), null)
                 .style("fill", this.data.settings.popup.fontColor)
                 .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
-                // .call(d => d.forEach(x => x[0] &&
-                //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
-                //    textMeasurementService.wordBreak(x[0], width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2)))
-                .attr("y", function (d: DataPoint) {
+                .each(function (series: Series) {
+                    let node = <SVGTextElement>this;
+                    textMeasurementService.wordBreak(node, width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2);
+                })
+              .attr("y", function (d: DataPoint) {
                     let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
                     let el: SVGTextElement = <any>d3.select(this)[0][0];
                     textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
