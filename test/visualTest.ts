@@ -114,10 +114,9 @@ namespace powerbi.extensibility.visual.test {
                         let chartWidth = visualBuilder.chart[0].getBoundingClientRect().width;
                         let pathWidth = pathElem[0].getBoundingClientRect().width;
 
-                        expect(pathWidth).toBeGreaterThan(chartWidth / 5);
-
+                        expect(pathWidth).toBeGreaterThan(chartWidth / 10);
                         done();
-                    }, 2000);
+                    }, 3000);
                 });
 
                 it("popup is hidden when pressing play during pause", (done) => {

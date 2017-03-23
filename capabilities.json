@@ -294,10 +294,10 @@
                     "displayName": "Position",
                     "type": {
                         "enumeration": [{
-                            "value": "Center",
+                            "value": "0",
                             "displayName": "Center"
                         }, {
-                            "value": "Bottom",
+                            "value": "1",
                             "displayName": "Bottom"
                         }]
                     }
@@ -401,12 +401,6 @@
                             }
                         }
                     }
-                },
-                "position": {
-                    "displayName": "Position",
-                    "type": {
-                        "text": true
-                    }
                 }
             }
         },
@@ -429,10 +423,10 @@
                     "displayName": "Position",
                     "type": {
                         "enumeration": [{
-                            "value": "TopLeft",
+                            "value": "0",
                             "displayName": "Top Left"
                         }, {
-                            "value": "TopRight",
+                            "value": "1",
                             "displayName": "Top Right"
                         }]
                     }
