@@ -39,6 +39,7 @@ module powerbi.extensibility.visual {
         playback: PlaybackSettings = new PlaybackSettings();
         runnerCounter: RunnerCounterSettings = new RunnerCounterSettings();
     }
+
     export class PopupSettings {
         show: boolean = true;
         alwaysOnTop: boolean = false;
@@ -52,6 +53,7 @@ module powerbi.extensibility.visual {
         timeColor: string = "#ffffff";
         timeFill: string = "#010101";
     }
+
     export class DotsSettings {
         color: string = "#808181";
         size: number = 5;
@@ -59,26 +61,32 @@ module powerbi.extensibility.visual {
         maxSize: number = 20;
         transparency: number = 25;
     }
+
     export class GapsSettings {
         show: boolean = false;
         transparency: number = 1;
     }
+
     export class SeriesSettings {
         fill: string = "#3779B7";
         width: number = 2;
     }
+
     export class AxisSettings {
         formatterOptions?: ValueFormatterOptions;
         fontColor: string = "#777777";
         color: string = "#777777";
         show: boolean = true;
     }
+
     export class XAxisSettings extends AxisSettings {
         backgroundColor: string = "#E1F2F7";
         position: XAxisPosition = XAxisPosition.Center;
         dateFormat?: XAxisDateFormat = XAxisDateFormat.TimeOnly;
     }
+
     export class YAxisSettings extends AxisSettings { }
+
     export class PlaybackSettings {
         autoplay: boolean = false;
         playSpeed: number = 5;
@@ -87,6 +95,7 @@ module powerbi.extensibility.visual {
         color: string = "#777777";
         position: AnimationPosition = null;
     }
+
     export class RunnerCounterSettings {
         show: boolean = true;
         label: string = "";

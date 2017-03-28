@@ -39,8 +39,7 @@ namespace powerbi.extensibility.visual.test {
     describe("PulseChartTests", () => {
         let visualBuilder: PulseChartBuilder,
             defaultDataViewBuilder: PulseChartData,
-            dataView: DataView,
-            setSettings;
+            dataView: DataView;
 
         beforeEach(() => {
             visualBuilder = new PulseChartBuilder(1000, 500);
@@ -88,7 +87,7 @@ namespace powerbi.extensibility.visual.test {
                 it("duplicate values", (done) => {
                     visualBuilder.viewport.width = 2000;
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        let tickTextValues = visualBuilder.xAxisNodeTick.children("text").toArray().map($).map(x => x.text());
+                        let tickTextValues: string[] = visualBuilder.xAxisNodeTick.children("text").toArray().map($).map(x => x.text());
                         for (let i = 0; i < tickTextValues.length - 1; i++) {
                             expect(tickTextValues[i]).not.toEqual(tickTextValues[i + 1]);
                         }
@@ -110,9 +109,9 @@ namespace powerbi.extensibility.visual.test {
                         }
                     };
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        let pathElem = visualBuilder.lineContainer.children("path.line");
-                        let chartWidth = visualBuilder.chart[0].getBoundingClientRect().width;
-                        let pathWidth = pathElem[0].getBoundingClientRect().width;
+                        let pathElem: JQuery = visualBuilder.lineContainer.children("path.line");
+                        let chartWidth: number = visualBuilder.chart[0].getBoundingClientRect().width;
+                        let pathWidth: number = pathElem[0].getBoundingClientRect().width;
 
                         expect(pathWidth).toBeGreaterThan(chartWidth / 10);
                         done();
@@ -120,7 +119,7 @@ namespace powerbi.extensibility.visual.test {
                 });
 
                 it("popup is hidden when pressing play during pause", (done) => {
-                    let eventIndex = dataView.categorical.categories[1].values
+                    let eventIndex: number = dataView.categorical.categories[1].values
                         .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[0].index;
                     dataView.metadata.objects = {
                         playback: {
@@ -135,7 +134,7 @@ namespace powerbi.extensibility.visual.test {
                     visualBuilder.updateRenderTimeout(dataView, () => {
                         visualBuilder.animationNext.d3Click(5, 5);
                         helpers.renderTimeout(() => {
-                            let popup = visualBuilder.tooltipContainerTooltip.first();
+                            let popup: JQuery = visualBuilder.tooltipContainerTooltip.first();
                             expect(popup.get(0)).toBeDefined();
                             visualBuilder.animationPlay.d3Click(5, 5);
                             helpers.renderTimeout(() => {
@@ -148,7 +147,7 @@ namespace powerbi.extensibility.visual.test {
                 });
 
                 it("popup is vissible when pressing next", (done) => {
-                    let eventIndex = dataView.categorical.categories[1].values
+                    let eventIndex: number = dataView.categorical.categories[1].values
                         .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[1].index;
                     dataView.metadata.objects = {
                         playback: {
@@ -171,7 +170,7 @@ namespace powerbi.extensibility.visual.test {
                 });
 
                 it("popup is visible when pressing prev", (done) => {
-                    let eventIndex = dataView.categorical.categories[1].values
+                    let eventIndex: number = dataView.categorical.categories[1].values
                         .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[2].index;
                     dataView.metadata.objects = {
                         playback: {
@@ -192,7 +191,7 @@ namespace powerbi.extensibility.visual.test {
                                     helpers.renderTimeout(() => {
                                         visualBuilder.animationPrev.d3Click(5, 5);
                                         helpers.renderTimeout(() => {
-                                            let popup = visualBuilder.tooltipContainerTooltip.first();
+                                            let popup: JQuery = visualBuilder.tooltipContainerTooltip.first();
                                             expect(popup.get(0)).toBeDefined();
                                             done();
                                         }, DefaultTimeout);

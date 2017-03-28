@@ -26,6 +26,7 @@
 
 module powerbi.extensibility.visual {
     // d3
+    import Axis = d3.svg.Axis;
     import Selection = d3.Selection;
     import UpdateSelection = d3.selection.Update;
 
@@ -59,8 +60,6 @@ module powerbi.extensibility.visual {
     // powerbi.visuals
     import ISelectionId = powerbi.visuals.ISelectionId;
 
-    import Axis = d3.svg.Axis;
-
     export class PulseChart implements IVisual {
         public static RoleDisplayNames = <DataRoles<string>>{
             Timestamp: "Timestamp",
@@ -91,6 +90,10 @@ module powerbi.extensibility.visual {
         private static topShift: number = 20;
         private static MaxGapCount: number = 100;
         private static DefaultAnimationDuration: number = 250;
+        private static ScalarTooltipLabelWidth: number = 60;
+        private static DefaultXAxisLabelWidth: number = 70;
+        private static DefaultTooltipLabelPadding: number = 5;
+        private static DefaultTooltipLabelMargin: number = 10;
         private static DefaultTooltipSettings: TooltipSettings = {
             dataPointColor: "#808181",
             marginTop: 20,
@@ -172,6 +175,8 @@ module powerbi.extensibility.visual {
         private static TooltipDescription: ClassAndSelector = createClassAndSelector("tooltipDescription");
         private static TooltipContainer: ClassAndSelector = createClassAndSelector("tooltipContainer");
         private static AnimationDot: ClassAndSelector = createClassAndSelector("animationDot");
+        private static Y: ClassAndSelector = createClassAndSelector("y");
+        private static Axis: ClassAndSelector = createClassAndSelector("axis");
         private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewCategoryColumn | DataViewValueColumn {
             let filterFunc = (cols: DataViewCategoricalColumn[]) => cols.filter((x) => x.source && x.source.roles && x.source.roles[roleName])[0];
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
@@ -226,11 +231,10 @@ module powerbi.extensibility.visual {
                 settings.xAxis.formatterOptions.format = PulseChart.GetDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
             }
 
-            let widthOfXAxisLabel = 70;
-            let widthOfTooltipValueLabel = isScalar ? 60 : PulseChart.GetFullWidthOfDateFormat(timeStampColumn.source.format, PulseChart.GetPopupValueTextProperties()) + 5;
+            let widthOfTooltipValueLabel = isScalar ? PulseChart.ScalarTooltipLabelWidth : PulseChart.GetFullWidthOfDateFormat(timeStampColumn.source.format, PulseChart.GetPopupValueTextProperties()) + PulseChart.DefaultTooltipLabelPadding;
             let heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(PulseChart.GetPopupDescriptionTextProperties("lj", settings.popup.fontSize));
             let runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
-            settings.popup.width = Math.max(widthOfTooltipValueLabel + 20, settings.popup.width);
+            settings.popup.width = Math.max(widthOfTooltipValueLabel + 2 * PulseChart.DefaultTooltipLabelMargin, settings.popup.width);
 
             let minSize: number = settings.dots.minSize;
             let maxSize: number = settings.dots.maxSize;
@@ -322,7 +326,7 @@ module powerbi.extensibility.visual {
                     value: value,
                     categoryIndex: categoryIndex,
                     seriesIndex: series.length,
-                    tooltipInfo: null, // tooltipInfo,
+                    tooltipInfo: null,
                     popupInfo: popupInfo,
                     selected: false,
                     identity: identity,
@@ -392,7 +396,7 @@ module powerbi.extensibility.visual {
                 settings: settings,
                 grouped: grouped,
                 hasHighlights: !!(<any>columns.Value).highlights,
-                widthOfXAxisLabel: widthOfXAxisLabel,
+                widthOfXAxisLabel: PulseChart.DefaultXAxisLabelWidth,
                 widthOfTooltipValueLabel: widthOfTooltipValueLabel,
                 heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
                 runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
@@ -424,14 +428,16 @@ module powerbi.extensibility.visual {
                     yAxisLabel = valueFormatter.formatListAnd(valuesNames);
                 }
             }
-            return { xAxisLabel: xAxisLabel, yAxisLabel: yAxisLabel };
+            return { xAxisLabel, yAxisLabel };
         }
+
         private static getDataPointsFromSeries(series: Series[]): DataPoint[] {
             let dataPointsArray: DataPoint[][] = series.map((d: Series): DataPoint[] => {
                 return d.data.filter((d: DataPoint) => !!d.popupInfo);
             });
             return <DataPoint[]>_.flatten(dataPointsArray);
         }
+
         private static createAxisY(
             commonYScale: LinearScale,
             height: number,
@@ -447,6 +453,7 @@ module powerbi.extensibility.visual {
                 .tickFormat(formatter.format);
             return yAxis;
         }
+
         private static createAxisX(
             isScalar: boolean,
             series: Series[],
@@ -493,6 +500,7 @@ module powerbi.extensibility.visual {
 
             return xAxisProperties;
         }
+
         private static getXAxisScales(
             series: Series[],
             isScalar: boolean,
@@ -506,6 +514,7 @@ module powerbi.extensibility.visual {
                 return PulseChart.createScale(isScalar, [minValue, maxValue], minX, maxX);
             });
         }
+
         private static getXAxisValuesToDisplay(
             scale: TimeScale | LinearScale,
             rotate: boolean,
@@ -563,6 +572,7 @@ module powerbi.extensibility.visual {
 
             return values;
         }
+
         private static getGroupIndex(index: number, grouped: DataViewValueColumnGroup[]): number {
             for (let i: number = 0; i < grouped.length; i++) {
                 if (grouped[i].values && grouped[i].values[0] &&
@@ -574,6 +584,7 @@ module powerbi.extensibility.visual {
 
             return 0;
         }
+
         private static getGapWidths(values: Date[] | number[]): number[] {
             let result: number[] = [];
             for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
@@ -588,6 +599,7 @@ module powerbi.extensibility.visual {
 
             return result;
         }
+
         private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
             let scale: LinearScale | TimeScale;
 
@@ -607,22 +619,18 @@ module powerbi.extensibility.visual {
         public viewport: IViewport;
         public size: IViewport;
         public handleSelectionTimeout: number;
-
         private svg: Selection<any>;
         private chart: Selection<any>;
         private dots: Selection<any>;
         private yAxis: Selection<any>;
         private gaps: Selection<any>;
-
         private animationDot: Selection<any>;
         private lineX: Line;
-        // private animator: IGenericAnimator;
         private animationHandler: PulseAnimator;
         private colors: IColorPalette;
         private rootSelection: UpdateSelection<any>;
         private animationSelection: UpdateSelection<any>;
         private lastSelectedPoint: ISelectionId;
-
         private interactivityService: IInteractivityService;
         private behavior: IPulseChartInteractiveBehavior;
         private settings: PulseChartSettings;
@@ -646,8 +654,8 @@ module powerbi.extensibility.visual {
 
         public init(options: VisualConstructorOptions): void {
             this.margin = PulseChart.DefaultMargin;
-            let host = this.host = options.host;
-            this.interactivityService = createInteractivityService(host);
+            this.host = options.host;
+            this.interactivityService = createInteractivityService(this.host);
             this.behavior = new PulseChartWebBehavior();
 
             let svg: Selection<any> = this.svg = d3.select(options.element)
@@ -655,7 +663,7 @@ module powerbi.extensibility.visual {
                 .classed("pulseChart", true);
 
             this.gaps = svg.append("g").classed(PulseChart.Gaps.class, true);
-            this.yAxis = svg.append("g").classed("y", true).classed("axis", true);
+            this.yAxis = svg.append("g").classed(PulseChart.Y.class, true).classed(PulseChart.Axis.class, true);
             this.chart = svg.append("g").classed(PulseChart.Chart.class, true);
             this.dots = svg.append("g").classed(PulseChart.Dots.class, true);
             this.animationDot = this.dots
@@ -665,7 +673,7 @@ module powerbi.extensibility.visual {
 
             this.animationHandler = new PulseAnimator(this, svg);
 
-            this.colors = host.colorPalette;
+            this.colors = this.host.colorPalette;
         }
 
         public update(options: VisualUpdateOptions): void {
@@ -865,7 +873,7 @@ module powerbi.extensibility.visual {
         }
 
         public render(suppressAnimations: boolean) {
-            let duration: number = PulseChart.DefaultAnimationDuration; // AnimatorCommon.GetAnimationDuration(this.animator, suppressAnimations);
+            let duration: number = PulseChart.DefaultAnimationDuration;
             let data = this.data;
             this.lastSelectedPoint = null;
 
@@ -920,15 +928,12 @@ module powerbi.extensibility.visual {
                 .selectAll(".tick")
                 .selectAll(".axisBox")
                 .data([[]]);
-
             axisBoxUpdateSelection
                 .enter()
                 .insert("rect", "text");
             axisBoxUpdateSelection
                 .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
                 .style("fill", this.data.settings.xAxis.backgroundColor);
-
-
             let tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
             axisBoxUpdateSelection.attr({
                 x: -(this.data.widthOfXAxisLabel / 2),
@@ -1785,6 +1790,5 @@ module powerbi.extensibility.visual {
             this.data = null;
             this.clearAll(true);
         }
-
     }
 }

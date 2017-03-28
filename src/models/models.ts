@@ -39,26 +39,32 @@ module powerbi.extensibility.visual {
         fontSize?: number;
         labelStyle?: any;
     }
+
     export interface PointDataLabelsSettings extends VisualDataLabelsSettings {
         position: PointLabelPosition;
     }
+
     export interface ChartDataLabelsSettings extends PointDataLabelsSettings {
         labelDensity: string;
     }
+
     export interface TooltipData {
         value: string;
         title: string;
         description: string;
         offsetX?: number;
     }
+
     export interface AnimationPosition {
         series: number;
         index: number;
     }
+
     export interface PointXY {
         x: number;
         y: number;
     }
+
     export interface PrimitiveDataPoint
         extends TooltipEnabledDataPoint, SelectableDataPoint, LabelEnabledDataPoint {
 
@@ -71,6 +77,7 @@ module powerbi.extensibility.visual {
         labelSettings: ChartDataLabelsSettings;
         pointColor?: string;
     }
+
     export interface DataPoint extends PrimitiveDataPoint, PointXY {
         groupIndex: number;
         popupInfo?: TooltipData;
@@ -78,17 +85,20 @@ module powerbi.extensibility.visual {
         runnerCounterValue: any;
         runnerCounterFormatString: any;
     }
+
     export interface AxisSettings {
         formatterOptions?: ValueFormatterOptions;
         fontColor: string;
         color: string;
         show: boolean;
     }
+
     export interface AxesLabels {
         x: string;
         y: string;
         y2?: string;
     }
+
     export interface Series {
         name?: string;
         displayName: string;
@@ -100,6 +110,7 @@ module powerbi.extensibility.visual {
         xAxisProperties?: XAxisProperties;
         widthOfGap: number;
     }
+
     export interface ChartData {
         settings: PulseChartSettings;
         columns: DataRoles<DataViewCategoricalColumn>;
@@ -130,12 +141,14 @@ module powerbi.extensibility.visual {
         heightOfTooltipDescriptionTextLine: number;
         runnerCounterHeight: number;
     }
+
     export interface XAxisProperties {
         values: (Date | number)[];
         scale: TimeScale;
         axis: Axis;
         rotate: boolean;
     }
+
     export interface DataRoles<T> {
         Timestamp?: T;
         Category?: T;
@@ -145,12 +158,14 @@ module powerbi.extensibility.visual {
         EventSize?: T;
         RunnerCounter?: T;
     }
+
     export interface ElementDimensions {
         x: number;
         y: number;
         width: number;
         height: number;
     }
+
     export interface BehaviorOptions {
         selection: Selection<any>;
         clearCatcher: Selection<any>;
@@ -158,9 +173,11 @@ module powerbi.extensibility.visual {
         hasHighlights: boolean;
         onSelectCallback(): void;
     }
+
     export interface IPulseChartInteractiveBehavior extends IInteractiveBehavior {
         setSelection(d: DataPoint): void;
     }
+
     export interface TooltipSettings {
         dataPointColor: string;
         marginTop: number;

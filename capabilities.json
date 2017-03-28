@@ -64,10 +64,6 @@
                     }
                 }, {
                     "bind": {
-                        "to": "EventDescription"
-                    }
-                }, {
-                    "bind": {
                         "to": "RunnerCounter"
                     }
                 }],

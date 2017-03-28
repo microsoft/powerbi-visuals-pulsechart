@@ -30,7 +30,6 @@ module powerbi.extensibility.visual.test {
     import VisualBuilderBase = powerbi.extensibility.utils.test.VisualBuilderBase;
 
     // PulseChart1459209850231
-    import VisualPlugin = powerbi.extensibility.visual.PulseChart1459209850231;
     import VisualClass = powerbi.extensibility.visual.PulseChart1459209850231.PulseChart;
     export class PulseChartBuilder extends VisualBuilderBase<VisualClass> {
         constructor(width: number, height: number) {
