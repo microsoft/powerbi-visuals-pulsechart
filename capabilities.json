@@ -1,0 +1,460 @@
+{
+    "dataRoles": [{
+        "displayName": "Timestamp",
+        "name": "Timestamp",
+        "kind": "Grouping"
+    }, {
+        "displayName": "Value",
+        "name": "Value",
+        "kind": "Measure"
+    }, {
+        "displayName": "Event Title",
+        "name": "EventTitle",
+        "kind": "GroupingOrMeasure"
+    }, {
+        "displayName": "Event Description",
+        "name": "EventDescription",
+        "kind": "GroupingOrMeasure"
+    }, {
+        "displayName": "Event Size",
+        "name": "EventSize",
+        "kind": "Measure"
+    }, {
+        "displayName": "Runner Counter",
+        "name": "RunnerCounter",
+        "kind": "GroupingOrMeasure"
+    }],
+    "dataViewMappings": [{
+        "conditions": [{
+            "Timestamp": {
+                "max": 1
+            },
+            "Value": {
+                "max": 1
+            },
+            "Category": {
+                "max": 1
+            },
+            "EventTitle": {
+                "max": 1
+            },
+            "EventDescription": {
+                "max": 1
+            },
+            "EventSize": {
+                "max": 1
+            },
+            "RunnerCounter": {
+                "max": 1
+            }
+        }],
+        "categorical": {
+            "categories": {
+                "select": [{
+                    "for": {
+                        "in": "Timestamp"
+                    }
+                }, {
+                    "bind": {
+                        "to": "EventTitle"
+                    }
+                }, {
+                    "bind": {
+                        "to": "EventDescription"
+                    }
+                }, {
+                    "bind": {
+                        "to": "RunnerCounter"
+                    }
+                }],
+                "dataReductionAlgorithm": {
+                    "top": {
+                        "count": 10000
+                    }
+                }
+            },
+            "values": {
+                "group": {
+                    "by": "Category",
+                    "select": [{
+                        "bind": {
+                            "to": "Value"
+                        }
+                    }, {
+                        "bind": {
+                            "to": "EventSize"
+                        }
+                    }],
+
+                    "dataReductionAlgorithm": {
+                        "top": {}
+                    }
+                }
+            }
+        }
+    }],
+    "objects": {
+        "series": {
+            "displayName": "Series",
+            "description": "Series",
+            "properties": {
+                "fill": {
+                    "displayName": "Fill",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "width": {
+                    "displayName": "Width",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "gaps": {
+            "displayName": "Gaps",
+            "description": "Gaps",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "transparency": {
+                    "displayName": "Visible gaps",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "general": {
+            "displayName": "General",
+            "properties": {
+                "fill": {
+                    "displayName": "Background color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "popup": {
+            "displayName": "Popup",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "alwaysOnTop": {
+                    "displayName": "Always on top",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "width": {
+                    "displayName": "Width",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "height": {
+                    "displayName": "Height",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color": {
+                    "displayName": "Fill",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "fontSize": {
+                    "displayName": "Text size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                },
+                "fontColor": {
+                    "displayName": "Text color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "showTime": {
+                    "displayName": "Show time",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "showTitle": {
+                    "displayName": "Show title",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "timeColor": {
+                    "displayName": "Time color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "timeFill": {
+                    "displayName": "Time fill",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "dots": {
+            "displayName": "Dots",
+            "properties": {
+                "color": {
+                    "displayName": "Fill",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "minSize": {
+                    "displayName": "Min Size",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "maxSize": {
+                    "displayName": "Max Size",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "size": {
+                    "displayName": "Default Size",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "transparency": {
+                    "displayName": "Transparency",
+                    "type": {
+                        "numeric": true
+                    }
+                }
+            }
+        },
+        "xAxis": {
+            "displayName": "X Axis",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "position": {
+                    "displayName": "Position",
+                    "type": {
+                        "enumeration": [{
+                            "value": "0",
+                            "displayName": "Center"
+                        }, {
+                            "value": "1",
+                            "displayName": "Bottom"
+                        }]
+                    }
+                },
+                "fontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "color": {
+                    "displayName": "Axis Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "backgroundColor": {
+                    "displayName": "Background Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "yAxis": {
+            "displayName": "Y Axis",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "fontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "color": {
+                    "displayName": "Axis Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "playback": {
+            "displayName": "Playback",
+            "properties": {
+                "autoplay": {
+                    "displayName": "Autoplay",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "playSpeed": {
+                    "displayName": "Speed (dots/sec)",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "pauseDuration": {
+                    "displayName": "Pause Duration",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "autoplayPauseDuration": {
+                    "displayName": "Start Delay",
+                    "type": {
+                        "numeric": true
+                    }
+                },
+                "color": {
+                    "displayName": "Buttons Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "runnerCounter": {
+            "displayName": "Runner Counter",
+            "properties": {
+                "show": {
+                    "displayName": "Show",
+                    "type": {
+                        "bool": true
+                    }
+                },
+                "label": {
+                    "displayName": "Label",
+                    "type": {
+                        "text": true
+                    }
+                },
+                "position": {
+                    "displayName": "Position",
+                    "type": {
+                        "enumeration": [{
+                            "value": "0",
+                            "displayName": "Top Left"
+                        }, {
+                            "value": "1",
+                            "displayName": "Top Right"
+                        }]
+                    }
+                },
+                "fontSize": {
+                    "displayName": "Text Size",
+                    "type": {
+                        "formatting": {
+                            "fontSize": true
+                        }
+                    }
+                },
+                "fontColor": {
+                    "displayName": "Font Color",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "sorting": {
+        "implicit": {
+            "clauses": [{
+                "role": "Timestamp",
+                "direction": 1
+            }]
+        }
+    },
+    "supportsHighlight": true
+}
