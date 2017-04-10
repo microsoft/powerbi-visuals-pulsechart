@@ -82,6 +82,46 @@ module powerbi.extensibility.visual.test {
                     }
                 ], columnNames).build();
         }
+
+        public getDataViewWithSingleDate(columnNames?: string[]): powerbi.DataView {
+            return this.createCategoricalDataViewBuilder([
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnTimestamp,
+                        format: "G",
+                        type: ValueType.fromDescriptor({ dateTime: true }),
+                        roles: { Timestamp: true }
+                    },
+                    values: [this.valuesTimestamp[0], this.valuesTimestamp[0]]
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventTitle,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventTitle: true }
+                    },
+                    values: [this.valuesEvents.map(x => x && x.title)[20]]
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventDescription,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventDescription: true }
+                    },
+                    values: [this.valuesEvents.map(x => x && x.description)[20]]
+                }
+            ], [
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnValue,
+                        type: ValueType.fromDescriptor({ integer: true }),
+                        roles: { Value: true }
+                    },
+                    values: [this.valuesValue[0]]
+                }
+            ], columnNames).build();
+        }
+
         private generateEvents(valuesCount: number, eventCount: number): any[] {
             let startIndex = valuesCount / eventCount;
             let eventIndexesSpace = (valuesCount - startIndex) / eventCount;
