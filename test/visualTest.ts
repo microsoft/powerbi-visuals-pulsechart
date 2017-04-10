@@ -39,7 +39,8 @@ namespace powerbi.extensibility.visual.test {
     describe("PulseChartTests", () => {
         let visualBuilder: PulseChartBuilder,
             defaultDataViewBuilder: PulseChartData,
-            dataView: DataView;
+            dataView: DataView,
+            dataViewSingleDate: DataView;
 
         beforeEach(() => {
             visualBuilder = new PulseChartBuilder(1000, 500);
@@ -201,6 +202,25 @@ namespace powerbi.extensibility.visual.test {
                         });
 
                     });
+                });
+            });
+
+            describe("selection with single date", () => {
+                beforeEach(() => {
+                    dataViewSingleDate = defaultDataViewBuilder.getDataViewWithSingleDate();
+                });
+
+                it("select click", (done) => {
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        expect( () =>  {
+                            //apply filtered date
+                            visualBuilder.updateRenderTimeout(dataViewSingleDate, () => {
+                                const clickPoint: JQuery = visualBuilder.mainElement.first();
+                                clickPoint.click();
+                                done();
+                            }, DefaultTimeout);
+                        }).not.toThrow();
+                    }, DefaultTimeout);
                 });
             });
         });
