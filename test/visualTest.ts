@@ -212,19 +212,14 @@ namespace powerbi.extensibility.visual.test {
 
                 it("select click", (done) => {
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        //apply filtered date
-                        try {
+                        expect( () =>  {
+                            //apply filtered date
                             visualBuilder.updateRenderTimeout(dataViewSingleDate, () => {
                                 const clickPoint: JQuery = visualBuilder.mainElement.first();
                                 clickPoint.click();
-                                setTimeout(() => {
-                                    done();
-                                }, DefaultTimeout);
+                                done();
                             }, DefaultTimeout);
-                        }
-                        catch(exception){
-                            expect(exception).not.toBe("Cannot read property \'0\' of undefined");
-                        }
+                        }).not.toThrow();
                     }, DefaultTimeout);
                 });
             });
