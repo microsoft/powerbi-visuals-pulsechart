@@ -701,14 +701,13 @@ module powerbi.extensibility.visual {
             let width = this.getChartWidth();
             this.calculateXAxisProperties(width);
 
+            let height = this.getChartHeight(this.data.settings.xAxis.show
+                && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
+            this.calculateYAxisProperties(height);
             if (this.data.xScale.ticks(undefined).length < 2) {
                 this.clearAll(true);
                 return;
             }
-
-            let height = this.getChartHeight(this.data.settings.xAxis.show
-                && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
-            this.calculateYAxisProperties(height);
 
             this.size = { width: width, height: height };
             this.updateElements();
