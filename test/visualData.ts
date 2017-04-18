@@ -83,6 +83,12 @@ module powerbi.extensibility.visual.test {
                 ], columnNames).build();
         }
 
+        public getDataViewWithStringDate(columnNames?: string[]): powerbi.DataView {
+            let defaultData: powerbi.DataView = this.getDataView();
+            defaultData.categorical.categories[0].values = defaultData.categorical.categories[0].values.map((v: Date) => v.toISOString());
+            return defaultData;
+        }
+
         public getDataViewWithSingleDate(columnNames?: string[]): powerbi.DataView {
             return this.createCategoricalDataViewBuilder([
                 {
