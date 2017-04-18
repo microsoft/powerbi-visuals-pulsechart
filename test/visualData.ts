@@ -82,6 +82,13 @@ module powerbi.extensibility.visual.test {
                     }
                 ], columnNames).build();
         }
+
+        public getDataViewWithStringDate(columnNames?: string[]): powerbi.DataView {
+            let defaultData: powerbi.DataView = this.getDataView();
+            defaultData.categorical.categories[0].values = defaultData.categorical.categories[0].values.map((v: Date) => v.toISOString());
+            return defaultData;
+        }
+
         private generateEvents(valuesCount: number, eventCount: number): any[] {
             let startIndex = valuesCount / eventCount;
             let eventIndexesSpace = (valuesCount - startIndex) / eventCount;

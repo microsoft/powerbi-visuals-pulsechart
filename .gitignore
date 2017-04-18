@@ -7,3 +7,5 @@ dist
 typings
 .api
 *.log
+
+.idea/*

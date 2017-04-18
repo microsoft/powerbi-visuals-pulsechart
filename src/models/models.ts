@@ -49,7 +49,7 @@ module powerbi.extensibility.visual {
     }
 
     export interface TooltipData {
-        value: string;
+        value: string | Date;
         title: string;
         description: string;
         offsetX?: number;

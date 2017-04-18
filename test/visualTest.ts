@@ -29,6 +29,8 @@
 namespace powerbi.extensibility.visual.test {
     import PulseChartData = powerbi.extensibility.visual.test.PulseChartData;
     import PulseChartBuilder = powerbi.extensibility.visual.test.PulseChartBuilder;
+    import VisualClass = powerbi.extensibility.visual.PulseChart1459209850231.PulseChart;
+    import mocks = powerbi.extensibility.utils.test.mocks;
 
     // powerbi.extensibility.utils.test
     import helpers = powerbi.extensibility.utils.test.helpers;
@@ -39,7 +41,8 @@ namespace powerbi.extensibility.visual.test {
     describe("PulseChartTests", () => {
         let visualBuilder: PulseChartBuilder,
             defaultDataViewBuilder: PulseChartData,
-            dataView: DataView;
+            dataView: DataView,
+            dataViewForCategoricalColumn: DataView;
 
         beforeEach(() => {
             visualBuilder = new PulseChartBuilder(1000, 500);
@@ -202,6 +205,20 @@ namespace powerbi.extensibility.visual.test {
 
                     });
                 });
+            });
+        });
+
+        describe("PulseChart.converter", () => {
+            beforeEach(() => {
+                dataViewForCategoricalColumn = defaultDataViewBuilder.getDataViewWithStringDate();
+            });
+
+            it("date values provided as string should be converted to Date type", () => {
+                let host: IVisualHost = mocks.createVisualHost();
+
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+
+                expect(convertedData.series[0].data.every(d => d.categoryValue instanceof Date)).toBeTruthy();
             });
         });
     });

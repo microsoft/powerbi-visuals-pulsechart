@@ -270,7 +270,15 @@ module powerbi.extensibility.visual {
             let dataPoints: DataPoint[] = [];
 
             for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
-                let categoryValue = categoryValues[categoryIndex];
+                let categoryValue: string | Date = categoryValues[categoryIndex];
+                if (_.isString(categoryValue)) {
+                    let date: Date = new Date(categoryValue);
+
+                    if (!isNaN(date.getTime())) {
+                        categoryValue = date;
+                    }
+                }
+
                 let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
                 let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && columns.RunnerCounter.values[categoryIndex];
                 let identity: ISelectionId = host.createSelectionIdBuilder()
@@ -333,7 +341,7 @@ module powerbi.extensibility.visual {
                     key: JSON.stringify({ ser: identity.getKey(), catIdx: categoryIndex }),
                     labelFill: dataPointLabelSettings.labelColor,
                     labelSettings: dataPointLabelSettings,
-                    x: categoryValue,
+                    x: <any>categoryValue,
                     y: <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0,
                     pointColor: settings.series.fill,
                     groupIndex: PulseChart.getGroupIndex(categoryIndex, grouped),
@@ -1670,7 +1678,7 @@ module powerbi.extensibility.visual {
                 .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
                     ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight + 3))
                     : PulseChart.DefaultTooltipSettings.timeHeight - 3)
-                .text((d: DataPoint) => d.popupInfo.value);
+                .text((d: DataPoint) => d.popupInfo.value.toString());
 
             let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
             title.enter().append("text").classed(PulseChart.TooltipTitle.class, true);
