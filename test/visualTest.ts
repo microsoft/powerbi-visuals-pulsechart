@@ -231,7 +231,7 @@ namespace powerbi.extensibility.visual.test {
 
         describe("PulseChart.converter", () => {
             beforeEach(() => {
-                dataViewForCategoricalColumn = defaultDataViewBuilder.getDataViewWithStringDate();
+                dataViewForCategoricalColumn = defaultDataViewBuilder.getDataView(null, true);
             });
 
             it("date values provided as string should be converted to Date type", () => {
@@ -239,7 +239,7 @@ namespace powerbi.extensibility.visual.test {
 
                 let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
 
-                expect(convertedData.series[0].data.every(d => d.categoryValue instanceof Date)).toBeTruthy();
+                expect(convertedData.categories.every(d => d instanceof Date)).toBeTruthy();
             });
         });
     });
