@@ -44,7 +44,13 @@ module powerbi.extensibility.visual.test {
         public valuesTimestamp =  testHelpers.getRandomUniqueSortedDates(100, new Date(2014, 0, 1), new Date(2015, 5, 10));
         public valuesValue: number[] = helpers.getRandomNumbers(this.valuesTimestamp.length, 100, 1000);
         public valuesEvents: any[] = this.generateEvents(this.valuesValue.length, 5);
-        public getDataView(columnNames?: string[]): powerbi.DataView {
+        public getDataView(columnNames?: string[], isDateAsString?: boolean): powerbi.DataView {
+            let dateValues: string[] | Date[] = this.valuesTimestamp;
+
+            if (isDateAsString) {
+                dateValues = dateValues.map((v: Date) => v.toISOString());
+            }
+
             return this.createCategoricalDataViewBuilder([
                 {
                     source: {
@@ -53,7 +59,7 @@ module powerbi.extensibility.visual.test {
                         type: ValueType.fromDescriptor({ dateTime: true }),
                         roles: { Timestamp: true }
                     },
-                    values: this.valuesTimestamp
+                    values: dateValues
                 },
                 {
                     source: {
@@ -81,12 +87,6 @@ module powerbi.extensibility.visual.test {
                         values: this.valuesValue
                     }
                 ], columnNames).build();
-        }
-
-        public getDataViewWithStringDate(columnNames?: string[]): powerbi.DataView {
-            let defaultData: powerbi.DataView = this.getDataView();
-            defaultData.categorical.categories[0].values = defaultData.categorical.categories[0].values.map((v: Date) => v.toISOString());
-            return defaultData;
         }
 
         public getDataViewWithSingleDate(columnNames?: string[]): powerbi.DataView {
