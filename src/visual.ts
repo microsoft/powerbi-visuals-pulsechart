@@ -276,6 +276,7 @@ module powerbi.extensibility.visual {
 
                     if (!isNaN(date.getTime())) {
                         categoryValue = date;
+                        categoryValues[categoryIndex] = date;
                     }
                 }
 
