@@ -1784,7 +1784,9 @@ module powerbi.extensibility.visual {
         }
 
         private static parseSettings(dataView: DataView): PulseChartSettings {
-            return PulseChartSettings.parse<PulseChartSettings>(dataView);
+            let settings: PulseChartSettings = PulseChartSettings.parse<PulseChartSettings>(dataView);
+            settings.popup.fontSize = parseInt(<any>settings.popup.fontSize);
+            return settings;
         }
 
         public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
