@@ -192,6 +192,7 @@ module powerbi.extensibility.visual {
                 return null;
             }
             let columns: DataRoles<DataViewCategoricalColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
+            let valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
             let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
             if (!timeStampColumn) {
@@ -203,11 +204,11 @@ module powerbi.extensibility.visual {
 
             let categoryValues: any[] = timeStampColumn.values;
 
-            if (!categoryValues || _.isEmpty(dataView.categorical.values) || !columns.Value || _.isEmpty(columns.Value.values)) {
+            if (!categoryValues || _.isEmpty(dataView.categorical.values) || !valuesColumn || _.isEmpty(valuesColumn.values)) {
                 return null;
             }
 
-            let minValuesValue = Math.min.apply(null, columns.Value.values), maxValuesValue = Math.max.apply(null, columns.Value.values);
+            let minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
             let minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
             settings.xAxis.dateFormat =
                 (maxCategoryValue - minCategoryValue < (24 * 60 * 60 * 1000)
@@ -222,7 +223,7 @@ module powerbi.extensibility.visual {
             settings.yAxis.formatterOptions = {
                 value: minValuesValue,
                 value2: maxValuesValue,
-                format: valueFormatter.getFormatString(columns.Value.source, null)
+                format: valueFormatter.getFormatString(valuesColumn.source, null)
             };
 
             if (isScalar) {
@@ -252,6 +253,7 @@ module powerbi.extensibility.visual {
             let xAxisCardProperties: DataViewObject = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
 
             let hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
+            let hasHighlights: boolean = !!valuesColumn.highlights;
 
             let dataPointLabelSettings = PulseChartDataLabelUtils.getDefaultPulseChartLabelSettings();
             let gapWidths = PulseChart.getGapWidths(categoryValues);
@@ -350,6 +352,7 @@ module powerbi.extensibility.visual {
                     runnerCounterValue: runnerCounterValue,
                     runnerCounterFormatString: runnerCounterFormatString,
                     specificIdentity: undefined,
+                    highlight: hasHighlights && !!(valuesColumn.highlights[categoryIndex])
                 };
 
                 dataPoints.push(dataPoint);
@@ -404,7 +407,7 @@ module powerbi.extensibility.visual {
                 categories: categoryValues,
                 settings: settings,
                 grouped: grouped,
-                hasHighlights: !!(<any>columns.Value).highlights,
+                hasHighlights: !!valuesColumn.highlights,
                 widthOfXAxisLabel: PulseChart.DefaultXAxisLabelWidth,
                 widthOfTooltipValueLabel: widthOfTooltipValueLabel,
                 heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
@@ -1406,7 +1409,8 @@ module powerbi.extensibility.visual {
                 dotSize: number = this.data.settings.dots.size,
                 isAnimated: boolean = this.animationHandler.isAnimated,
                 position: AnimationPosition = this.animationHandler.position,
-                hasSelection: boolean = this.interactivityService.hasSelection();
+                hasSelection: boolean = this.interactivityService.hasSelection(),
+                hasHighlights: boolean = this.data.hasHighlights;
 
             let selection: UpdateSelection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
                 .select(nodeParent.selector)
@@ -1431,7 +1435,7 @@ module powerbi.extensibility.visual {
                 .attr("r", (d: DataPoint) => d.eventSize || dotSize)
                 .style("fill", dotColor)
                 .style("opacity", (d: DataPoint) => {
-                    return pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && false);
+                    return pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights);
                 })
                 .style("cursor", "pointer");
 
