@@ -1250,7 +1250,6 @@ module powerbi.extensibility.visual {
             this.animationDot
                 .style("display", "inline")
                 .style("fill", this.data.settings.dots.color)
-                .style("opacity", this.dotOpacity)
                 .attr("r", size);
         }
 
@@ -1435,7 +1434,8 @@ module powerbi.extensibility.visual {
                 .attr("r", (d: DataPoint) => d.eventSize || dotSize)
                 .style("fill", dotColor)
                 .style("opacity", (d: DataPoint) => {
-                    return pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights);
+                    let isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights) === 1;
+                    return isSelected ? this.dotOpacity : this.dotOpacity / 2;
                 })
                 .style("cursor", "pointer");
 
@@ -1682,7 +1682,7 @@ module powerbi.extensibility.visual {
                 .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
                     ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight + 3))
                     : PulseChart.DefaultTooltipSettings.timeHeight - 3)
-                .text((d: DataPoint) => d.popupInfo.value.toString());
+                .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
             let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
             title.enter().append("text").classed(PulseChart.TooltipTitle.class, true);
