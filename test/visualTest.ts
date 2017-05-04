@@ -84,6 +84,23 @@ namespace powerbi.extensibility.visual.test {
                         done();
                     }, DefaultTimeout);
                 });
+
+                it("time data should fit time box", (done) => {
+                    let view: DataView = defaultDataViewBuilder.getDataViewWithNumbersInsteadDate();
+
+                    visualBuilder.updateFlushAllD3Transitions(view);
+                    expect(visualBuilder.tooltipContainer.first().get(0)).toBeDefined();
+                    const clickPoint: JQuery = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
+                    clickPoint.d3Click(5, 5);
+
+                    setTimeout(() => {
+                        debugger;
+                        const timeRectWidth: number = (<SVGPathElement>d3.select(".tooltipTimeRect")[0][0]).getClientRects()[0].width,
+                            dataWidth: number = (<SVGPathElement>d3.select(".tooltipTime")[0][0]).getClientRects()[0].width;
+                        expect(dataWidth).toBeLessThanOrEqual(timeRectWidth);
+                        done();
+                    }, DefaultTimeout);
+                });
             });
 
             describe("xAxis", () => {
@@ -225,6 +242,28 @@ namespace powerbi.extensibility.visual.test {
                             }, DefaultTimeout);
                         }).not.toThrow();
                     }, DefaultTimeout);
+                });
+            });
+
+            describe("dots rendering", () => {
+                const transparency: number = 50,
+                    opacity: number = 1 - (transparency / 100);
+
+                beforeEach(() => {
+                    dataView.metadata.objects = {
+                        dots: {
+                            transparency: transparency
+                        }
+                    };
+                });
+
+                it("should respond on transparancy change", (done) => {
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        helpers.renderTimeout(() => {
+                            expect(visualBuilder.dotsContainerDot.first().prop("style")["opacity"]).toBe(opacity.toString());
+                            done();
+                        });
+                    });
                 });
             });
         });

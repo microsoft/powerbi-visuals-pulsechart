@@ -89,6 +89,45 @@ module powerbi.extensibility.visual.test {
                 ], columnNames).build();
         }
 
+        public getDataViewWithNumbersInsteadDate(columnNames?: string[], isDateAsString?: boolean): powerbi.DataView {
+            return this.createCategoricalDataViewBuilder([
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnTimestamp,
+                        format: "G",
+                        type: ValueType.fromDescriptor({ dateTime: true }),
+                        roles: { Timestamp: true }
+                    },
+                    values: this.valuesValue
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventTitle,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventTitle: true }
+                    },
+                    values: this.valuesEvents.map(x => x && x.title)
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventDescription,
+                        type: ValueType.fromDescriptor({ text: true }),
+                        roles: { EventDescription: true }
+                    },
+                    values: this.valuesEvents.map(x => x && x.description)
+                }
+            ], [
+                    {
+                        source: {
+                            displayName: PulseChartData.ColumnValue,
+                            type: ValueType.fromDescriptor({ integer: true }),
+                            roles: { Value: true }
+                        },
+                        values: this.valuesValue
+                    }
+                ], columnNames).build();
+        }
+
         public getDataViewWithSingleDate(columnNames?: string[]): powerbi.DataView {
             return this.createCategoricalDataViewBuilder([
                 {
