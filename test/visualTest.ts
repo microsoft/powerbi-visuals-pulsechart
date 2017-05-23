@@ -133,7 +133,7 @@ namespace powerbi.extensibility.visual.test {
                         let chartWidth: number = visualBuilder.chart[0].getBoundingClientRect().width;
                         let pathWidth: number = pathElem[0].getBoundingClientRect().width;
 
-                        expect(pathWidth).toBeGreaterThan(chartWidth / 10);
+                        expect(pathWidth).toBeGreaterThan(30);
                         done();
                     }, 3000);
                 });

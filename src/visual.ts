@@ -146,7 +146,7 @@ module powerbi.extensibility.visual {
                 case XAxisDateFormat.DateOnly: return dateFormat;
                 case XAxisDateFormat.TimeOnly: return "H:mm";
                 default: return "";
-            };
+            }
         }
 
         private static GetFullWidthOfDateFormat(dateFormat: string, textProperties: TextProperties): number {
@@ -674,13 +674,13 @@ module powerbi.extensibility.visual {
                 .append("svg")
                 .classed("pulseChart", true);
 
-            this.gaps = svg.append("g").classed(PulseChart.Gaps.class, true);
-            this.yAxis = svg.append("g").classed(PulseChart.Y.class, true).classed(PulseChart.Axis.class, true);
-            this.chart = svg.append("g").classed(PulseChart.Chart.class, true);
-            this.dots = svg.append("g").classed(PulseChart.Dots.class, true);
+            this.gaps = svg.append("g").classed(PulseChart.Gaps.className, true);
+            this.yAxis = svg.append("g").classed(PulseChart.Y.className, true).classed(PulseChart.Axis.className, true);
+            this.chart = svg.append("g").classed(PulseChart.Chart.className, true);
+            this.dots = svg.append("g").classed(PulseChart.Dots.className, true);
             this.animationDot = this.dots
                 .append("circle")
-                .classed(PulseChart.AnimationDot.class, true)
+                .classed(PulseChart.AnimationDot.className, true)
                 .style("display", "none");
 
             this.animationHandler = new PulseAnimator(this, svg);
@@ -923,14 +923,14 @@ module powerbi.extensibility.visual {
                 axisBoxUpdateSelection: UpdateSelection<any>,
                 color: string = data.settings.xAxis.color,
                 fontColor: string = data.settings.xAxis.fontColor;
-            axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selector);
+            axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selectorName);
             axisNodeSelection.selectAll("*").remove();
             axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
             axisNodeUpdateSelection
                 .enter()
-                .insert("g", `g.${PulseChart.LineContainer.class}`)
-                .classed(PulseChart.XAxisNode.class, true);
+                .insert("g", `g.${PulseChart.LineContainer.className}`)
+                .classed(PulseChart.XAxisNode.className, true);
             axisNodeUpdateSelection
                 .each(function (series: Series) {
                     d3.select(this).call(series.xAxisProperties.axis.orient("bottom"));
@@ -1035,25 +1035,24 @@ module powerbi.extensibility.visual {
                 series: Series[] = this.data.series;
 
             this.rootSelection = this.chart
-                .selectAll(PulseChart.LineNode.selector)
+                .selectAll(PulseChart.LineNode.selectorName)
                 .data(series);
 
             const lineNode: Selection<any> = this.rootSelection
                 .enter()
                 .append("g")
-                .classed(PulseChart.LineNode.class, true);
+                .classed(PulseChart.LineNode.className, true);
 
             lineNode
                 .append("g")
-                .classed(PulseChart.LineContainer.class, true);
+                .classed(PulseChart.LineContainer.className, true);
 
             lineNode
                 .append("g")
-                .classed(PulseChart.TooltipContainer.class, true);
-
+                .classed(PulseChart.TooltipContainer.className, true);
             lineNode
                 .append("g")
-                .classed(PulseChart.DotsContainer.class, true);
+                .classed(PulseChart.DotsContainer.className, true);
 
             if (this.animationHandler.isAnimated) {
                 this.showAnimationDot();
@@ -1077,13 +1076,13 @@ module powerbi.extensibility.visual {
 
             let selection: UpdateSelection<any> = rootSelection
                 .filter((d, index) => !isAnimated || index < limit)
-                .select(nodeParent.selector)
-                .selectAll(node.selector).data(d => [d]);
+                .select(nodeParent.selectorName)
+                .selectAll(node.selectorName).data(d => [d]);
 
             selection
                 .enter()
                 .append("path")
-                .classed(node.class, true);
+                .classed(node.className, true);
 
             selection
                 .style({
@@ -1105,12 +1104,12 @@ module powerbi.extensibility.visual {
 
             this.animationSelection = rootSelection.filter((d, index) => {
                 return index === limit;
-            }).select(nodeParent.selector).selectAll(node.selector).data((d: Series) => [d]);
+            }).select(nodeParent.selectorName).selectAll(node.selectorName).data((d: Series) => [d]);
 
             this.animationSelection
                 .enter()
                 .append("path")
-                .classed(node.class, true);
+                .classed(node.className, true);
 
             this.animationSelection
                 .style({
@@ -1322,7 +1321,7 @@ module powerbi.extensibility.visual {
             if (this.interactivityService) {
                 this.interactivityService.clearSelection();
             }
-            this.chart.selectAll(PulseChart.Tooltip.selector).remove();
+            this.chart.selectAll(PulseChart.Tooltip.selectorName).remove();
         }
 
         private getDatapointFromPosition(position: AnimationPosition): DataPoint {
@@ -1412,8 +1411,8 @@ module powerbi.extensibility.visual {
                 hasHighlights: boolean = this.data.hasHighlights;
 
             let selection: UpdateSelection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
-                .select(nodeParent.selector)
-                .selectAll(node.selector)
+                .select(nodeParent.selectorName)
+                .selectAll(node.selectorName)
                 .data((d: Series, seriesIndex: number) => {
                     return _.filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
                         if (isAnimated && (seriesIndex === position.series) && (valueIndex > position.index)) {
@@ -1426,7 +1425,7 @@ module powerbi.extensibility.visual {
             selection
                 .enter()
                 .append("circle")
-                .classed(node.class, true);
+                .classed(node.className, true);
 
             selection
                 .attr("cx", (d: DataPoint) => xScale(d.categoryValue))
@@ -1476,7 +1475,7 @@ module powerbi.extensibility.visual {
                 width: 3
             }];
 
-            gapsSelection = this.gaps.selectAll(PulseChart.Gap.selector)
+            gapsSelection = this.gaps.selectAll(PulseChart.Gap.selectorName)
                 .data(series.slice(0, series.length - 1));
 
             gapsEnterSelection = gapsSelection
@@ -1498,7 +1497,7 @@ module powerbi.extensibility.visual {
                     return SVGUtil.translate(x, 0);
                 });
 
-            gapNodeSelection = gapsSelection.selectAll(PulseChart.GapNode.selector)
+            gapNodeSelection = gapsSelection.selectAll(PulseChart.GapNode.selectorName)
                 .data(gaps);
 
             gapNodeSelection
@@ -1510,9 +1509,9 @@ module powerbi.extensibility.visual {
                     height: (gap: IRect) => gap.height,
                     width: (gap: IRect) => gap.width
                 })
-                .classed(PulseChart.GapNode.class, true);
+                .classed(PulseChart.GapNode.className, true);
 
-            gapsEnterSelection.classed(PulseChart.Gap.class, true);
+            gapsEnterSelection.classed(PulseChart.Gap.className, true);
 
             gapsSelection
                 .exit()
@@ -1552,7 +1551,7 @@ module powerbi.extensibility.visual {
                 return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
             };
 
-            let tooltipRoot: UpdateSelection<any> = rootSelection.select(nodeParent.selector).selectAll(node.selector)
+            let tooltipRoot: UpdateSelection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
                 .data(d => {
                     return _.filter(d.data, (value: DataPoint) => this.isPopupShow(value));
                 });
@@ -1560,7 +1559,7 @@ module powerbi.extensibility.visual {
             tooltipRoot
                 .enter()
                 .append("g")
-                .classed(node.class, true);
+                .classed(node.className, true);
 
             tooltipRoot
                 .attr("transform", (d: DataPoint) => {
@@ -1570,8 +1569,8 @@ module powerbi.extensibility.visual {
                     return SVGUtil.translate(x + d.popupInfo.offsetX, y);
                 });
 
-            let tooltipRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipRect.selector).data(d => [d]);
-            tooltipRect.enter().append("path").classed(PulseChart.TooltipRect.class, true);
+            let tooltipRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipRect.selectorName).data(d => [d]);
+            tooltipRect.enter().append("path").classed(PulseChart.TooltipRect.className, true);
             tooltipRect
                 .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
                 .style("fill", this.data.settings.popup.color)
@@ -1597,8 +1596,8 @@ module powerbi.extensibility.visual {
                     return line(path as DataPoint[]);
                 });
 
-            let tooltipTriangle: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selector).data(d => [d]);
-            tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.class, true);
+            let tooltipTriangle: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selectorName).data(d => [d]);
+            tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.className, true);
             tooltipTriangle
                 .style("fill", this.data.settings.popup.color)
                 .attr("d", (d: DataPoint) => {
@@ -1620,8 +1619,8 @@ module powerbi.extensibility.visual {
                 })
                 .style("stroke-width", "1px");
 
-            let tooltipLine: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipLine.selector).data(d => [d]);
-            tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.class, true);
+            let tooltipLine: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipLine.selectorName).data(d => [d]);
+            tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.className, true);
             tooltipLine
                 .style("fill", this.data.settings.popup.color)
                 .style("stroke", this.data.settings.popup.color)
@@ -1641,8 +1640,8 @@ module powerbi.extensibility.visual {
                     return line(path as DataPoint[]);
                 });
 
-            let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selector).data(d => [d]);
-            timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.class, true);
+            let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
+            timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.className, true);
             timeRect
                 .style("fill", this.data.settings.popup.timeFill)
                 .style("display", showTimeDisplayProperty)
@@ -1672,8 +1671,8 @@ module powerbi.extensibility.visual {
                     return line(path as DataPoint[]);
                 });
 
-            let time: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTime.selector).data(d => [d]);
-            time.enter().append("text").classed(PulseChart.TooltipTime.class, true);
+            let time: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
+            time.enter().append("text").classed(PulseChart.TooltipTime.className, true);
             time
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()), null)
                 .style("display", showTimeDisplayProperty)
@@ -1684,8 +1683,8 @@ module powerbi.extensibility.visual {
                     : PulseChart.DefaultTooltipSettings.timeHeight - 3)
                 .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
-            let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selector).data(d => [d]);
-            title.enter().append("text").classed(PulseChart.TooltipTitle.class, true);
+            let title: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
+            title.enter().append("text").classed(PulseChart.TooltipTitle.className, true);
             title
                 .style("display", showTitleDisplayProperty)
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties()), null)
@@ -1720,8 +1719,8 @@ module powerbi.extensibility.visual {
                 };
             };
 
-            let description = tooltipRoot.selectAll(PulseChart.TooltipDescription.selector).data(d => [d]);
-            description.enter().append("text").classed(PulseChart.TooltipDescription.class, true);
+            let description = tooltipRoot.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
+            description.enter().append("text").classed(PulseChart.TooltipDescription.className, true);
             description
                 .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)), null)
                 .style("fill", this.data.settings.popup.fontColor)
@@ -1768,7 +1767,7 @@ module powerbi.extensibility.visual {
         }
 
         private clearAll(hide: boolean): void {
-            this.gaps.selectAll(PulseChart.Gap.selector).remove();
+            this.gaps.selectAll(PulseChart.Gap.selectorName).remove();
 
             if (this.animationHandler) {
                 this.animationHandler.reset();
@@ -1784,8 +1783,8 @@ module powerbi.extensibility.visual {
         public clearChart(): void {
             this.onClearSelection();
             this.hideAnimationDot();
-            this.chart.selectAll(PulseChart.Line.selector).remove();
-            this.chart.selectAll(PulseChart.Dot.selector).remove();
+            this.chart.selectAll(PulseChart.Line.selectorName).remove();
+            this.chart.selectAll(PulseChart.Dot.selectorName).remove();
         }
 
         private static parseSettings(dataView: DataView): PulseChartSettings {
