@@ -31,13 +31,11 @@
 @import (less) "node_modules/powerbi-visuals-utils-interactivityutils/lib/index.css";
 @import (less) "node_modules/powerbi-visuals-utils-formattingutils/lib/index.css";
 
-@regularFontFamily: 'Segoe UI', 'wf_segoe-ui_normal', helvetica, arial, sans-serif;
+@regularFontFamily: "Segoe UI", "wf_segoe-ui_normal", helvetica, arial, sans-serif;
 
 .pulseChart {
     @fontSize: 11px;
-
     font-family: @regularFontFamily;
-
     stroke: none;
     stroke-width: 1px;
     outline: none;
@@ -74,6 +72,7 @@
 
     .y {
         font-size: @fontSize;
+
         g.tick {
             line {
                 opacity: 0.2;

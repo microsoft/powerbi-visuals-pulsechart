@@ -125,12 +125,12 @@ module powerbi.extensibility.visual {
 
             let container: Selection<any> = this.container = this.svg
                 .append('g')
-                .classed(PulseAnimator.ControlsContainer.class, true)
+                .classed(PulseAnimator.ControlsContainer.className, true)
                 .style('display', 'none');
 
             this.animationPlay = container
                 .append('g')
-                .classed(PulseAnimator.AnimationPlay.class, true);
+                .classed(PulseAnimator.AnimationPlay.className, true);
 
             this.animationPlay
                 .append("circle")
@@ -148,7 +148,7 @@ module powerbi.extensibility.visual {
 
             this.animationPause = container
                 .append('g')
-                .classed(PulseAnimator.AnimationPause.class, true);
+                .classed(PulseAnimator.AnimationPause.className, true);
 
             this.animationPause
                 .append("circle")
@@ -165,7 +165,7 @@ module powerbi.extensibility.visual {
 
             this.animationReset = container
                 .append('g')
-                .classed(PulseAnimator.AnimationReset.class, true);
+                .classed(PulseAnimator.AnimationReset.className, true);
 
             this.animationReset
                 .append("circle")
@@ -183,7 +183,7 @@ module powerbi.extensibility.visual {
             /* Prev */
             this.animationPrev = container
                 .append('g')
-                .classed(PulseAnimator.AnimationPrev.class, true);
+                .classed(PulseAnimator.AnimationPrev.className, true);
 
             this.animationPrev
                 .append("circle")
@@ -201,7 +201,7 @@ module powerbi.extensibility.visual {
             /* Next */
             this.animationNext = container
                 .append('g')
-                .classed(PulseAnimator.AnimationNext.class, true);
+                .classed(PulseAnimator.AnimationNext.className, true);
 
             this.animationNext
                 .append("circle")
@@ -219,7 +219,7 @@ module powerbi.extensibility.visual {
 
             this.animationToEnd = container
                 .append('g')
-                .classed(PulseAnimator.AnimationToEnd.class, true);
+                .classed(PulseAnimator.AnimationToEnd.className, true);
 
             this.animationToEnd
                 .append("circle")
@@ -237,7 +237,7 @@ module powerbi.extensibility.visual {
 
             this.runnerCounter = container
                 .append('g')
-                .classed(PulseAnimator.RunnerCounter.class, true);
+                .classed(PulseAnimator.RunnerCounter.className, true);
 
             this.runnerCounterText = this.runnerCounter.append('text');
             this.setControlsColor(PulseAnimator.DefaultControlsColor);
