@@ -96,10 +96,12 @@
     "objects": {
         "series": {
             "displayName": "Series",
+            "displayNameKey": "Visual_Series",
             "description": "Series",
             "properties": {
                 "fill": {
                     "displayName": "Fill",
+                    "displayNameKey": "Visual_Fill",
                     "type": {
                         "fill": {
                             "solid": {
@@ -110,6 +112,7 @@
                 },
                 "width": {
                     "displayName": "Width",
+                    "displayNameKey": "Visual_Width",
                     "type": {
                         "numeric": true
                     }
@@ -118,16 +121,19 @@
         },
         "gaps": {
             "displayName": "Gaps",
+            "displayNameKey": "Visual_PulseChart_Gaps",
             "description": "Gaps",
             "properties": {
                 "show": {
                     "displayName": "Show",
+                    "displayNameKey": "Visual_Show",
                     "type": {
                         "bool": true
                     }
                 },
                 "transparency": {
                     "displayName": "Visible gaps",
+                    "displayNameKey": "Visual_PulseChart_VisibleGaps",
                     "type": {
                         "numeric": true
                     }
@@ -136,9 +142,11 @@
         },
         "general": {
             "displayName": "General",
+            "displayNameKey": "Visual_General",
             "properties": {
                 "fill": {
                     "displayName": "Background color",
+                    "displayNameKey": "Visual_BackgroundColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -151,33 +159,39 @@
         },
         "popup": {
             "displayName": "Popup",
+            "displayNameKey": "Visual_Popup",
             "properties": {
                 "show": {
                     "displayName": "Show",
+                    "displayNameKey": "Visual_Show",
                     "type": {
                         "bool": true
                     }
                 },
                 "alwaysOnTop": {
                     "displayName": "Always on top",
+                    "displayNameKey": "Visual_AlwaysTop",
                     "type": {
                         "bool": true
                     }
                 },
                 "width": {
                     "displayName": "Width",
+                    "displayNameKey": "Visual_Width",
                     "type": {
                         "numeric": true
                     }
                 },
                 "height": {
                     "displayName": "Height",
+                    "displayNameKey": "Visual_Height",
                     "type": {
                         "numeric": true
                     }
                 },
                 "color": {
                     "displayName": "Fill",
+                    "displayNameKey": "Visual_Fill",
                     "type": {
                         "fill": {
                             "solid": {
@@ -188,6 +202,7 @@
                 },
                 "fontSize": {
                     "displayName": "Text size",
+                    "displayNameKey": "Visual_TextSize",
                     "type": {
                         "formatting": {
                             "fontSize": true
@@ -196,6 +211,7 @@
                 },
                 "fontColor": {
                     "displayName": "Text color",
+                    "displayNameKey": "Visual_TextColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -206,18 +222,21 @@
                 },
                 "showTime": {
                     "displayName": "Show time",
+                    "displayNameKey": "Visual_PulseChart_ShowTime",
                     "type": {
                         "bool": true
                     }
                 },
                 "showTitle": {
                     "displayName": "Show title",
+                    "displayNameKey": "Visual_ShowTitle",
                     "type": {
                         "bool": true
                     }
                 },
                 "timeColor": {
                     "displayName": "Time color",
+                    "displayNameKey": "Visual_PulseChart_TimeColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -228,6 +247,7 @@
                 },
                 "timeFill": {
                     "displayName": "Time fill",
+                    "displayNameKey": "Visual_PulseChart_TimeFill",
                     "type": {
                         "fill": {
                             "solid": {
@@ -240,9 +260,11 @@
         },
         "dots": {
             "displayName": "Dots",
+            "displayNameKey": "Visual_Dots",
             "properties": {
                 "color": {
                     "displayName": "Fill",
+                    "displayNameKey": "Visual_Fill",
                     "type": {
                         "fill": {
                             "solid": {
@@ -253,24 +275,28 @@
                 },
                 "minSize": {
                     "displayName": "Min Size",
+                    "displayNameKey": "Visual_MinSize",
                     "type": {
                         "numeric": true
                     }
                 },
                 "maxSize": {
                     "displayName": "Max Size",
+                    "displayNameKey": "Visual_MaxSize",
                     "type": {
                         "numeric": true
                     }
                 },
                 "size": {
                     "displayName": "Default Size",
+                    "displayNameKey": "Visual_DefaultSize",
                     "type": {
                         "numeric": true
                     }
                 },
                 "transparency": {
                     "displayName": "Transparency",
+                    "displayNameKey": "Visual_Transparency",
                     "type": {
                         "numeric": true
                     }
@@ -279,27 +305,33 @@
         },
         "xAxis": {
             "displayName": "X Axis",
+            "displayNameKey": "Visual_XAxis",
             "properties": {
                 "show": {
                     "displayName": "Show",
+                    "displayNameKey": "Visual_Show",
                     "type": {
                         "bool": true
                     }
                 },
                 "position": {
                     "displayName": "Position",
+                    "displayNameKey": "Visual_Position",
                     "type": {
                         "enumeration": [{
                             "value": "0",
+                            "displayNameKey": "Visual_Center",
                             "displayName": "Center"
                         }, {
                             "value": "1",
+                            "displayNameKey": "Visual_Bottom",
                             "displayName": "Bottom"
                         }]
                     }
                 },
                 "fontColor": {
                     "displayName": "Font Color",
+                    "displayNameKey": "Visual_FontColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -310,6 +342,7 @@
                 },
                 "color": {
                     "displayName": "Axis Color",
+                    "displayNameKey": "Visual_AxisColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -320,6 +353,7 @@
                 },
                 "backgroundColor": {
                     "displayName": "Background Color",
+                    "displayNameKey": "Visual_BackgroundColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -332,15 +366,18 @@
         },
         "yAxis": {
             "displayName": "Y Axis",
+            "displayNameKey": "Visual_YAxis",
             "properties": {
                 "show": {
                     "displayName": "Show",
+                    "displayNameKey": "Visual_Show",
                     "type": {
                         "bool": true
                     }
                 },
                 "fontColor": {
                     "displayName": "Font Color",
+                    "displayNameKey": "Visual_FontColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -351,6 +388,7 @@
                 },
                 "color": {
                     "displayName": "Axis Color",
+                    "displayNameKey": "Visual_AxisColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -363,33 +401,39 @@
         },
         "playback": {
             "displayName": "Playback",
+            "displayNameKey": "Visual_PulseChart_Playback",
             "properties": {
                 "autoplay": {
                     "displayName": "Autoplay",
+                    "displayNameKey": "Visual_PulseChart_Autoplay",
                     "type": {
                         "bool": true
                     }
                 },
                 "playSpeed": {
                     "displayName": "Speed (dots/sec)",
+                    "displayNameKey": "Visual_PulseChart_PlaySpeed",
                     "type": {
                         "numeric": true
                     }
                 },
                 "pauseDuration": {
                     "displayName": "Pause Duration",
+                    "displayNameKey": "Visual_PulseChart_PauseDuration",
                     "type": {
                         "numeric": true
                     }
                 },
                 "autoplayPauseDuration": {
                     "displayName": "Start Delay",
+                    "displayNameKey": "Visual_PulseChart_StartDelay",
                     "type": {
                         "numeric": true
                     }
                 },
                 "color": {
                     "displayName": "Buttons Color",
+                    "displayNameKey": "Visual_PulseChart_ButtonsColor",
                     "type": {
                         "fill": {
                             "solid": {
@@ -402,33 +446,40 @@
         },
         "runnerCounter": {
             "displayName": "Runner Counter",
+            "displayNameKey": "Visual_PulseChart_RunnerCounter",
             "properties": {
                 "show": {
                     "displayName": "Show",
+                    "displayNameKey": "Visual_Show",
                     "type": {
                         "bool": true
                     }
                 },
                 "label": {
                     "displayName": "Label",
+                    "displayNameKey": "Visual_Label",
                     "type": {
                         "text": true
                     }
                 },
                 "position": {
                     "displayName": "Position",
+                    "displayNameKey": "Visual_Position",
                     "type": {
                         "enumeration": [{
                             "value": "0",
+                            "displayNameKey": "Visual_TopLeft",
                             "displayName": "Top Left"
                         }, {
                             "value": "1",
+                            "displayNameKey": "Visual_TopRight",
                             "displayName": "Top Right"
                         }]
                     }
                 },
                 "fontSize": {
                     "displayName": "Text Size",
+                    "displayNameKey": "Visual_TextSize",
                     "type": {
                         "formatting": {
                             "fontSize": true
@@ -437,6 +488,7 @@
                 },
                 "fontColor": {
                     "displayName": "Font Color",
+                    "displayNameKey": "Visual_FontColor",
                     "type": {
                         "fill": {
                             "solid": {
