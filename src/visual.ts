@@ -177,8 +177,9 @@ module powerbi.extensibility.visual {
         private static AnimationDot: ClassAndSelector = createClassAndSelector("animationDot");
         private static Y: ClassAndSelector = createClassAndSelector("y");
         private static Axis: ClassAndSelector = createClassAndSelector("axis");
-        private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewCategoryColumn | DataViewValueColumn {
-            let filterFunc = (cols: DataViewCategoricalColumn[]) => cols.filter((x) => x.source && x.source.roles && x.source.roles[roleName])[0];
+        private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewValueColumn | DataViewCategoryColumn {
+            let filterFunc = (cols: DataViewValueColumns | DataViewCategoryColumn[]): DataViewValueColumn | DataViewCategoryColumn =>
+                (<any>cols).filter((x: DataViewValueColumn | DataViewCategoryColumn) => x.source && x.source.roles && x.source.roles[roleName])[0];
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
         }
 
@@ -191,7 +192,7 @@ module powerbi.extensibility.visual {
                 || !dataView.categorical.categories) {
                 return null;
             }
-            let columns: DataRoles<DataViewCategoricalColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
+            let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
             let valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
             let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
@@ -1729,7 +1730,7 @@ module powerbi.extensibility.visual {
                     let node = <SVGTextElement>this;
                     textMeasurementService.wordBreak(node, width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2);
                 })
-              .attr("y", function (d: DataPoint) {
+                .attr("y", function (d: DataPoint) {
                     let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
                     let el: SVGTextElement = <any>d3.select(this)[0][0];
                     textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
