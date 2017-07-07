@@ -178,8 +178,8 @@ module powerbi.extensibility.visual {
         private static Y: ClassAndSelector = createClassAndSelector("y");
         private static Axis: ClassAndSelector = createClassAndSelector("axis");
         private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewValueColumn | DataViewCategoryColumn {
-            let filterFunc = (cols: DataViewValueColumns | DataViewCategoryColumn[]): DataViewValueColumn | DataViewCategoryColumn =>
-                (<any>cols).filter((x: DataViewValueColumn | DataViewCategoryColumn) => x.source && x.source.roles && x.source.roles[roleName])[0];
+            let filterFunc = (cols: (DataViewValueColumn | DataViewCategoryColumn)[]): DataViewValueColumn | DataViewCategoryColumn =>
+                cols.filter((x: DataViewValueColumn | DataViewCategoryColumn) => x.source && x.source.roles && x.source.roles[roleName])[0];
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
         }
 
