@@ -1,25 +1,31 @@
 {
     "dataRoles": [{
+        "displayNameKey": "Visual_Timestamp",
         "displayName": "Timestamp",
         "name": "Timestamp",
         "kind": "Grouping"
     }, {
-        "displayName": "Value",
+        "displayNameKey": "Visual_Values",
+        "displayName": "Values",
         "name": "Value",
         "kind": "Measure"
     }, {
+        "displayNameKey": "Visual_PulseChart_EventTitle",
         "displayName": "Event Title",
         "name": "EventTitle",
         "kind": "GroupingOrMeasure"
     }, {
+        "displayNameKey": "Visual_PulseChart_EventDescription",
         "displayName": "Event Description",
         "name": "EventDescription",
         "kind": "GroupingOrMeasure"
     }, {
+        "displayNameKey": "Visual_PulseChart_EventSize",
         "displayName": "Event Size",
         "name": "EventSize",
         "kind": "Measure"
     }, {
+        "displayNameKey": "Visual_PulseChart_RunnerCounter",
         "displayName": "Runner Counter",
         "name": "RunnerCounter",
         "kind": "GroupingOrMeasure"

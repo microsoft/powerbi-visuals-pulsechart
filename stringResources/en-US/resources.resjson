@@ -1,4 +1,6 @@
 {
+    "Visual_Timestamp": "Timestamp",
+    "Visual_Values": "Values",
     "Visual_General": "General",
     "Visual_Series": "Series",
     "Visual_Fill": "Fill",
@@ -26,6 +28,9 @@
     "Visual_TopLeft": "Top Left",
     "Visual_TopRight": "Top Right",
     "Visual_Label": "Label",
+    "Visual_PulseChart_EventTitle": "Event Title",
+    "Visual_PulseChart_EventDescription": "Event Description",
+    "Visual_PulseChart_EventSize": "Event Size",
     "Visual_PulseChart_Gaps": "Gaps",
     "Visual_PulseChart_VisibleGaps": "Visible gaps",
     "Visual_PulseChart_ShowTime": "Show time",
