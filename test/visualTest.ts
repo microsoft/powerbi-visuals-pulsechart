@@ -53,7 +53,7 @@ namespace powerbi.extensibility.visual.test {
         describe("DOM tests", () => {
 
             it("main element was created", () => {
-                () => expect(visualBuilder.mainElement.get(0)).toBeDefined();
+                expect(visualBuilder.mainElement.get(0)).toBeDefined();
             });
             it("update", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
