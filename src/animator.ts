@@ -50,14 +50,14 @@ module powerbi.extensibility.visual {
         private animationNext: Selection<any>;
         private runnerCounter: Selection<any>;
         private runnerCounterText: Selection<any>;
-        private static AnimationPlay: ClassAndSelector = createClassAndSelector('animationPlay');
-        private static AnimationPause: ClassAndSelector = createClassAndSelector('animationPause');
-        private static AnimationReset: ClassAndSelector = createClassAndSelector('animationReset');
-        private static AnimationToEnd: ClassAndSelector = createClassAndSelector('animationToEnd');
-        private static AnimationPrev: ClassAndSelector = createClassAndSelector('animationPrev');
-        private static AnimationNext: ClassAndSelector = createClassAndSelector('animationNext');
-        private static ControlsContainer: ClassAndSelector = createClassAndSelector('ControlsContainer');
-        private static RunnerCounter: ClassAndSelector = createClassAndSelector('runnerCounter');
+        private static AnimationPlay: ClassAndSelector = createClassAndSelector("animationPlay");
+        private static AnimationPause: ClassAndSelector = createClassAndSelector("animationPause");
+        private static AnimationReset: ClassAndSelector = createClassAndSelector("animationReset");
+        private static AnimationToEnd: ClassAndSelector = createClassAndSelector("animationToEnd");
+        private static AnimationPrev: ClassAndSelector = createClassAndSelector("animationPrev");
+        private static AnimationNext: ClassAndSelector = createClassAndSelector("animationNext");
+        private static ControlsContainer: ClassAndSelector = createClassAndSelector("ControlsContainer");
+        private static RunnerCounter: ClassAndSelector = createClassAndSelector("runnerCounter");
         private static PlayButtonMarkup: string = "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-3 17v-10l9 5.146-9 4.854z";
         private static PauseButtonMarkup: string = "M12 2c5.514 0 10 4.486 10 10s-4.486 10-10 10-10-4.486-10-10 4.486-10 10-10zm0-2c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-1 17h-3v-10h3v10zm5-10h-3v10h3v-10z";
         private static ResetButtonMarkup: string = "M22 12c0 5.514-4.486 10-10 10s-10-4.486-10-10 4.486-10 10-10 10 4.486 10 10zm-22 0c0 6.627 5.373 12 12 12s12-5.373 12-12-5.373-12-12-12-12 5.373-12 12zm13 0l5-4v8l-5-4zm-5 0l5-4v8l-5-4zm-2 4h2v-8h-2v8z";
@@ -124,12 +124,12 @@ module powerbi.extensibility.visual {
             this.setDefaultValues();
 
             let container: Selection<any> = this.container = this.svg
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.ControlsContainer.className, true)
-                .style('display', 'none');
+                .style("display", "none");
 
             this.animationPlay = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationPlay.className, true);
 
             this.animationPlay
@@ -147,7 +147,7 @@ module powerbi.extensibility.visual {
                 .attr("d", PulseAnimator.PlayButtonMarkup);
 
             this.animationPause = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationPause.className, true);
 
             this.animationPause
@@ -164,7 +164,7 @@ module powerbi.extensibility.visual {
                 .attr("d", PulseAnimator.PauseButtonMarkup);
 
             this.animationReset = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationReset.className, true);
 
             this.animationReset
@@ -182,7 +182,7 @@ module powerbi.extensibility.visual {
 
             /* Prev */
             this.animationPrev = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationPrev.className, true);
 
             this.animationPrev
@@ -200,7 +200,7 @@ module powerbi.extensibility.visual {
 
             /* Next */
             this.animationNext = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationNext.className, true);
 
             this.animationNext
@@ -218,7 +218,7 @@ module powerbi.extensibility.visual {
                 .attr("rotate", PulseAnimator.buttonRotate);
 
             this.animationToEnd = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.AnimationToEnd.className, true);
 
             this.animationToEnd
@@ -236,10 +236,10 @@ module powerbi.extensibility.visual {
                 .attr("d", PulseAnimator.EndButtonMarkup);
 
             this.runnerCounter = container
-                .append('g')
+                .append("g")
                 .classed(PulseAnimator.RunnerCounter.className, true);
 
-            this.runnerCounterText = this.runnerCounter.append('text');
+            this.runnerCounterText = this.runnerCounter.append("text");
             this.setControlsColor(PulseAnimator.DefaultControlsColor);
         }
 
@@ -298,43 +298,43 @@ module powerbi.extensibility.visual {
             let color: string = this.color;
 
             this.animationPlay
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.animationPause
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.animationReset
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.animationPrev
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.animationNext
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.animationToEnd
-                .attr('transform', SVGUtil.translate(shiftX(), 0))
+                .attr("transform", SVGUtil.translate(shiftX(), 0))
                 .attr("fill", color);
 
             this.runnerCounter
-                .attr('fill', color)
-                .attr('transform',
+                .attr("fill", color)
+                .attr("transform",
                 SVGUtil.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
                     ? this.runnerCounterTopLeftPosition
                     : this.chart.viewport.width - PulseAnimator.runnerCounterShiftX,
                     this.chart.data.runnerCounterHeight / 2 + PulseAnimator.runnerCounterShiftY));
             this.runnerCounterText
-                .style('text-anchor', this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end");
+                .style("text-anchor", this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end");
 
             if (this.chart.data && this.chart.data.settings) {
                 this.runnerCounterText.style(<any>PulseChart.ConvertTextPropertiesToStyle(
                     PulseChart.GetRunnerCounterTextProperties(null, this.chart.data.settings.runnerCounter.fontSize)));
-                this.runnerCounterText.style('fill', this.chart.data.settings.runnerCounter.fontColor);
+                this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor);
             }
 
             this.drawCounterValue();
@@ -342,11 +342,11 @@ module powerbi.extensibility.visual {
 
         private static setControlVisiblity(element: Selection<any>, isVisible: boolean, isDisabled: boolean = false): void {
             element
-                .style('opacity', isVisible ? PulseAnimator.DefaultOpacity : PulseAnimator.DimmedOpacity);
+                .style("opacity", isVisible ? PulseAnimator.DefaultOpacity : PulseAnimator.DimmedOpacity);
             if (isVisible) {
-                element.attr('display', "inline");
+                element.attr("display", "inline");
             } else if (isDisabled) {
-                element.attr('display', "none");
+                element.attr("display", "none");
             }
         }
 
@@ -406,7 +406,7 @@ module powerbi.extensibility.visual {
         }
 
         public show(): void {
-            this.container.style('display', 'inline');
+            this.container.style("display", "inline");
         }
 
         public setRunnerCounterValue(index?: number): void {
@@ -602,7 +602,7 @@ module powerbi.extensibility.visual {
             }
 
             this.setDefaultValues();
-            this.container.style('display', 'none');
+            this.container.style("display", "none");
         }
 
         public clearTimeouts(): void {

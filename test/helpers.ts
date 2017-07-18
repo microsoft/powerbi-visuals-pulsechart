@@ -79,7 +79,7 @@ module powerbi.extensibility.visual.test.helpers {
         let alphabetLength = alphabet.length;
         let length = getRandomInteger(minLength, maxLength);
         let strings = <string[]>_.range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
-        return strings.join('');
+        return strings.join("");
     }
 
     export function getRandomText(
@@ -87,6 +87,6 @@ module powerbi.extensibility.visual.test.helpers {
         minLength: number,
         maxLength: number,
         alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
-        return getRandomWords(wordCount, minLength, maxLength, alphabet).join(' ');
+        return getRandomWords(wordCount, minLength, maxLength, alphabet).join(" ");
     }
 }
