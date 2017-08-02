@@ -36,7 +36,7 @@ namespace powerbi.extensibility.visual.test {
     import helpers = powerbi.extensibility.utils.test.helpers;
 
     // powerbi.extensibility.utils.formatting
-    const DefaultTimeout: number = 1000;
+    const DefaultTimeout: number = 500;
 
     describe("PulseChartTests", () => {
         let visualBuilder: PulseChartBuilder,
@@ -117,6 +117,13 @@ namespace powerbi.extensibility.visual.test {
             });
 
             describe("playback", () => {
+                let originalTimeout;
+
+                beforeEach(function() {
+                    originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
+                    jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
+                });
+
                 it("autoplay position set", (done) => {
                     dataView.metadata.objects = {
                         playback: {
@@ -134,7 +141,7 @@ namespace powerbi.extensibility.visual.test {
 
                         expect(pathWidth).toBeGreaterThan(30);
                         done();
-                    }, DefaultTimeout * 5);
+                    }, DefaultTimeout * 10);
                 });
 
                 it("popup is hidden when pressing play during pause", (done) => {
@@ -220,6 +227,10 @@ namespace powerbi.extensibility.visual.test {
                         });
 
                     });
+                });
+
+                afterEach(function() {
+                    jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
                 });
             });
 
