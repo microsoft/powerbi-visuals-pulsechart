@@ -36,7 +36,7 @@ namespace powerbi.extensibility.visual.test {
     import helpers = powerbi.extensibility.utils.test.helpers;
 
     // powerbi.extensibility.utils.formatting
-    const DefaultTimeout: number = 300;
+    const DefaultTimeout: number = 1000;
 
     describe("PulseChartTests", () => {
         let visualBuilder: PulseChartBuilder,
@@ -94,7 +94,6 @@ namespace powerbi.extensibility.visual.test {
                     clickPoint.d3Click(5, 5);
 
                     setTimeout(() => {
-                        debugger;
                         const timeRectWidth: number = (<SVGPathElement>d3.select(".tooltipTimeRect")[0][0]).getClientRects()[0].width,
                             dataWidth: number = (<SVGPathElement>d3.select(".tooltipTime")[0][0]).getClientRects()[0].width;
                         expect(dataWidth).toBeLessThanOrEqual(timeRectWidth);
@@ -135,7 +134,7 @@ namespace powerbi.extensibility.visual.test {
 
                         expect(pathWidth).toBeGreaterThan(30);
                         done();
-                    }, 3000);
+                    }, DefaultTimeout * 5);
                 });
 
                 it("popup is hidden when pressing play during pause", (done) => {
