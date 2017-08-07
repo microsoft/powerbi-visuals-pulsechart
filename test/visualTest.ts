@@ -152,11 +152,10 @@ namespace powerbi.extensibility.visual.test {
                     };
                     visualBuilder.updateRenderTimeout(dataView, () => {
                         visualBuilder.animationPlay.d3Click(5, 5);
-                        let animatedDot = visualBuilder.dotsContainerDot;
-                        debugger;
+                        let animatedDot: JQuery = visualBuilder.dotsContainerDot;
                         visualBuilder.updateRenderTimeout(dataView, () => {
                             visualBuilder.animationPlay.d3Click(5, 5);
-                            let currentAnimatedDot = visualBuilder.dotsContainerDot;
+                            let currentAnimatedDot: JQuery = visualBuilder.dotsContainerDot;
 
                             expect(currentAnimatedDot).not.toEqual(animatedDot);
                             done();
