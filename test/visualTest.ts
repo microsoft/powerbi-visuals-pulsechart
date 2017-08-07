@@ -142,7 +142,6 @@ namespace powerbi.extensibility.visual.test {
                         expect(pathWidth).toBeGreaterThan(30);
                         done();
                     }, DefaultTimeout * 10);
-<<<<<<< HEAD
                 });
 
                 it("repeat animation", (done) => {
@@ -163,8 +162,6 @@ namespace powerbi.extensibility.visual.test {
                             done();
                         }, DefaultTimeout * 5);
                     }, DefaultTimeout * 5);
-=======
->>>>>>> refs/remotes/Microsoft/master
                 });
 
                 it("popup is hidden when pressing play during pause", (done) => {
