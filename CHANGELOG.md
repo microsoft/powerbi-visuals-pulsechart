@@ -1,3 +1,6 @@
+## 2.2.1
+* Code refactoring
+
 ## 2.2.0
 * Adds auto repeat feature
 
