@@ -89,6 +89,7 @@ module powerbi.extensibility.visual {
 
     export class PlaybackSettings {
         autoplay: boolean = false;
+        repeat: boolean = false;
         playSpeed: number = 5;
         pauseDuration: number = 10;
         autoplayPauseDuration: number = 0;

@@ -466,6 +466,12 @@ module powerbi.extensibility.visual {
             if (this.chart.isAnimationSeriesLast(this.position)) {
                 this.setDefaultValues();
                 this.chart.onClearSelection();
+                if (this.chart.isRepeat) {
+                    this.animatorState = AnimatorStates.Play;
+                    this.chart.renderChart();
+                    this.chart.playAnimation();
+                    this.disableControls();
+                }
             } else {
                 this.position = {
                     series: this.position.series + 1,
