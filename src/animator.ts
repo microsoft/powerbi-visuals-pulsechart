@@ -467,10 +467,7 @@ module powerbi.extensibility.visual {
                 this.setDefaultValues();
                 this.chart.onClearSelection();
                 if (this.chart.isRepeat) {
-                    this.animatorState = AnimatorStates.Play;
-                    this.chart.renderChart();
-                    this.chart.playAnimation();
-                    this.disableControls();
+                    this.playFromStart();
                 }
             } else {
                 this.position = {
@@ -481,6 +478,12 @@ module powerbi.extensibility.visual {
             }
         }
 
+        public playFromStart(): void {
+            this.animatorState = AnimatorStates.Play;
+            this.chart.renderChart();
+            this.chart.playAnimation();
+            this.disableControls();
+        }
         public pause(): void {
             if (this.animatorState === AnimatorStates.Play) {
                 this.animatorState = AnimatorStates.Paused;
