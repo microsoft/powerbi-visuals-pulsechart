@@ -466,7 +466,7 @@ module powerbi.extensibility.visual {
             if (this.chart.isAnimationSeriesLast(this.position)) {
                 this.setDefaultValues();
                 this.chart.onClearSelection();
-                if (this.chart.isRepeat) { 
+                if (this.chart.isRepeat) {
                     this.playFromStart();
                 }
             } else {
@@ -478,7 +478,7 @@ module powerbi.extensibility.visual {
             }
         }
 
-        public playFromStart(): void { 
+        public playFromStart(): void {
             this.animatorState = AnimatorStates.Play;
             this.chart.renderChart();
             this.chart.playAnimation();
