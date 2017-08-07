@@ -39,6 +39,7 @@
     "Visual_MaxFontSize": "Max font size",
     "Visual_PulseChart_Playback": "Playback",
     "Visual_PulseChart_Autoplay": "Autoplay",
+    "Visual_PulseChart_Repeat": "Repeat",
     "Visual_PulseChart_PlaySpeed": "Speed (dots/sec)",
     "Visual_PulseChart_PauseDuration": "Pause Duration",
     "Visual_PulseChart_StartDelay": "Start Delay",

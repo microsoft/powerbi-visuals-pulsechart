@@ -884,6 +884,13 @@ module powerbi.extensibility.visual {
                 this.data.settings.playback.autoplay;
         }
 
+        public get isRepeat(): boolean {
+            return this.data &&
+                this.data.settings &&
+                this.data.settings.playback &&
+                this.data.settings.playback.repeat;
+        }
+
         public render(suppressAnimations: boolean) {
             let duration: number = PulseChart.DefaultAnimationDuration;
             let data = this.data;
@@ -1352,7 +1359,7 @@ module powerbi.extensibility.visual {
             let animationPlayingIndex: number = this.animationHandler.animationPlayingIndex;
             let isLastDataPoint: boolean = this.animationHandler.isPlaying && this.isAnimationSeriesAndIndexLast(position);
             if ((!dataPoint || !dataPoint.popupInfo) && (this.animationHandler.isPlaying)) {
-                if (isLastDataPoint) {
+                if (isLastDataPoint && !this.isRepeat) {
                     setTimeout(() => this.animationHandler.toEnd(), 0);
                 } else {
                     this.animationHandler.play(0, true);

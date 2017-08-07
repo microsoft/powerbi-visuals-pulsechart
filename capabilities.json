@@ -416,6 +416,13 @@
                         "bool": true
                     }
                 },
+                "repeat": {
+                    "displayName": "Repeat",
+                    "displayNameKey": "Visual_PulseChart_Repeat",
+                    "type": {
+                        "bool": true
+                    }
+                },
                 "playSpeed": {
                     "displayName": "Speed (dots/sec)",
                     "displayNameKey": "Visual_PulseChart_PlaySpeed",

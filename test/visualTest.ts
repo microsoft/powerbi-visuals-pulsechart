@@ -144,6 +144,25 @@ namespace powerbi.extensibility.visual.test {
                     }, DefaultTimeout * 10);
                 });
 
+                it("repeat animation", (done) => {
+                    dataView.metadata.objects = {
+                        playback: {
+                            repeat: true
+                        }
+                    };
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        visualBuilder.animationPlay.d3Click(5, 5);
+                        let animatedDot: JQuery = visualBuilder.dotsContainerDot;
+                        visualBuilder.updateRenderTimeout(dataView, () => {
+                            visualBuilder.animationPlay.d3Click(5, 5);
+                            let currentAnimatedDot: JQuery = visualBuilder.dotsContainerDot;
+
+                            expect(currentAnimatedDot).not.toEqual(animatedDot);
+                            done();
+                        }, DefaultTimeout * 5);
+                    }, DefaultTimeout * 5);
+                });
+
                 it("popup is hidden when pressing play during pause", (done) => {
                     let eventIndex: number = dataView.categorical.categories[1].values
                         .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[0].index;
