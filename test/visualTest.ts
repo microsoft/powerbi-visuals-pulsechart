@@ -309,6 +309,15 @@ namespace powerbi.extensibility.visual.test {
 
                 expect(convertedData.categories.every(d => d instanceof Date)).toBeTruthy();
             });
+
+            it("values provided as string should be processed as zero values", () => {
+                let host: IVisualHost = mocks.createVisualHost();
+                dataViewForCategoricalColumn.categorical.values["0"].values[12] = "<scrutp> test test non number value";
+                dataViewForCategoricalColumn.categorical.values["0"].values[18] = ">>> #$%^$^scrutp> test test non number value";
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+                expect(convertedData.series["0"].data.every(d => !isNaN(d.y))).toBeTruthy();
+            });
+
         });
     });
 }

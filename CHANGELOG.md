@@ -1,3 +1,6 @@
+## 2.2.2
+* Fix issue - string values cause random errors throwing
+
 ## 2.2.1
 * Code refactoring
 

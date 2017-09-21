@@ -332,6 +332,10 @@ module powerbi.extensibility.visual {
                         description: columns.EventDescription && columns.EventDescription.values && <string>columns.EventDescription.values[categoryIndex],
                     };
                 }
+                let y_value = <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0;
+                if (isNaN(y_value)) {
+                    y_value = 0;
+                }
 
                 let dataPoint: DataPoint = {
                     categoryValue: categoryValue,
@@ -346,7 +350,7 @@ module powerbi.extensibility.visual {
                     labelFill: dataPointLabelSettings.labelColor,
                     labelSettings: dataPointLabelSettings,
                     x: <any>categoryValue,
-                    y: <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0,
+                    y: y_value,
                     pointColor: settings.series.fill,
                     groupIndex: PulseChart.getGroupIndex(categoryIndex, grouped),
                     eventSize: columns.EventSize ? eventSizeScale(eventSize as number) : 0,
@@ -1038,7 +1042,6 @@ module powerbi.extensibility.visual {
             if (!this.data) {
                 return;
             }
-
             const data: ChartData = this.data,
                 series: Series[] = this.data.series;
 
@@ -1067,7 +1070,6 @@ module powerbi.extensibility.visual {
             } else {
                 this.hideAnimationDot();
             }
-
             this.drawLines();
             this.drawDots(data);
             this.drawTooltips(data);
