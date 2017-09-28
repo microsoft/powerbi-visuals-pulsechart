@@ -41,6 +41,7 @@ module powerbi.extensibility.visual.test {
         public static ColumnValue: string = "Value";
         public static ColumnEventTitle: string = "Event Title";
         public static ColumnEventDescription: string = "Event Description";
+        public static ColumnEventSize: string = "Event Size";
         public valuesTimestamp =  testHelpers.getRandomUniqueSortedDates(100, new Date(2014, 0, 1), new Date(2015, 5, 10));
         public valuesValue: number[] = helpers.getRandomNumbers(this.valuesTimestamp.length, 100, 1000);
         public valuesEvents: any[] = this.generateEvents(this.valuesValue.length, 5);
@@ -76,6 +77,14 @@ module powerbi.extensibility.visual.test {
                         roles: { EventDescription: true }
                     },
                     values: this.valuesEvents.map(x => x && x.description)
+                },
+                {
+                    source: {
+                        displayName: PulseChartData.ColumnEventSize,
+                        type: ValueType.fromDescriptor({ integer: true }),
+                        roles: { EventSize: true }
+                    },
+                    values: this.valuesEvents.map(x => x && x.EventSize)
                 }
             ], [
                     {

@@ -208,7 +208,6 @@ module powerbi.extensibility.visual {
             if (!categoryValues || _.isEmpty(dataView.categorical.values) || !valuesColumn || _.isEmpty(valuesColumn.values)) {
                 return null;
             }
-
             let minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
             let minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
             settings.xAxis.dateFormat =
@@ -336,7 +335,10 @@ module powerbi.extensibility.visual {
                 if (isNaN(y_value)) {
                     y_value = 0;
                 }
-
+                let eventSizeValue: number = columns.EventSize ? eventSizeScale(eventSize as number) : 0;
+                if (isNaN(eventSizeValue)) {
+                    eventSizeValue = 0;
+                }
                 let dataPoint: DataPoint = {
                     categoryValue: categoryValue,
                     value: value,
@@ -353,7 +355,7 @@ module powerbi.extensibility.visual {
                     y: y_value,
                     pointColor: settings.series.fill,
                     groupIndex: PulseChart.getGroupIndex(categoryIndex, grouped),
-                    eventSize: columns.EventSize ? eventSizeScale(eventSize as number) : 0,
+                    eventSize: eventSizeValue,
                     runnerCounterValue: runnerCounterValue,
                     runnerCounterFormatString: runnerCounterFormatString,
                     specificIdentity: undefined,
@@ -1555,7 +1557,9 @@ module powerbi.extensibility.visual {
 
             let line: Line = d3.svg.line<DataPoint>()
                 .x((d: DataPoint) => d.x)
-                .y((d: DataPoint) => d.y);
+                .y((d: DataPoint) => {
+                    return d.y;
+                });
 
             let tooltipShiftY = (y: number, groupIndex: number): number => {
                 return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
