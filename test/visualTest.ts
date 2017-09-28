@@ -318,6 +318,12 @@ namespace powerbi.extensibility.visual.test {
                 expect(convertedData.series["0"].data.every(d => !isNaN(d.y))).toBeTruthy();
             });
 
+            it("EventSize provided as string should be processed as zero values", () => {
+                let host: IVisualHost = mocks.createVisualHost();
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+                expect(convertedData.series["0"].data.every(d => !isNaN(d.eventSize))).toBeTruthy();
+            });
+
         });
     });
 }
