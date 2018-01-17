@@ -456,6 +456,7 @@ module powerbi.extensibility.visual {
 
             this.animatorState = AnimatorStates.Play;
             this.chart.renderChart();
+            this.chart.clearTooltips();
             this.chart.playAnimation(delay);
             this.disableControls();
         }

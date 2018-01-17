@@ -1,3 +1,6 @@
+## 2.2.4
+* Fixed not expected selection calls for datapoints with no title or description
+
 ## 2.2.3
 * Fix issue - string values in EventSize basket cause random errors throwing
 

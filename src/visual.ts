@@ -638,6 +638,7 @@ module powerbi.extensibility.visual {
         public viewport: IViewport;
         public size: IViewport;
         public handleSelectionTimeout: number;
+        public behavior: IPulseChartInteractiveBehavior;
         private svg: Selection<any>;
         private chart: Selection<any>;
         private dots: Selection<any>;
@@ -651,7 +652,6 @@ module powerbi.extensibility.visual {
         private animationSelection: UpdateSelection<any>;
         private lastSelectedPoint: ISelectionId;
         private interactivityService: IInteractivityService;
-        private behavior: IPulseChartInteractiveBehavior;
         private settings: PulseChartSettings;
         public host: IVisualHost;
 
@@ -1336,7 +1336,7 @@ module powerbi.extensibility.visual {
             this.chart.selectAll(PulseChart.Tooltip.selectorName).remove();
         }
 
-        private getDatapointFromPosition(position: AnimationPosition): DataPoint {
+        public getDatapointFromPosition(position: AnimationPosition): DataPoint {
             if (!this.data ||
                 !this.data.series ||
                 !this.data.series[position.series] ||
@@ -1348,8 +1348,11 @@ module powerbi.extensibility.visual {
         }
 
         public handleSelection(position: AnimationPosition): void {
+            if (!position) {
+                return;
+            }
             let dataPoint: DataPoint = this.getDatapointFromPosition(position);
-            if (dataPoint) {
+            if (dataPoint && dataPoint.popupInfo) {
                 this.behavior.setSelection(dataPoint);
             }
         }
@@ -1534,12 +1537,15 @@ module powerbi.extensibility.visual {
                 .remove();
         }
 
-        private isPopupShow(d: DataPoint): boolean {
-            if (!this.popupHeight || !d.popupInfo) {
+        public isPopupShow(d: DataPoint): boolean {
+            if (!this.popupHeight || !d || !d.popupInfo || this.animationIsPlaying()) {
                 return false;
             }
-
             return d.selected;
+        }
+
+        public animationIsPlaying(): boolean {
+            return this.animationHandler.isPlaying;
         }
 
         private drawTooltips(data: ChartData): void {
@@ -1816,6 +1822,12 @@ module powerbi.extensibility.visual {
         public destroy(): void {
             this.data = null;
             this.clearAll(true);
+        }
+
+        public clearTooltips(): void {
+            this.chart
+                .selectAll(PulseChart.Tooltip.className)
+                .style("display", "none");
         }
     }
 }
