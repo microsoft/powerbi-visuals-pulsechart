@@ -349,5 +349,78 @@ namespace powerbi.extensibility.visual.test {
                 objectsChecker(jsonData);
             });
         });
+
+        describe("Popup", () => {
+            it("should not be shown when data point empty", done => {
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{});
+                expect(result).toBeFalsy();
+                done();
+            });
+
+            it("should not be shown when selected false or undefined", done => {
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: false});
+                expect(result).toBeFalsy();
+
+                result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}});
+                expect(result).toBeFalsy();
+                done();
+            });
+
+            it("should not be shown when animation is playing", done => {
+                visualBuilder.visualInstance.animationIsPlaying = () => true;
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: true});
+                expect(result).toBeFalsy();
+                done();
+            });
+
+            it("should be shown when all good", done => {
+                let visual = visualBuilder.visualInstance;
+                visual.data = <any>{
+                    settings: {
+                        popup: {
+                            show: true,
+                            height: 100
+                        }
+                    }
+                };
+
+                visualBuilder.visualInstance.animationIsPlaying = () => false;
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: true});
+                expect(result).toBeTruthy();
+                done();
+            });
+        });
+
+        describe("SetSelection", () => {
+            let visualInst;
+
+            beforeEach(() => {
+                visualInst = visualBuilder.visualInstance;
+                visualInst.behavior = jasmine.createSpyObj("behavior", ["setSelection"]);
+            });
+
+            it("should not be invoked with null argument", () => {
+                visualInst.handleSelection(null);
+                expect(visualInst.behavior.setSelection).not.toHaveBeenCalled();
+            });
+
+            it("should be invoked when data point has popupInfo", () => {
+                spyOn(visualInst, "getDatapointFromPosition").and.returnValue({popupInfo: {}});
+                visualInst.handleSelection(<any>{});
+                expect(visualInst.behavior.setSelection).toHaveBeenCalled();
+            });
+
+            it("should not be invoked when data point is null", () => {
+                spyOn(visualInst, "getDatapointFromPosition").and.returnValue(null);
+                visualInst.handleSelection(null);
+                expect(visualInst.behavior.setSelection).not.toHaveBeenCalled();
+            });
+
+            it("should not be invoked when data point has not popupInfo", () => {
+                spyOn(visualInst, "getDatapointFromPosition").and.returnValue({});
+                visualInst.handleSelection(null);
+                expect(visualInst.behavior.setSelection).not.toHaveBeenCalled();
+            });
+        });
     });
 }
