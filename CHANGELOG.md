@@ -1,3 +1,7 @@
+## 2.2.5
+* Fixed issue with showing tooltip during animation
+* Fixed tooltip issue after animation stop
+
 ## 2.2.4
 * Fixed not expected selection calls for datapoints with no title or description
 

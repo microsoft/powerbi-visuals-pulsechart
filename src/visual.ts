@@ -1160,6 +1160,7 @@ module powerbi.extensibility.visual {
 
         public playAnimation(delay: number = 0): void {
             let flooredStart = this.animationHandler.flooredPosition.index;
+            this.onClearSelection();
             this.showAnimationDot();
             this.animationSelection
                 .transition()
@@ -1265,7 +1266,7 @@ module powerbi.extensibility.visual {
         }
 
         private hideAnimationDot(): void {
-            this.animationDot.attr("display", "none");
+            this.animationDot.style("display", "none");
         }
 
         private getInterpolation(data: DataPoint[], start: number): any {
@@ -1538,7 +1539,7 @@ module powerbi.extensibility.visual {
         }
 
         public isPopupShow(d: DataPoint): boolean {
-            if (!this.popupHeight || !d || !d.popupInfo || this.animationIsPlaying()) {
+            if (!this.popupHeight || !d || !d.popupInfo || (this.animationIsPlaying() && !d.selected)) {
                 return false;
             }
             return d.selected;
