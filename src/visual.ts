@@ -653,6 +653,7 @@ module powerbi.extensibility.visual {
         private lastSelectedPoint: ISelectionId;
         private interactivityService: IInteractivityService;
         private settings: PulseChartSettings;
+        private skipDoubleSelectionForCurrentPosition: boolean;
         public host: IVisualHost;
 
         public get runnerCounterPlaybackButtonsHeight(): number {
@@ -702,6 +703,7 @@ module powerbi.extensibility.visual {
             this.viewport = options.viewport;
             let dataView: DataView = options.dataViews[0];
             let pulseChartData: ChartData = PulseChart.converter(dataView, this.host, this.colors, this.interactivityService);
+            this.settings = PulseChart.parseSettings(dataView);
 
             this.updateData(pulseChartData);
             if (!this.validateData(this.data)) {
@@ -1159,8 +1161,22 @@ module powerbi.extensibility.visual {
         }
 
         public playAnimation(delay: number = 0): void {
-            let flooredStart = this.animationHandler.flooredPosition.index;
+            let flooredStart: number = this.animationHandler.flooredPosition.index;
             this.onClearSelection();
+
+            const currentPosition: AnimationPosition = this.animationHandler.flooredPosition;
+
+            if (this.skipDoubleSelectionForCurrentPosition) {
+                this.skipDoubleSelectionForCurrentPosition = false;
+
+            } else if (this.checkTooltipForSelection(currentPosition)) {
+
+                this.skipDoubleSelectionForCurrentPosition = true;
+                this.handleSelection(currentPosition);
+                this.continueAnimation(currentPosition);
+                return;
+            }
+
             this.showAnimationDot();
             this.animationSelection
                 .transition()
@@ -1348,14 +1364,26 @@ module powerbi.extensibility.visual {
             return this.data.series[position.series].data[position.index];
         }
 
-        public handleSelection(position: AnimationPosition): void {
+        public handleSelection(position: AnimationPosition): boolean {
             if (!position) {
-                return;
+                return false;
             }
-            let dataPoint: DataPoint = this.getDatapointFromPosition(position);
+
+            const dataPoint: DataPoint = this.getDatapointFromPosition(position);
             if (dataPoint && dataPoint.popupInfo) {
                 this.behavior.setSelection(dataPoint);
             }
+        }
+
+        private checkTooltipForSelection(position: AnimationPosition) {
+            if (!position) {
+                return false;
+            } else if (!this.settings || !this.settings.gaps || !this.settings.gaps.show) {
+                return false;
+            }
+
+            const dataPoint: DataPoint = this.getDatapointFromPosition(position);
+            return dataPoint && dataPoint.popupInfo;
         }
 
         private continueAnimation(position: AnimationPosition): void {
@@ -1748,13 +1776,9 @@ module powerbi.extensibility.visual {
                 .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
                 .each(function (series: Series) {
                     let node = <SVGTextElement>this;
-                    textMeasurementService.wordBreak(node, width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2);
-                })
-                .attr("y", function (d: DataPoint) {
-                    let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
-                    let el: SVGTextElement = <any>d3.select(this)[0][0];
-                    textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
-                    return 0;
+                    const allowedWidth = width - 2 - PulseChart.PopupTextPadding * 2;
+                    const allowedHeight = height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2;
+                    textMeasurementService.wordBreak(node, allowedWidth, allowedHeight);
                 })
                 .attr("transform", function (d: DataPoint) {
                     let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);

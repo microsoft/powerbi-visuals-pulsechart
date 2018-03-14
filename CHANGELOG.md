@@ -1,6 +1,8 @@
 ## 2.2.5
-* Fixed issue with showing tooltip during animation
-* Fixed tooltip issue after animation stop
+* Fixed issue with showing tooltip after animation stop
+* Fixed issue with enable points for click after animation stop
+* Fixed issue with skiping animation stops after gaps
+* Update api version to 1.11.0
 
 ## 2.2.4
 * Fixed not expected selection calls for datapoints with no title or description
