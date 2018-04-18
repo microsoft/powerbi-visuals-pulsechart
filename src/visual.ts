@@ -282,8 +282,9 @@ module powerbi.extensibility.visual {
                     }
                 }
 
+                let valueFormatterLocalized = valueFormatter.create({cultureSelector: host.locale});
                 let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-                let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && columns.RunnerCounter.values[categoryIndex];
+                let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
                 let identity: ISelectionId = host.createSelectionIdBuilder()
                     .withCategory(timeStampColumn, categoryIndex)
                     .createSelectionId();
@@ -322,13 +323,13 @@ module powerbi.extensibility.visual {
                     let formattedValue = categoryValue;
 
                     if (!isScalar && categoryValue) {
-                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format }).format(categoryValue);
+                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale}).format(categoryValue);
                     }
 
                     popupInfo = {
                         value: formattedValue,
-                        title: columns.EventTitle && columns.EventTitle.values && <string>columns.EventTitle.values[categoryIndex],
-                        description: columns.EventDescription && columns.EventDescription.values && <string>columns.EventDescription.values[categoryIndex],
+                        title: columns.EventTitle && columns.EventTitle.values && valueFormatterLocalized.format(columns.EventTitle.values[categoryIndex]),
+                        description: columns.EventDescription && columns.EventDescription.values && valueFormatterLocalized.format(columns.EventDescription.values[categoryIndex]),
                     };
                 }
                 let y_value = <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0;
@@ -480,7 +481,8 @@ module powerbi.extensibility.visual {
             formatterOptions: ValueFormatterOptions,
             dateFormat: XAxisDateFormat,
             position: XAxisPosition,
-            widthOfXAxisLabel: number): XAxisProperties[] {
+            widthOfXAxisLabel: number,
+            locale: string): XAxisProperties[] {
 
             let scales = PulseChart.getXAxisScales(series, isScalar, originalScale);
             let xAxisProperties = new Array<XAxisProperties>(scales.length);
@@ -505,6 +507,7 @@ module powerbi.extensibility.visual {
             formatterOptions.tickCount = xAxisProperties.length && xAxisProperties.map(x => x.values.length).reduce((a, b) => a + b) * 5;
             formatterOptions.value = originalScale.domain()[0];
             formatterOptions.value2 = originalScale.domain()[1];
+            formatterOptions.cultureSelector = locale;
 
             xAxisProperties.forEach((properties: XAxisProperties) => {
                 let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
@@ -831,7 +834,8 @@ module powerbi.extensibility.visual {
                 _.assign({}, this.data.settings.xAxis.formatterOptions),
                 this.data.settings.xAxis.dateFormat,
                 this.data.settings.xAxis.position,
-                this.data.widthOfXAxisLabel);
+                this.data.widthOfXAxisLabel,
+                this.host.locale);
 
             this.data.series.forEach((series: Series, index: number) => {
                 series.xAxisProperties = xAxisProperties[index];
