@@ -104,6 +104,7 @@
             "displayName": "Series",
             "displayNameKey": "Visual_Series",
             "description": "Series",
+            "descriptionKey": "Visual_Series",
             "properties": {
                 "fill": {
                     "displayName": "Fill",
@@ -129,6 +130,7 @@
             "displayName": "Gaps",
             "displayNameKey": "Visual_PulseChart_Gaps",
             "description": "Gaps",
+            "descriptionKey": "Visual_PulseChart_Gaps",
             "properties": {
                 "show": {
                     "displayName": "Show",
