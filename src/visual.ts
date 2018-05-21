@@ -282,8 +282,9 @@ module powerbi.extensibility.visual {
                     }
                 }
 
+                let valueFormatterLocalized = valueFormatter.create({cultureSelector: host.locale});
                 let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-                let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && columns.RunnerCounter.values[categoryIndex];
+                let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
                 let identity: ISelectionId = host.createSelectionIdBuilder()
                     .withCategory(timeStampColumn, categoryIndex)
                     .createSelectionId();
@@ -322,13 +323,13 @@ module powerbi.extensibility.visual {
                     let formattedValue = categoryValue;
 
                     if (!isScalar && categoryValue) {
-                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format }).format(categoryValue);
+                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale}).format(categoryValue);
                     }
 
                     popupInfo = {
                         value: formattedValue,
-                        title: columns.EventTitle && columns.EventTitle.values && <string>columns.EventTitle.values[categoryIndex],
-                        description: columns.EventDescription && columns.EventDescription.values && <string>columns.EventDescription.values[categoryIndex],
+                        title: columns.EventTitle && columns.EventTitle.values && valueFormatterLocalized.format(columns.EventTitle.values[categoryIndex]),
+                        description: columns.EventDescription && columns.EventDescription.values && valueFormatterLocalized.format(columns.EventDescription.values[categoryIndex]),
                     };
                 }
                 let y_value = <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0;
@@ -480,7 +481,8 @@ module powerbi.extensibility.visual {
             formatterOptions: ValueFormatterOptions,
             dateFormat: XAxisDateFormat,
             position: XAxisPosition,
-            widthOfXAxisLabel: number): XAxisProperties[] {
+            widthOfXAxisLabel: number,
+            locale: string): XAxisProperties[] {
 
             let scales = PulseChart.getXAxisScales(series, isScalar, originalScale);
             let xAxisProperties = new Array<XAxisProperties>(scales.length);
@@ -505,6 +507,7 @@ module powerbi.extensibility.visual {
             formatterOptions.tickCount = xAxisProperties.length && xAxisProperties.map(x => x.values.length).reduce((a, b) => a + b) * 5;
             formatterOptions.value = originalScale.domain()[0];
             formatterOptions.value2 = originalScale.domain()[1];
+            formatterOptions.cultureSelector = locale;
 
             xAxisProperties.forEach((properties: XAxisProperties) => {
                 let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
@@ -638,6 +641,7 @@ module powerbi.extensibility.visual {
         public viewport: IViewport;
         public size: IViewport;
         public handleSelectionTimeout: number;
+        public behavior: IPulseChartInteractiveBehavior;
         private svg: Selection<any>;
         private chart: Selection<any>;
         private dots: Selection<any>;
@@ -651,8 +655,8 @@ module powerbi.extensibility.visual {
         private animationSelection: UpdateSelection<any>;
         private lastSelectedPoint: ISelectionId;
         private interactivityService: IInteractivityService;
-        private behavior: IPulseChartInteractiveBehavior;
         private settings: PulseChartSettings;
+        private skipDoubleSelectionForCurrentPosition: boolean;
         public host: IVisualHost;
 
         public get runnerCounterPlaybackButtonsHeight(): number {
@@ -702,6 +706,7 @@ module powerbi.extensibility.visual {
             this.viewport = options.viewport;
             let dataView: DataView = options.dataViews[0];
             let pulseChartData: ChartData = PulseChart.converter(dataView, this.host, this.colors, this.interactivityService);
+            this.settings = PulseChart.parseSettings(dataView);
 
             this.updateData(pulseChartData);
             if (!this.validateData(this.data)) {
@@ -829,7 +834,8 @@ module powerbi.extensibility.visual {
                 _.assign({}, this.data.settings.xAxis.formatterOptions),
                 this.data.settings.xAxis.dateFormat,
                 this.data.settings.xAxis.position,
-                this.data.widthOfXAxisLabel);
+                this.data.widthOfXAxisLabel,
+                this.host.locale);
 
             this.data.series.forEach((series: Series, index: number) => {
                 series.xAxisProperties = xAxisProperties[index];
@@ -1159,7 +1165,22 @@ module powerbi.extensibility.visual {
         }
 
         public playAnimation(delay: number = 0): void {
-            let flooredStart = this.animationHandler.flooredPosition.index;
+            let flooredStart: number = this.animationHandler.flooredPosition.index;
+            this.onClearSelection();
+
+            const currentPosition: AnimationPosition = this.animationHandler.flooredPosition;
+
+            if (this.skipDoubleSelectionForCurrentPosition) {
+                this.skipDoubleSelectionForCurrentPosition = false;
+
+            } else if (this.checkTooltipForSelection(currentPosition)) {
+
+                this.skipDoubleSelectionForCurrentPosition = true;
+                this.handleSelection(currentPosition);
+                this.continueAnimation(currentPosition);
+                return;
+            }
+
             this.showAnimationDot();
             this.animationSelection
                 .transition()
@@ -1265,7 +1286,7 @@ module powerbi.extensibility.visual {
         }
 
         private hideAnimationDot(): void {
-            this.animationDot.attr("display", "none");
+            this.animationDot.style("display", "none");
         }
 
         private getInterpolation(data: DataPoint[], start: number): any {
@@ -1336,7 +1357,7 @@ module powerbi.extensibility.visual {
             this.chart.selectAll(PulseChart.Tooltip.selectorName).remove();
         }
 
-        private getDatapointFromPosition(position: AnimationPosition): DataPoint {
+        public getDatapointFromPosition(position: AnimationPosition): DataPoint {
             if (!this.data ||
                 !this.data.series ||
                 !this.data.series[position.series] ||
@@ -1347,11 +1368,26 @@ module powerbi.extensibility.visual {
             return this.data.series[position.series].data[position.index];
         }
 
-        public handleSelection(position: AnimationPosition): void {
-            let dataPoint: DataPoint = this.getDatapointFromPosition(position);
-            if (dataPoint) {
+        public handleSelection(position: AnimationPosition): boolean {
+            if (!position) {
+                return false;
+            }
+
+            const dataPoint: DataPoint = this.getDatapointFromPosition(position);
+            if (dataPoint && dataPoint.popupInfo) {
                 this.behavior.setSelection(dataPoint);
             }
+        }
+
+        private checkTooltipForSelection(position: AnimationPosition) {
+            if (!position) {
+                return false;
+            } else if (!this.settings || !this.settings.gaps || !this.settings.gaps.show) {
+                return false;
+            }
+
+            const dataPoint: DataPoint = this.getDatapointFromPosition(position);
+            return dataPoint && dataPoint.popupInfo;
         }
 
         private continueAnimation(position: AnimationPosition): void {
@@ -1534,12 +1570,15 @@ module powerbi.extensibility.visual {
                 .remove();
         }
 
-        private isPopupShow(d: DataPoint): boolean {
-            if (!this.popupHeight || !d.popupInfo) {
+        public isPopupShow(d: DataPoint): boolean {
+            if (!this.popupHeight || !d || !d.popupInfo || (this.animationIsPlaying() && !d.selected)) {
                 return false;
             }
-
             return d.selected;
+        }
+
+        public animationIsPlaying(): boolean {
+            return this.animationHandler.isPlaying;
         }
 
         private drawTooltips(data: ChartData): void {
@@ -1741,13 +1780,9 @@ module powerbi.extensibility.visual {
                 .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
                 .each(function (series: Series) {
                     let node = <SVGTextElement>this;
-                    textMeasurementService.wordBreak(node, width - 2 - PulseChart.PopupTextPadding * 2, height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2);
-                })
-                .attr("y", function (d: DataPoint) {
-                    let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
-                    let el: SVGTextElement = <any>d3.select(this)[0][0];
-                    textMeasurementService.wordBreak(el, descriptionDimenstions.width, descriptionDimenstions.height);
-                    return 0;
+                    const allowedWidth = width - 2 - PulseChart.PopupTextPadding * 2;
+                    const allowedHeight = height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2;
+                    textMeasurementService.wordBreak(node, allowedWidth, allowedHeight);
                 })
                 .attr("transform", function (d: DataPoint) {
                     let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
@@ -1816,6 +1851,12 @@ module powerbi.extensibility.visual {
         public destroy(): void {
             this.data = null;
             this.clearAll(true);
+        }
+
+        public clearTooltips(): void {
+            this.chart
+                .selectAll(PulseChart.Tooltip.className)
+                .style("display", "none");
         }
     }
 }
