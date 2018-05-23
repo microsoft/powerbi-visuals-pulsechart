@@ -1,3 +1,6 @@
+## 2.3.0
+* Added localization for all supported languages
+
 ## 2.2.5
 * Fixed issue with showing tooltip after animation stop
 * Fixed issue with enable points for click after animation stop
