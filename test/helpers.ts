@@ -27,9 +27,23 @@
 /// <reference path="_references.ts"/>
 
 module powerbi.extensibility.visual.test.helpers {
+    // powerbi.extensibility.utils.test
+    import helpers = powerbi.extensibility.utils.test.helpers;
+    import RgbColor = powerbi.extensibility.utils.test.helpers.color.RgbColor;
+    import parseColorString = powerbi.extensibility.utils.test.helpers.color.parseColorString;
+
     const EnglishAlphabetLowerCase = "abcdefghijklmnopqrstuwxyz";
     const EnglishAlphabetUpperCase = "ABCDEFGHIJKLMNOPQRSTUWXYZ";
-    import helpers = powerbi.extensibility.utils.test.helpers;
+
+    export function areColorsEqual(firstColor: string, secondColor: string): boolean {
+        const firstConvertedColor: RgbColor = parseColorString(firstColor),
+            secondConvertedColor: RgbColor = parseColorString(secondColor);
+
+        return firstConvertedColor.R === secondConvertedColor.R
+            && firstConvertedColor.G === secondConvertedColor.G
+            && firstConvertedColor.B === secondConvertedColor.B;
+    }
+
     export function getRandomWords(
         wordCount: number,
         minLength: number,

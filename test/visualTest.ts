@@ -27,13 +27,22 @@
 /// <reference path="_references.ts"/>
 
 namespace powerbi.extensibility.visual.test {
+    // powerbi.extensibility.utils.test
+    import mocks = powerbi.extensibility.utils.test.mocks;
+    import helpers = powerbi.extensibility.utils.test.helpers;
+    import createColorPalette = powerbi.extensibility.utils.test.mocks.createColorPalette;
+
+    // powerbi.extensibility.utils.color
+    import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
+
+    // powerbi.extensibility.visual.test
     import PulseChartData = powerbi.extensibility.visual.test.PulseChartData;
     import PulseChartBuilder = powerbi.extensibility.visual.test.PulseChartBuilder;
-    import VisualClass = powerbi.extensibility.visual.PulseChart1459209850231.PulseChart;
-    import mocks = powerbi.extensibility.utils.test.mocks;
+    import areColorsEqual = powerbi.extensibility.visual.test.helpers.areColorsEqual;
 
-    // powerbi.extensibility.utils.test
-    import helpers = powerbi.extensibility.utils.test.helpers;
+    // PulseChart1459209850231
+    import ChartData = powerbi.extensibility.visual.PulseChart1459209850231.ChartData;
+    import VisualClass = powerbi.extensibility.visual.PulseChart1459209850231.PulseChart;
 
     // powerbi.extensibility.utils.formatting
     const DefaultTimeout: number = 500;
@@ -119,7 +128,7 @@ namespace powerbi.extensibility.visual.test {
             describe("playback", () => {
                 let originalTimeout;
 
-                beforeEach(function() {
+                beforeEach(function () {
                     originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
                     jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000;
                 });
@@ -248,7 +257,7 @@ namespace powerbi.extensibility.visual.test {
                     });
                 });
 
-                afterEach(function() {
+                afterEach(function () {
                     jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
                 });
             });
@@ -262,7 +271,7 @@ namespace powerbi.extensibility.visual.test {
 
                 it("select click", (done) => {
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        expect( () =>  {
+                        expect(() => {
                             // apply filtered date
                             visualBuilder.updateRenderTimeout(dataViewSingleDate, () => {
                                 const clickPoint: JQuery = visualBuilder.mainElement.first();
@@ -298,14 +307,18 @@ namespace powerbi.extensibility.visual.test {
         });
 
         describe("PulseChart.converter", () => {
+            let colorHelper: ColorHelper;
+
             beforeEach(() => {
                 dataViewForCategoricalColumn = defaultDataViewBuilder.getDataView(null, true);
+
+                colorHelper = new ColorHelper(createColorPalette());
             });
 
             it("date values provided as string should be converted to Date type", () => {
                 let host: IVisualHost = mocks.createVisualHost();
 
-                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
 
                 expect(convertedData.categories.every(d => d instanceof Date)).toBeTruthy();
             });
@@ -314,13 +327,13 @@ namespace powerbi.extensibility.visual.test {
                 let host: IVisualHost = mocks.createVisualHost();
                 dataViewForCategoricalColumn.categorical.values["0"].values[12] = "<scrutp> test test non number value";
                 dataViewForCategoricalColumn.categorical.values["0"].values[18] = ">>> #$%^$^scrutp> test test non number value";
-                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
                 expect(convertedData.series["0"].data.every(d => !isNaN(d.y))).toBeTruthy();
             });
 
             it("EventSize provided as string should be processed as zero values", () => {
                 let host: IVisualHost = mocks.createVisualHost();
-                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, null, null);
+                let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
                 expect(convertedData.series["0"].data.every(d => !isNaN(d.eventSize))).toBeTruthy();
             });
 
@@ -358,17 +371,17 @@ namespace powerbi.extensibility.visual.test {
             });
 
             it("should not be shown when selected false or undefined", done => {
-                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: false});
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: false });
                 expect(result).toBeFalsy();
 
-                result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}});
+                result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {} });
                 expect(result).toBeFalsy();
                 done();
             });
 
             it("should not be shown when animation is playing", done => {
                 visualBuilder.visualInstance.animationIsPlaying = () => true;
-                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: true});
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: true });
                 expect(result).toBeFalsy();
                 done();
             });
@@ -385,7 +398,7 @@ namespace powerbi.extensibility.visual.test {
                 };
 
                 visualBuilder.visualInstance.animationIsPlaying = () => false;
-                let result = visualBuilder.visualInstance.isPopupShow(<any>{popupInfo: {}, selected: true});
+                let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: true });
                 expect(result).toBeTruthy();
                 done();
             });
@@ -405,7 +418,7 @@ namespace powerbi.extensibility.visual.test {
             });
 
             it("should be invoked when data point has popupInfo", () => {
-                spyOn(visualInst, "getDatapointFromPosition").and.returnValue({popupInfo: {}});
+                spyOn(visualInst, "getDatapointFromPosition").and.returnValue({ popupInfo: {} });
                 visualInst.handleSelection(<any>{});
                 expect(visualInst.behavior.setSelection).toHaveBeenCalled();
             });
@@ -420,6 +433,54 @@ namespace powerbi.extensibility.visual.test {
                 spyOn(visualInst, "getDatapointFromPosition").and.returnValue({});
                 visualInst.handleSelection(null);
                 expect(visualInst.behavior.setSelection).not.toHaveBeenCalled();
+            });
+        });
+
+        describe("Accessibility", () => {
+            describe("High contrast mode", () => {
+                const backgroundColor: string = "#000000";
+                const foregroundColor: string = "#ffff00";
+
+                beforeEach(() => {
+                    visualBuilder.visualHost.colorPalette.isHighContrast = true;
+
+                    visualBuilder.visualHost.colorPalette.background = { value: backgroundColor };
+                    visualBuilder.visualHost.colorPalette.foreground = { value: foregroundColor };
+                });
+
+                it("should use theme foreground color as stroke of line", (done) => {
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        expect(isColorAppliedToElements([visualBuilder.linePath], null, "stroke"));
+
+                        done();
+                    });
+                });
+
+                it("should use theme background color as fill of rect of axis tick", (done) => {
+                    visualBuilder.updateRenderTimeout(dataView, () => {
+                        const rects: JQuery[] = visualBuilder.xAxisNodeRect.toArray().map($);
+
+                        expect(isColorAppliedToElements(rects, foregroundColor, "fill"));
+
+                        done();
+                    });
+                });
+
+                function isColorAppliedToElements(
+                    elements: JQuery[],
+                    color?: string,
+                    colorStyleName: string = "fill"
+                ): boolean {
+                    return elements.some((element: JQuery) => {
+                        const currentColor: string = element.css(colorStyleName);
+
+                        if (!currentColor || !color) {
+                            return currentColor === color;
+                        }
+
+                        return areColorsEqual(currentColor, color);
+                    });
+                }
             });
         });
     });
