@@ -30,78 +30,79 @@ module powerbi.extensibility.visual {
     import ValueFormatterOptions = utils.formatting.ValueFormatterOptions;
 
     export class PulseChartSettings extends DataViewObjectsParser {
-        popup: PopupSettings = new PopupSettings();
-        dots: DotsSettings = new DotsSettings();
-        gaps: GapsSettings = new GapsSettings();
-        series: SeriesSettings = new SeriesSettings();
-        xAxis: XAxisSettings = new XAxisSettings();
-        yAxis: YAxisSettings = new YAxisSettings;
-        playback: PlaybackSettings = new PlaybackSettings();
-        runnerCounter: RunnerCounterSettings = new RunnerCounterSettings();
+        public popup: PopupSettings = new PopupSettings();
+        public dots: DotsSettings = new DotsSettings();
+        public gaps: GapsSettings = new GapsSettings();
+        public series: SeriesSettings = new SeriesSettings();
+        public xAxis: XAxisSettings = new XAxisSettings();
+        public yAxis: YAxisSettings = new YAxisSettings;
+        public playback: PlaybackSettings = new PlaybackSettings();
+        public runnerCounter: RunnerCounterSettings = new RunnerCounterSettings();
     }
 
     export class PopupSettings {
-        show: boolean = true;
-        alwaysOnTop: boolean = false;
-        width: number = 100;
-        height: number = 80;
-        color: string = "#808181";
-        fontSize: number = 10;
-        fontColor: string = "#ffffff";
-        showTime: boolean = true;
-        showTitle: boolean = true;
-        timeColor: string = "#ffffff";
-        timeFill: string = "#010101";
+        public show: boolean = true;
+        public alwaysOnTop: boolean = false;
+        public width: number = 100;
+        public height: number = 80;
+        public color: string = "#808181";
+        public fontSize: number = 10;
+        public fontColor: string = "#ffffff";
+        public showTime: boolean = true;
+        public showTitle: boolean = true;
+        public timeColor: string = "#ffffff";
+        public timeFill: string = "#010101";
+        public stroke: string = undefined;
     }
 
     export class DotsSettings {
-        color: string = "#808181";
-        size: number = 5;
-        minSize: number = 5;
-        maxSize: number = 20;
-        transparency: number = 25;
+        public color: string = "#808181";
+        public size: number = 5;
+        public minSize: number = 5;
+        public maxSize: number = 20;
+        public transparency: number = 25;
     }
 
     export class GapsSettings {
-        show: boolean = false;
-        transparency: number = 1;
+        public show: boolean = false;
+        public transparency: number = 1;
     }
 
     export class SeriesSettings {
-        fill: string = "#3779B7";
-        width: number = 2;
+        public fill: string = "#3779B7";
+        public width: number = 2;
     }
 
     export class AxisSettings {
-        formatterOptions?: ValueFormatterOptions;
-        fontColor: string = "#777777";
-        color: string = "#777777";
-        show: boolean = true;
+        public formatterOptions?: ValueFormatterOptions;
+        public fontColor: string = "#777777";
+        public color: string = "#777777";
+        public show: boolean = true;
     }
 
     export class XAxisSettings extends AxisSettings {
-        backgroundColor: string = "#E1F2F7";
-        position: XAxisPosition = XAxisPosition.Center;
-        dateFormat?: XAxisDateFormat = XAxisDateFormat.TimeOnly;
+        public backgroundColor: string = "#E1F2F7";
+        public position: XAxisPosition = XAxisPosition.Center;
+        public dateFormat?: XAxisDateFormat = XAxisDateFormat.TimeOnly;
     }
 
     export class YAxisSettings extends AxisSettings { }
 
     export class PlaybackSettings {
-        autoplay: boolean = false;
-        repeat: boolean = false;
-        playSpeed: number = 5;
-        pauseDuration: number = 10;
-        autoplayPauseDuration: number = 0;
-        color: string = "#777777";
-        position: AnimationPosition = null;
+        public autoplay: boolean = false;
+        public repeat: boolean = false;
+        public playSpeed: number = 5;
+        public pauseDuration: number = 10;
+        public autoplayPauseDuration: number = 0;
+        public color: string = "#777777";
+        public position: AnimationPosition = null;
     }
 
     export class RunnerCounterSettings {
-        show: boolean = true;
-        label: string = "";
-        position: RunnerCounterPosition = RunnerCounterPosition.TopRight;
-        fontSize: number = 13;
-        fontColor: string = "#777777";
+        public show: boolean = true;
+        public label: string = "";
+        public position: RunnerCounterPosition = RunnerCounterPosition.TopRight;
+        public fontSize: number = 13;
+        public fontColor: string = "#777777";
     }
 }

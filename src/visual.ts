@@ -34,7 +34,6 @@ module powerbi.extensibility.visual {
     import IRect = utils.svg.IRect;
     import SVGUtil = utils.svg;
     import IMargin = utils.svg.IMargin;
-    import translate = utils.svg.translate;
     import ClassAndSelector = utils.svg.CssConstants.ClassAndSelector;
     import createClassAndSelector = utils.svg.CssConstants.createClassAndSelector;
 
@@ -42,17 +41,14 @@ module powerbi.extensibility.visual {
     import valueFormatter = utils.formatting.valueFormatter;
     import ValueFormatterOptions = utils.formatting.ValueFormatterOptions;
     import TextProperties = utils.formatting.TextProperties;
-    import IValueFormatter = utils.formatting.IValueFormatter;
     import textMeasurementService = utils.formatting.textMeasurementService;
 
     // powerbi.extensibility.utils.interactivity
     import IInteractivityService = utils.interactivity.IInteractivityService;
     import createInteractivityService = utils.interactivity.createInteractivityService;
 
-    // powerbi.extensibility.utils.tooltip
-    import TooltipEventArgs = utils.tooltip.TooltipEventArgs;
-    import ITooltipServiceWrapper = utils.tooltip.ITooltipServiceWrapper;
-    import createTooltipServiceWrapper = utils.tooltip.createTooltipServiceWrapper;
+    // powerbi.extensibility.utils.color
+    import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
 
     // utils.chart
     import AxisHelper = utils.chart.axis;
@@ -94,6 +90,7 @@ module powerbi.extensibility.visual {
         private static DefaultXAxisLabelWidth: number = 70;
         private static DefaultTooltipLabelPadding: number = 5;
         private static DefaultTooltipLabelMargin: number = 10;
+
         private static DefaultTooltipSettings: TooltipSettings = {
             dataPointColor: "#808181",
             marginTop: 20,
@@ -183,16 +180,27 @@ module powerbi.extensibility.visual {
             return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
         }
 
-        public static converter(dataView: DataView, host: IVisualHost, colors: IColorPalette, interactivityService: IInteractivityService): ChartData {
+        public static converter(
+            dataView: DataView,
+            host: IVisualHost,
+            colorHelper: ColorHelper,
+            interactivityService: IInteractivityService
+        ): ChartData {
             if (!dataView
                 || !dataView.categorical
                 || !dataView.categorical.values
                 || !dataView.categorical.values[0]
                 || !dataView.categorical.values[0].values
-                || !dataView.categorical.categories) {
+                || !dataView.categorical.categories
+            ) {
                 return null;
             }
-            let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_.mapValues(PulseChart.RoleDisplayNames, (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i));
+
+            let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_.mapValues(
+                PulseChart.RoleDisplayNames,
+                (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i)
+            );
+
             let valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
             let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
@@ -201,7 +209,8 @@ module powerbi.extensibility.visual {
             }
 
             let isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
-            let settings = PulseChart.parseSettings(dataView);
+
+            const settings: PulseChartSettings = PulseChart.parseSettings(dataView, colorHelper);
 
             let categoryValues: any[] = timeStampColumn.values;
 
@@ -282,7 +291,7 @@ module powerbi.extensibility.visual {
                     }
                 }
 
-                let valueFormatterLocalized = valueFormatter.create({cultureSelector: host.locale});
+                let valueFormatterLocalized = valueFormatter.create({ cultureSelector: host.locale });
                 let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
                 let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
                 let identity: ISelectionId = host.createSelectionIdBuilder()
@@ -323,7 +332,7 @@ module powerbi.extensibility.visual {
                     let formattedValue = categoryValue;
 
                     if (!isScalar && categoryValue) {
-                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale}).format(categoryValue);
+                        formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale }).format(categoryValue);
                     }
 
                     popupInfo = {
@@ -650,14 +659,16 @@ module powerbi.extensibility.visual {
         private animationDot: Selection<any>;
         private lineX: Line;
         private animationHandler: PulseAnimator;
-        private colors: IColorPalette;
         private rootSelection: UpdateSelection<any>;
         private animationSelection: UpdateSelection<any>;
-        private lastSelectedPoint: ISelectionId;
+
+        public host: IVisualHost;
+
         private interactivityService: IInteractivityService;
+        private colorHelper: ColorHelper;
+
         private settings: PulseChartSettings;
         private skipDoubleSelectionForCurrentPosition: boolean;
-        public host: IVisualHost;
 
         public get runnerCounterPlaybackButtonsHeight(): number {
             return Math.max(PulseChart.PlaybackButtonsHeight, this.data && (this.data.runnerCounterHeight / 2 + 17));
@@ -672,10 +683,6 @@ module powerbi.extensibility.visual {
         }
 
         constructor(options: VisualConstructorOptions) {
-            this.init(options);
-        }
-
-        public init(options: VisualConstructorOptions): void {
             this.margin = PulseChart.DefaultMargin;
             this.host = options.host;
             this.interactivityService = createInteractivityService(this.host);
@@ -696,19 +703,29 @@ module powerbi.extensibility.visual {
 
             this.animationHandler = new PulseAnimator(this, svg);
 
-            this.colors = this.host.colorPalette;
+            this.colorHelper = new ColorHelper(this.host.colorPalette);
         }
 
         public update(options: VisualUpdateOptions): void {
             if (!options || !options.dataViews || !options.dataViews[0]) {
                 return;
             }
+
             this.viewport = options.viewport;
-            let dataView: DataView = options.dataViews[0];
-            let pulseChartData: ChartData = PulseChart.converter(dataView, this.host, this.colors, this.interactivityService);
-            this.settings = PulseChart.parseSettings(dataView);
+
+            const dataView: DataView = options.dataViews[0];
+
+            let pulseChartData: ChartData = PulseChart.converter(
+                dataView,
+                this.host,
+                this.colorHelper,
+                this.interactivityService,
+            );
+
+            this.settings = pulseChartData.settings;
 
             this.updateData(pulseChartData);
+
             if (!this.validateData(this.data)) {
                 this.clearAll(true);
                 return;
@@ -719,13 +736,16 @@ module powerbi.extensibility.visual {
 
             let height = this.getChartHeight(this.data.settings.xAxis.show
                 && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
+
             this.calculateYAxisProperties(height);
+
             if (this.data.xScale.ticks(undefined).length < 2) {
                 this.clearAll(true);
                 return;
             }
 
-            this.size = { width: width, height: height };
+            this.size = { width, height };
+
             this.updateElements();
 
             this.render(true);
@@ -906,7 +926,6 @@ module powerbi.extensibility.visual {
         public render(suppressAnimations: boolean) {
             let duration: number = PulseChart.DefaultAnimationDuration;
             let data = this.data;
-            this.lastSelectedPoint = null;
 
             let xScale: LinearScale = <LinearScale>data.xScale,
                 yScales: LinearScale[] = <LinearScale[]>data.yScales;
@@ -1545,7 +1564,8 @@ module powerbi.extensibility.visual {
                     return SVGUtil.translate(x, 0);
                 });
 
-            gapNodeSelection = gapsSelection.selectAll(PulseChart.GapNode.selectorName)
+            gapNodeSelection = gapsSelection
+                .selectAll(PulseChart.GapNode.selectorName)
                 .data(gaps);
 
             gapNodeSelection
@@ -1558,6 +1578,8 @@ module powerbi.extensibility.visual {
                     width: (gap: IRect) => gap.width
                 })
                 .classed(PulseChart.GapNode.className, true);
+
+            gapNodeSelection.style("fill", data.settings.xAxis.color);
 
             gapsEnterSelection.classed(PulseChart.Gap.className, true);
 
@@ -1594,9 +1616,9 @@ module powerbi.extensibility.visual {
 
             let rootSelection: UpdateSelection<any> = this.rootSelection;
 
-            let line: Line = d3.svg.line<DataPoint>()
-                .x((d: DataPoint) => d.x)
-                .y((d: DataPoint) => {
+            let line: Line = d3.svg.line<PointXY>()
+                .x((d: PointXY) => d.x)
+                .y((d: PointXY) => {
                     return d.y;
                 });
 
@@ -1626,13 +1648,18 @@ module powerbi.extensibility.visual {
             tooltipRect.enter().append("path").classed(PulseChart.TooltipRect.className, true);
             tooltipRect
                 .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
-                .style("fill", this.data.settings.popup.color)
+                .style({
+                    "fill": this.data.settings.popup.color,
+                    "stroke": this.data.settings.popup.stroke,
+                })
                 .attr("d", (d: DataPoint) => {
-                    let path = [
-                        {
-                            "x": -2,
-                            "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
-                        },
+                    const firstPoint: PointXY = {
+                        "x": -2,
+                        "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
+                    };
+
+                    const points: PointXY[] = [
+                        firstPoint,
                         {
                             "x": -2,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height)) : height,
@@ -1644,15 +1671,20 @@ module powerbi.extensibility.visual {
                         {
                             "x": width - 2,
                             "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
-                        }
+                        },
+                        firstPoint,
                     ];
-                    return line(path as DataPoint[]);
+
+                    return line(points);
                 });
 
             let tooltipTriangle: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTriangle.selectorName).data(d => [d]);
             tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.className, true);
             tooltipTriangle
-                .style("fill", this.data.settings.popup.color)
+                .style({
+                    "fill": this.data.settings.popup.color,
+                    stroke: this.data.settings.popup.stroke,
+                })
                 .attr("d", (d: DataPoint) => {
                     let path = [
                         {
@@ -1676,7 +1708,7 @@ module powerbi.extensibility.visual {
             tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.className, true);
             tooltipLine
                 .style("fill", this.data.settings.popup.color)
-                .style("stroke", this.data.settings.popup.color)
+                .style("stroke", this.data.settings.popup.stroke || this.data.settings.popup.color)
                 .style("stroke-width", "1px")
                 .attr("d", (d: DataPoint) => {
                     let path = [
@@ -1696,7 +1728,10 @@ module powerbi.extensibility.visual {
             let timeRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
             timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.className, true);
             timeRect
-                .style("fill", this.data.settings.popup.timeFill)
+                .style({
+                    "fill": this.data.settings.popup.timeFill,
+                    "stroke": this.data.settings.popup.stroke,
+                })
                 .style("display", showTimeDisplayProperty)
                 .attr("d", (d: DataPoint) => {
                     let path = [
@@ -1836,9 +1871,37 @@ module powerbi.extensibility.visual {
             this.chart.selectAll(PulseChart.Dot.selectorName).remove();
         }
 
-        private static parseSettings(dataView: DataView): PulseChartSettings {
+        private static parseSettings(dataView: DataView, colorHelper: ColorHelper): PulseChartSettings {
             let settings: PulseChartSettings = PulseChartSettings.parse<PulseChartSettings>(dataView);
+
             settings.popup.fontSize = parseInt(<any>settings.popup.fontSize);
+
+            if (colorHelper.isHighContrast) {
+                const foregroundColor: string = colorHelper.getThemeColor("foreground");
+                const backgroundColor: string = colorHelper.getThemeColor("background");
+
+                settings.series.fill = foregroundColor;
+
+                settings.popup.color = backgroundColor;
+                settings.popup.fontColor = foregroundColor;
+                settings.popup.timeColor = foregroundColor;
+                settings.popup.timeFill = backgroundColor;
+                settings.popup.stroke = foregroundColor;
+
+                settings.dots.color = foregroundColor;
+
+                settings.xAxis.fontColor = foregroundColor;
+                settings.xAxis.color = foregroundColor;
+                settings.xAxis.backgroundColor = backgroundColor;
+
+                settings.yAxis.color = foregroundColor;
+                settings.yAxis.fontColor = foregroundColor;
+
+                settings.playback.color = foregroundColor;
+
+                settings.runnerCounter.fontColor = foregroundColor;
+            }
+
             return settings;
         }
 

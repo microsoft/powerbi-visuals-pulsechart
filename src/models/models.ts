@@ -22,7 +22,7 @@ module powerbi.extensibility.visual {
     export type GenericScale = TimeScale | LinearScale;
 
     // INTERFACES
-    export interface Line extends d3.svg.Line<DataPoint> { }
+    export interface Line extends d3.svg.Line<PointXY> { }
     export interface LinearScale extends d3.scale.Linear<any, any> { }
     export interface TimeScale extends d3.time.Scale<any, any> { }
     export interface VisualDataLabelsSettings {

@@ -15,4 +15,4 @@ When a data point is selected on the Pulse Chart, you get a customizable popup. 
 
 Creating a Pulse Chart is really easy - you just need to provide data that is a time series. You add columns to the time series data that define the events you want to show on the line. For those columns, non-blank values become events and are shown as circles on the Pulse chart.
 
-See also [Pulse Chart at Microsoft Office store](https://store.office.com/en-001/app.aspx?assetid=WA104381006)
+See also [Pulse Chart at Microsoft AppSource](https://appsource.microsoft.com/en-us/product/power-bi-visuals/WA104381006)

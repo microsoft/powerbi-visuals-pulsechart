@@ -95,6 +95,10 @@ module powerbi.extensibility.visual.test {
             return this.xAxisNode.children("g.tick");
         }
 
+        public get xAxisNodeRect(): JQuery {
+            return this.xAxisNodeTick.children("rect");
+        }
+
         public get yAxis(): JQuery {
             return this.mainElement.children("g.y.axis");
         }
