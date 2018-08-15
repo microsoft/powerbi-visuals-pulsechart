@@ -1,16 +1,17 @@
 {
   "name": "powerbi-visuals-pulsechart",
   "description": "Pulse chart shows a line chart annotated with key events.  Each events can be selected to filter and cross highlight other visuals to reveal insights or help tell a story. Pulse chart supports animation so you can load your report and watch it play through key events, without user interaction. This visualization is perfect for story telling with data, especially the Power BI publish to web feature. Use it anywhere you need to draw attention to events that shaped a trend.",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "author": {
     "name": "Microsoft",
     "email": "pbicvsupport@microsoft.com"
   },
   "scripts": {
-    "postinstall": "pbiviz update 1.13.0",
+    "postinstall": "pbiviz update 2.1.0",
     "pbiviz": "pbiviz",
     "start": "pbiviz start",
     "package": "pbiviz package",
+    "cert": "pbiviz --create-cert",
     "lint": "npm run lint:ts && npm run lint:less",
     "lint:ts": "tslint -r \"node_modules/tslint-microsoft-contrib\" \"+(src|test)/**/*.ts\"",
     "lint:less": "stylelint -s less \"style/**/*.less\"",
@@ -39,7 +40,7 @@
     "karma-remap-istanbul": "0.6.0",
     "karma-sourcemap-loader": "0.3.7",
     "karma-typescript-preprocessor": "0.3.1",
-    "powerbi-visuals-tools": "1.13.1",
+    "powerbi-visuals-tools": "2.1.0",
     "powerbi-visuals-utils-testutils": "1.2.1",
     "puppeteer": "^1.6.0",
     "stylelint": "^7.12.0",
