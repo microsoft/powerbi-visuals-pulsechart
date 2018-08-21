@@ -1,3 +1,6 @@
+## 2.5.0
+* API 2.1.0
+
 ## 2.4.0
 * High contrast mode
 * API 1.13.0
