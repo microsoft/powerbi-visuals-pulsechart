@@ -1,3 +1,6 @@
+## 3.0.0
+* Webpack integration
+
 ## 2.5.0
 * API 2.1.0
 
