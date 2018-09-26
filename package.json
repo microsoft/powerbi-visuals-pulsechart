@@ -33,8 +33,6 @@
     "@types/webpack": "4.4.4",
     "coveralls": "3.0.2",
     "css-loader": "1.0.0",
-    "del-cli": "1.1.0",
-    "istanbul-reports": "2.0.0",
     "jasmine": "2.5.2",
     "jasmine-jquery": "2.1.1",
     "jquery": "3.2.1",
@@ -62,7 +60,6 @@
   },
   "dependencies": {
     "d3": "3.5.5",
-    "globalize": "0.1.0-a2",
     "jquery": "3.2.1",
     "lodash": "4.17.4",
     "powerbi-models": "^1.0.8",
