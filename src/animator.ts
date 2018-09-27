@@ -23,19 +23,26 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-// d3
+
+import powerbi from "powerbi-visuals-api";
 import Selection = d3.Selection;
 
-// powerbi.extensibility.utils.svg
-import SVGUtil = powerbi.extensibility.utils.svg;
-import ClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.ClassAndSelector;
-import createClassAndSelector = powerbi.extensibility.utils.svg.CssConstants.createClassAndSelector;
+import VisualObjectInstancesToPersist = powerbi.VisualObjectInstancesToPersist;
 
-// powerbi.extensibility.utils.formatting
-import valueFormatter = powerbi.extensibility.utils.formatting.valueFormatter;
-import TextProperties = powerbi.extensibility.utils.formatting.TextProperties;
-import IValueFormatter = powerbi.extensibility.utils.formatting.IValueFormatter;
-import textMeasurementService = powerbi.extensibility.utils.formatting.textMeasurementService;
+import * as SVGUtil from "powerbi-visuals-utils-svgutils";
+import SVGManipulations = SVGUtil.manipulation;
+import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
+import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
+
+import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
+import valueFormatter = vf.valueFormatter;
+import IValueFormatter = tms.TextProperties;
+import textMeasurementService = tms.textMeasurementService;
+
+import { AnimationPosition } from "./models/models";
+import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";
+import { PulseChart } from "./visual";
+import { pulseChartUtils } from "./utils";
 
 export class PulseAnimator {
     private chart: PulseChart;
@@ -296,33 +303,33 @@ export class PulseAnimator {
         let color: string = this.color;
 
         this.animationPlay
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationPause
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationReset
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationPrev
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationNext
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationToEnd
-            .attr("transform", SVGUtil.translate(shiftX(), 0))
+            .attr("transform", SVGManipulations.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.runnerCounter
             .attr("fill", color)
             .attr("transform",
-                SVGUtil.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
+                SVGManipulations.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
                     ? this.runnerCounterTopLeftPosition
                     : this.chart.viewport.width - PulseAnimator.runnerCounterShiftX,
                     this.chart.data.runnerCounterHeight / 2 + PulseAnimator.runnerCounterShiftY));

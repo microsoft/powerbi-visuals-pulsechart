@@ -25,8 +25,15 @@
  */
 import powerbi from "powerbi-visuals-api";
 import * as d3 from "d3";
+import * as _ from "lodash";
 
+import DataView = powerbi.DataView;
+import DataViewObject = powerbi.DataViewObject;
 import IViewport = powerbi.IViewport;
+import DataViewValueColumn = powerbi.DataViewValueColumn;
+import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
+import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
+import PrimitiveValue = powerbi.PrimitiveValue;
 import IVisualHost = powerbi.extensibility.IVisualHost;
 import IVisual = powerbi.extensibility.IVisual;
 
@@ -35,32 +42,32 @@ import Selection = d3.Selection;
 import UpdateSelection = d3.selection.Update;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
-import IRect = utils.svg.IRect;
+import IRect = SVGUtil.IRect;
 import { axisInterfaces } from "powerbi-visuals-utils-chartutils";
 import IMargin = axisInterfaces.IMargin;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
-// powerbi.extensibility.utils.formatting
-import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
-import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
-import TextProperties = utils.formatting.TextProperties;
-import textMeasurementService = utils.formatting.textMeasurementService;
+import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
+import valueFormatter = vf.valueFormatter;
+import ValueFormatterOptions = vf.ValueFormatterOptions;
+import TextProperties = tms.TextProperties;
+import textMeasurementService = tms.textMeasurementService;
 
 import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
 import createInteractivityService = interactivityService.createInteractivityService;
 import IInteractivityService = interactivityService.IInteractivityService;
 
-// powerbi.extensibility.utils.color
-import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
+import { ColorHelper } from "powerbi-visuals-utils-colorutils";
+import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
 
-// utils.chart
-import AxisHelper = utils.chart.axis;
-
-// powerbi.visuals
 import ISelectionId = powerbi.visuals.ISelectionId;
 
-import { TooltipSettings } from "./models/models";
+import { TooltipSettings, ChartData, TooltipData } from "./models/models";
+import { XAxisDateFormat } from "./enum/enums";
+import { PulseChartSettings } from "./settings";
+import { PulseChartAxisPropertiesHelper } from "./helpers";
+import { PulseChartDataLabelUtils } from "./utils";
 
 export class PulseChart implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
