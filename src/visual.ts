@@ -42,14 +42,14 @@ import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
 // powerbi.extensibility.utils.formatting
-import valueFormatter = utils.formatting.valueFormatter;
-import ValueFormatterOptions = utils.formatting.ValueFormatterOptions;
+import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
+import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 import TextProperties = utils.formatting.TextProperties;
 import textMeasurementService = utils.formatting.textMeasurementService;
 
-// powerbi.extensibility.utils.interactivity
-import IInteractivityService = utils.interactivity.IInteractivityService;
-import createInteractivityService = utils.interactivity.createInteractivityService;
+import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
+import createInteractivityService = interactivityService.createInteractivityService;
+import IInteractivityService = interactivityService.IInteractivityService;
 
 // powerbi.extensibility.utils.color
 import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
