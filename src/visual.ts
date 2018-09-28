@@ -32,10 +32,16 @@ import DataViewObject = powerbi.DataViewObject;
 import IViewport = powerbi.IViewport;
 import DataViewValueColumn = powerbi.DataViewValueColumn;
 import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
+import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
 import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
+import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
+import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
 import PrimitiveValue = powerbi.PrimitiveValue;
-import IVisualHost = powerbi.extensibility.IVisualHost;
-import IVisual = powerbi.extensibility.IVisual;
+
+import IVisualHost = powerbi.extensibility.visual.IVisualHost;
+import IVisual = powerbi.extensibility.visual.IVisual;
+import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
+import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
 import Axis = d3.svg.Axis;
 import Selection = d3.Selection;
@@ -43,6 +49,7 @@ import UpdateSelection = d3.selection.Update;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
 import IRect = SVGUtil.IRect;
+import SVGUtilManipulations = SVGUtil.manipulation;
 import { axisInterfaces } from "powerbi-visuals-utils-chartutils";
 import IMargin = axisInterfaces.IMargin;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
@@ -63,11 +70,30 @@ import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
 
 import ISelectionId = powerbi.visuals.ISelectionId;
 
-import { TooltipSettings, ChartData, TooltipData } from "./models/models";
-import { XAxisDateFormat } from "./enum/enums";
+import {
+    TooltipSettings,
+    ChartData,
+    TooltipData,
+    LinearScale,
+    Line,
+    DataPoint,
+    DataRoles,
+    Series,
+    GenericScale,
+    XAxisProperties,
+    AnimationPosition,
+    TimeScale,
+    PointXY,
+    ElementDimensions,
+    IPulseChartInteractiveBehavior,
+    BehaviorOptions
+} from "./models/models";
+import { XAxisDateFormat, XAxisPosition } from "./enum/enums";
 import { PulseChartSettings } from "./settings";
 import { PulseChartAxisPropertiesHelper } from "./helpers";
-import { PulseChartDataLabelUtils } from "./utils";
+import { PulseChartDataLabelUtils, pulseChartUtils } from "./utils";
+import { PulseChartWebBehavior } from "./webBehavior";
+import { PulseAnimator } from "./animator";
 
 export class PulseChart implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
@@ -847,10 +873,10 @@ export class PulseChart implements IVisual {
             height: this.viewport.height,
         });
         this.svg.style("display", undefined);
-        this.gaps.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
-        this.chart.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop));
-        this.yAxis.attr("transform", SVGUtil.translate(this.size.width + this.margin.left, chartMarginTop));
-        this.dots.attr("transform", SVGUtil.translate(this.margin.left, chartMarginTop));
+        this.gaps.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
+        this.chart.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop));
+        this.yAxis.attr("transform", SVGUtilManipulations.translate(this.size.width + this.margin.left, chartMarginTop));
+        this.dots.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop));
     }
 
     public calculateXAxisProperties(width: number) {
@@ -1042,7 +1068,7 @@ export class PulseChart implements IVisual {
                 break;
         }
 
-        axisNodeUpdateSelection.attr("transform", SVGUtil.translate(0, xAxisTop));
+        axisNodeUpdateSelection.attr("transform", SVGUtilManipulations.translate(0, xAxisTop));
     }
 
     private renderYAxis(data: ChartData, duration: number): void {
@@ -1446,7 +1472,7 @@ export class PulseChart implements IVisual {
         }
 
         clearTimeout(this.handleSelectionTimeout);
-        this.handleSelectionTimeout = setTimeout(() => {
+        this.handleSelectionTimeout = <any>setTimeout(() => {
             if (this.animationHandler.animationPlayingIndex !== animationPlayingIndex) {
                 return;
             }
@@ -1574,7 +1600,7 @@ export class PulseChart implements IVisual {
                     x = xScale(<any>(new Date(middleOfGap + ((<Date>categoryValue).getTime()))));
                 }
 
-                return SVGUtil.translate(x, 0);
+                return SVGUtilManipulations.translate(x, 0);
             });
 
         gapNodeSelection = gapsSelection
@@ -1654,7 +1680,7 @@ export class PulseChart implements IVisual {
                 let x: number = xScale(d.x) - width / 2;
                 let y: number = tooltipShiftY(d.y, d.groupIndex);
                 d.popupInfo.offsetX = Math.min(this.viewport.width - this.margin.right - width, Math.max(-this.margin.left, x)) - x;
-                return SVGUtil.translate(x + d.popupInfo.offsetX, y);
+                return SVGUtilManipulations.translate(x + d.popupInfo.offsetX, y);
             });
 
         let tooltipRect: UpdateSelection<any> = tooltipRoot.selectAll(PulseChart.TooltipRect.selectorName).data(d => [d]);
@@ -1834,7 +1860,7 @@ export class PulseChart implements IVisual {
             })
             .attr("transform", function (d: DataPoint) {
                 let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
-                return SVGUtil.translate(0, descriptionDimenstions.y);
+                return SVGUtilManipulations.translate(0, descriptionDimenstions.y);
             });
         description.selectAll("tspan").attr("x", PulseChart.PopupTextPadding);
 

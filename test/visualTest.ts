@@ -23,24 +23,24 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+import powerbi from "powerbi-visuals-api";
 import * as d3 from "d3";
+import * as _ from "lodash";
 
-import mocks = powerbi.extensibility.utils.test.mocks;
-import helpers = powerbi.extensibility.utils.test.helpers;
-import createColorPalette = powerbi.extensibility.utils.test.mocks.createColorPalette;
+import DataView = powerbi.DataView;
+import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 
-// powerbi.extensibility.utils.color
-import ColorHelper = powerbi.extensibility.utils.color.ColorHelper;
+import { createColorPalette, createVisualHost, renderTimeout, d3Click } from "powerbi-visuals-utils-testutils";
 
-// powerbi.extensibility.visual.test
-import PulseChartData = powerbi.extensibility.visual.test.PulseChartData;
-import PulseChartBuilder = powerbi.extensibility.visual.test.PulseChartBuilder;
-import areColorsEqual = powerbi.extensibility.visual.test.helpers.areColorsEqual;
+import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 
-// PulseChart1459209850231
-import { PulseChart as VisualClass, ChartData } from "../src/visual";
+import { PulseChartData } from "./visualData";
+import { PulseChartBuilder } from "./visualBuilder";
+import { areColorsEqual } from "./helpers";
 
-// powerbi.extensibility.utils.formatting
+import { ChartData } from "../src/models/models";
+import { PulseChart as VisualClass } from "../src/visual";
+
 const DefaultTimeout: number = 500;
 
 describe("PulseChartTests", () => {
@@ -83,7 +83,7 @@ describe("PulseChartTests", () => {
                 visualBuilder.updateFlushAllD3Transitions(dataView);
                 expect(visualBuilder.tooltipContainer.first().get(0)).toBeDefined();
                 const clickPoint: JQuery = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
-                clickPoint.d3Click(5, 5);
+                d3Click(clickPoint, 5, 5);
                 setTimeout(() => {
                     expect(visualBuilder.tooltipContainerTooltip.first().get(0)).toBeDefined();
                     done();
@@ -96,7 +96,7 @@ describe("PulseChartTests", () => {
                 visualBuilder.updateFlushAllD3Transitions(view);
                 expect(visualBuilder.tooltipContainer.first().get(0)).toBeDefined();
                 const clickPoint: JQuery = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
-                clickPoint.d3Click(5, 5);
+                d3Click(clickPoint, 5, 5);
 
                 setTimeout(() => {
                     const timeRectWidth: number = (<SVGPathElement>d3.select(".tooltipTimeRect")[0][0]).getClientRects()[0].width,
@@ -156,10 +156,10 @@ describe("PulseChartTests", () => {
                     }
                 };
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    visualBuilder.animationPlay.d3Click(5, 5);
+                    d3Click(visualBuilder.animationPlay, 5, 5);
                     let animatedDot: JQuery = visualBuilder.dotsContainerDot;
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        visualBuilder.animationPlay.d3Click(5, 5);
+                        d3Click(visualBuilder.animationPlay, 5, 5);
                         let currentAnimatedDot: JQuery = visualBuilder.dotsContainerDot;
 
                         expect(currentAnimatedDot).not.toEqual(animatedDot);
@@ -182,12 +182,12 @@ describe("PulseChartTests", () => {
                 };
 
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    visualBuilder.animationNext.d3Click(5, 5);
-                    helpers.renderTimeout(() => {
+                    d3Click(visualBuilder.animationNext, 5, 5);
+                    renderTimeout(() => {
                         let popup: JQuery = visualBuilder.tooltipContainerTooltip.first();
                         expect(popup.get(0)).toBeDefined();
-                        visualBuilder.animationPlay.d3Click(5, 5);
-                        helpers.renderTimeout(() => {
+                        d3Click(visualBuilder.animationPlay, 5, 5);
+                        renderTimeout(() => {
                             let popup = visualBuilder.tooltipContainerTooltip.first();
                             expect(popup.get(0)).not.toBeDefined();
                             done();
@@ -210,8 +210,8 @@ describe("PulseChartTests", () => {
                 };
 
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    visualBuilder.animationNext.d3Click(5, 5);
-                    helpers.renderTimeout(() => {
+                    d3Click(visualBuilder.animationNext, 5, 5);
+                    renderTimeout(() => {
                         let popup = visualBuilder.tooltipContainerTooltip.first();
                         expect(popup.get(0)).toBeDefined();
                         done();
@@ -234,13 +234,13 @@ describe("PulseChartTests", () => {
 
                 visualBuilder.updateRenderTimeout(dataView, () => {
                     visualBuilder.updateRenderTimeout(dataView, () => {
-                        visualBuilder.animationNext.d3Click(5, 5);
-                        helpers.renderTimeout(() => {
-                            helpers.renderTimeout(() => {
-                                visualBuilder.animationNext.d3Click(5, 5);
-                                helpers.renderTimeout(() => {
-                                    visualBuilder.animationPrev.d3Click(5, 5);
-                                    helpers.renderTimeout(() => {
+                        d3Click(visualBuilder.animationNext, 5, 5);
+                        renderTimeout(() => {
+                            renderTimeout(() => {
+                                d3Click(visualBuilder.animationNext, 5, 5);
+                                renderTimeout(() => {
+                                    d3Click(visualBuilder.animationPrev, 5, 5);
+                                    renderTimeout(() => {
                                         let popup: JQuery = visualBuilder.tooltipContainerTooltip.first();
                                         expect(popup.get(0)).toBeDefined();
                                         done();
@@ -293,7 +293,7 @@ describe("PulseChartTests", () => {
 
             it("should respond on transparancy change", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    helpers.renderTimeout(() => {
+                    renderTimeout(() => {
                         expect(visualBuilder.dotsContainerDot.first().prop("style")["opacity"]).toBe(opacity.toString());
                         done();
                     });
@@ -312,7 +312,7 @@ describe("PulseChartTests", () => {
         });
 
         it("date values provided as string should be converted to Date type", () => {
-            let host: IVisualHost = mocks.createVisualHost();
+            let host: IVisualHost = createVisualHost();
 
             let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
 
@@ -320,7 +320,7 @@ describe("PulseChartTests", () => {
         });
 
         it("values provided as string should be processed as zero values", () => {
-            let host: IVisualHost = mocks.createVisualHost();
+            let host: IVisualHost = createVisualHost();
             dataViewForCategoricalColumn.categorical.values["0"].values[12] = "<scrutp> test test non number value";
             dataViewForCategoricalColumn.categorical.values["0"].values[18] = ">>> #$%^$^scrutp> test test non number value";
             let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
@@ -328,7 +328,7 @@ describe("PulseChartTests", () => {
         });
 
         it("EventSize provided as string should be processed as zero values", () => {
-            let host: IVisualHost = mocks.createVisualHost();
+            let host: IVisualHost = createVisualHost();
             let convertedData: ChartData = VisualClass.converter(dataViewForCategoricalColumn, host, colorHelper, null);
             expect(convertedData.series["0"].data.every(d => !isNaN(d.eventSize))).toBeTruthy();
         });

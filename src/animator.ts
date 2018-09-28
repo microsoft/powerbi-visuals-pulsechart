@@ -25,6 +25,7 @@
  */
 
 import powerbi from "powerbi-visuals-api";
+import * as _ from "lodash";
 import Selection = d3.Selection;
 
 import VisualObjectInstancesToPersist = powerbi.VisualObjectInstancesToPersist;
@@ -39,7 +40,7 @@ import valueFormatter = vf.valueFormatter;
 import IValueFormatter = tms.TextProperties;
 import textMeasurementService = tms.textMeasurementService;
 
-import { AnimationPosition } from "./models/models";
+import { AnimationPosition, DataPoint } from "./models/models";
 import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";
 import { PulseChart } from "./visual";
 import { pulseChartUtils } from "./utils";
