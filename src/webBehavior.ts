@@ -37,15 +37,15 @@ import { BehaviorOptions } from "./models/models";
 import { pulseChartUtils } from "./utils";
 
 export class PulseChartWebBehavior implements IInteractiveBehavior {
-    private selection: Selection<any>;
+    private selection: Selection<d3.BaseType, any, d3.BaseType, any>;
     private selectionHandler: ISelectionHandler;
     private interactivityService: IInteractivityService;
     private hasHighlights: boolean;
     private onSelectCallback: any;
 
     public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
-        let clearCatcher: Selection<any> = options.clearCatcher;
-        let selection: Selection<any> = this.selection = options.selection;
+        let clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any> = options.clearCatcher;
+        let selection: Selection<d3.BaseType, any, d3.BaseType, any> = this.selection = options.selection;
         this.onSelectCallback = options.onSelectCallback;
         this.selectionHandler = selectionHandler;
         this.interactivityService = options.interactivityService;

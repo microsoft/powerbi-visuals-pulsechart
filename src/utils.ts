@@ -39,7 +39,7 @@ export module pulseChartUtils {
         return DefaultOpacity;
     }
 
-    export function AddOnTouchClick(selection: Selection<any>, callback: (data: any, index: number) => any): Selection<any> {
+    export function AddOnTouchClick(selection: Selection<d3.BaseType, any, d3.BaseType, any>, callback: (data: any, index: number) => any): Selection<d3.BaseType, any, d3.BaseType, any> {
         let preventDefaultCallback = (data: any, index: number): void => {
             (d3.event as MouseEvent).preventDefault();
             (d3.event as MouseEvent).stopPropagation();

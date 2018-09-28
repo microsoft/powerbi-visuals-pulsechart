@@ -23,7 +23,7 @@
     "url": "git+https://github.com/Microsoft/PowerBI-visuals-pulsechart.git"
   },
   "devDependencies": {
-    "@types/d3": "3.5.38",
+    "@types/d3": "^5.0.0",
     "@types/jasmine": "^2.5.53",
     "@types/jasmine-jquery": "^1.5.31",
     "@types/jquery": "2.0.45",
@@ -41,6 +41,7 @@
     "karma-coverage-istanbul-reporter": "^2.0.4",
     "karma-jasmine": "1.1.2",
     "karma-sourcemap-loader": "0.3.7",
+    "karma-typescript": "3.0.13",
     "karma-typescript-preprocessor": "0.3.1",
     "karma-webpack": "3.0.0",
     "less": "^2.1.1",
@@ -58,7 +59,7 @@
     "webpack": "4.14.0"
   },
   "dependencies": {
-    "d3": "3.5.5",
+    "d3": "^5.4.0",
     "jquery": "3.2.1",
     "jsonschema": "^1.2.4",
     "lodash": "4.17.4",
@@ -69,7 +70,7 @@
     "powerbi-visuals-utils-formattingutils": "4.0.2",
     "powerbi-visuals-utils-interactivityutils": "^5.0.1",
     "powerbi-visuals-utils-svgutils": "2.0.2",
-    "powerbi-visuals-utils-tooltiputils": "2.0.2",
+    "powerbi-visuals-utils-tooltiputils": "2.0.3",
     "powerbi-visuals-utils-typeutils": "2.0.1"
   }
 }

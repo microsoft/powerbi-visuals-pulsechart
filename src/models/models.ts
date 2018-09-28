@@ -28,7 +28,7 @@ import { PulseChartSettings } from "../settings";
 export type GenericScale = TimeScale | LinearScale;
 
 // INTERFACES
-export interface Line extends d3.svg.Line<PointXY> { }
+export interface Line extends d3.Line<PointXY> { }
 export interface LinearScale extends d3.scale.Linear<any, any> { }
 export interface TimeScale extends d3.time.Scale<any, any> { }
 export interface VisualDataLabelsSettings {
@@ -173,8 +173,8 @@ export interface ElementDimensions {
 }
 
 export interface BehaviorOptions {
-    selection: Selection<any>;
-    clearCatcher: Selection<any>;
+    selection: Selection<d3.BaseType, any, d3.BaseType, any>;
+    clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any>;
     interactivityService: IInteractivityService;
     hasHighlights: boolean;
     onSelectCallback(): void;
