@@ -1,6 +1,6 @@
 import powerbi from "powerbi-visuals-api";
 
-import Axis = d3.svg.Axis;
+import Axis = d3.Axis;
 import Selection = d3.Selection;
 
 import DataViewCategoricalColumn = powerbi.DataViewCategoricalColumn;
@@ -29,8 +29,8 @@ export type GenericScale = TimeScale | LinearScale;
 
 // INTERFACES
 export interface Line extends d3.Line<PointXY> { }
-export interface LinearScale extends d3.scale.Linear<any, any> { }
-export interface TimeScale extends d3.time.Scale<any, any> { }
+export interface LinearScale extends d3.ScaleLinear<any, any> { }
+export interface TimeScale extends d3.ScaleTime<any, any> { }
 export interface VisualDataLabelsSettings {
     show: boolean;
     showLabelPerSeries?: boolean;
@@ -140,7 +140,7 @@ export interface ChartData {
     xScale?: TimeScale | LinearScale;
     commonYScale?: LinearScale;
     yScales?: LinearScale[];
-    yAxis?: Axis;
+    yAxis?: Axis<any>;
 
     widthOfXAxisLabel: number;
     widthOfTooltipValueLabel: number;
@@ -151,7 +151,7 @@ export interface ChartData {
 export interface XAxisProperties {
     values: (Date | number)[];
     scale: TimeScale;
-    axis: Axis;
+    axis: Axis<any>;
     rotate: boolean;
 }
 
