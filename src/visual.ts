@@ -27,6 +27,8 @@ import powerbi from "powerbi-visuals-api";
 import * as d3 from "d3";
 import * as _ from "lodash";
 
+import "../style/pulseChart.less";
+
 import DataView = powerbi.DataView;
 import DataViewObject = powerbi.DataViewObject;
 import IViewport = powerbi.IViewport;
@@ -44,7 +46,8 @@ import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructor
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
 import Axis = d3.Axis;
-import Selection = d3.Selection;
+import SelectionV4 = d3.Selection;
+type Selection<T> = d3.Selection<any, T, any, any>;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
 import IRect = SVGUtil.IRect;
@@ -93,7 +96,6 @@ import { PulseChartAxisPropertiesHelper } from "./helpers";
 import { PulseChartDataLabelUtils, pulseChartUtils } from "./utils";
 import { PulseChartWebBehavior } from "./webBehavior";
 import { PulseAnimator } from "./animator";
-import { debug } from "util";
 
 export class PulseChart implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
@@ -692,16 +694,16 @@ export class PulseChart implements IVisual {
     public size: IViewport;
     public handleSelectionTimeout: number;
     public behavior: IPulseChartInteractiveBehavior;
-    private svg: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private chart: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private dots: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private yAxis: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private gaps: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationDot: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private svg: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private chart: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private dots: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private yAxis: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private gaps: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private animationDot: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
     private lineX: Line;
     private animationHandler: PulseAnimator;
-    private rootSelection: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationSelection: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private rootSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
+    private animationSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any>;
 
     public host: IVisualHost;
 
@@ -729,7 +731,7 @@ export class PulseChart implements IVisual {
         this.interactivityService = createInteractivityService(this.host);
         this.behavior = new PulseChartWebBehavior();
 
-        let svg: Selection<d3.BaseType, any, d3.BaseType, any> = this.svg = d3.select(options.element)
+        let svg: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.svg = d3.select(options.element)
             .append("svg")
             .classed("pulseChart", true);
 
@@ -748,10 +750,10 @@ export class PulseChart implements IVisual {
     }
 
     public update(options: VisualUpdateOptions): void {
+        debugger;
         if (!options || !options.dataViews || !options.dataViews[0]) {
             return;
         }
-        debugger;
 
         this.viewport = options.viewport;
 
@@ -992,16 +994,14 @@ export class PulseChart implements IVisual {
     }
 
     private renderAxes(data: ChartData, duration: number): void {
-        debugger;
-        this.renderXAxis(data, duration);
+        //this.renderXAxis(data, duration);
         this.renderYAxis(data, duration);
-        debugger;
     }
 
     private renderXAxis(data: ChartData, duration: number): void {
-        let axisNodeSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
-            axisNodeUpdateSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
-            axisBoxUpdateSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
+        let axisNodeSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any>,
+            axisNodeUpdateSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any>,
+            axisBoxUpdateSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any>,
             color: string = data.settings.xAxis.color,
             fontColor: string = data.settings.xAxis.fontColor;
         axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selectorName);
@@ -1011,8 +1011,8 @@ export class PulseChart implements IVisual {
         let axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
             .enter()
             .insert("g", `g.${PulseChart.LineContainer.className}`)
-            .classed(PulseChart.XAxisNode.className, true)
-            .merge(axisNodeUpdateSelection);
+            .merge(axisNodeUpdateSelection)
+        axisNodeUpdateSelectionMerged.classed(PulseChart.XAxisNode.className, true);
 
         axisNodeUpdateSelectionMerged
             .each(function (series: Series) {
@@ -1042,7 +1042,7 @@ export class PulseChart implements IVisual {
             .attr("width", this.data.widthOfXAxisLabel)
             .attr("height", PulseChart.XAxisTickHeight + "px");
 
-        axisBoxUpdateSelection
+        axisBoxUpdateSelectionMerged
             .exit()
             .remove();
 
@@ -1050,9 +1050,8 @@ export class PulseChart implements IVisual {
             .style("stroke", this.data.settings.xAxis.position === XAxisPosition.Center ? color : "none")
             .style("display", this.data.settings.xAxis.show ? "inherit" : "none");
 
-        debugger;
         axisNodeUpdateSelectionMerged.call(selection => {
-            if (_.isEmpty(selection.data())) return;
+            //if (_.isEmpty(selection.data())) return;
             let rotate = selection.datum().xAxisProperties.rotate;
             let rotateCoeff = rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0;
             let dy = tickRectY + 3;
@@ -1124,21 +1123,20 @@ export class PulseChart implements IVisual {
         }
         const data: ChartData = this.data,
             series: Series[] = this.data.series;
-
         this.rootSelection = this.chart
             .selectAll(PulseChart.LineNode.selectorName)
             .data(series);
 
-        const lineNode: Selection<d3.BaseType, any, d3.BaseType, any> = this.rootSelection
+        const lineNode: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.rootSelection = this.rootSelection
             .enter()
             .append("g")
-            .classed(PulseChart.LineNode.className, true)
-            .merge(this.rootSelection);
+            .merge(this.rootSelection)
+
+        lineNode.classed(PulseChart.LineNode.className, true);
 
         lineNode
             .append("g")
             .classed(PulseChart.LineContainer.className, true);
-
         lineNode
             .append("g")
             .classed(PulseChart.TooltipContainer.className, true);
@@ -1161,20 +1159,19 @@ export class PulseChart implements IVisual {
     }
 
     private drawLinesStatic(limit: number, isAnimated: boolean): void {
-        let node: ClassAndSelector = PulseChart.Line,
-            nodeParent: ClassAndSelector = PulseChart.LineContainer,
-            rootSelection: Selection<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
+        const rootSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
 
-        let selection: Selection<d3.BaseType, any, d3.BaseType, any> = rootSelection
+        let selection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = rootSelection
             .filter((d, index) => !isAnimated || index < limit)
-            .select(nodeParent.selectorName)
-            .selectAll(node.selectorName).data(d => [d]);
+            .select(PulseChart.LineContainer.selectorName)
+            .selectAll(PulseChart.Line.selectorName).data(d => [d]);
 
         let selectionMerged = selection
             .enter()
             .append("path")
-            .classed(node.className, true)
-            .merge(selection);
+            .merge(selection)
+
+        selectionMerged.classed(PulseChart.Line.className, true);
 
         selectionMerged
             .style("fill", "none")
@@ -1190,7 +1187,7 @@ export class PulseChart implements IVisual {
     private drawLinesStaticBeforeAnimation(limit: number) {
         let node: ClassAndSelector = PulseChart.Line,
             nodeParent: ClassAndSelector = PulseChart.LineContainer,
-            rootSelection: Selection<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
+            rootSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
 
         this.animationSelection = rootSelection.filter((d, index) => {
             return index === limit;
@@ -1199,8 +1196,8 @@ export class PulseChart implements IVisual {
         const animationSelectionMerged = this.animationSelection
             .enter()
             .append("path")
-            .classed(node.className, true)
-            .merge(this.animationSelection);
+            .merge(this.animationSelection)
+        animationSelectionMerged.classed(node.className, true);
 
         animationSelectionMerged
             .style("fill", "none")
@@ -1521,7 +1518,7 @@ export class PulseChart implements IVisual {
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
             node: ClassAndSelector = PulseChart.Dot,
             nodeParent: ClassAndSelector = PulseChart.DotsContainer,
-            rootSelection: Selection<d3.BaseType, any, d3.BaseType, any> = this.rootSelection,
+            rootSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.rootSelection,
             dotColor: string = this.data.settings.dots.color,
             dotSize: number = this.data.settings.dots.size,
             isAnimated: boolean = this.animationHandler.isAnimated,
@@ -1529,7 +1526,7 @@ export class PulseChart implements IVisual {
             hasSelection: boolean = this.interactivityService.hasSelection(),
             hasHighlights: boolean = this.data.hasHighlights;
 
-        let selection: Selection<d3.BaseType, any, d3.BaseType, any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
+        let selection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
             .select(nodeParent.selectorName)
             .selectAll(node.selectorName)
             .data((d: Series, seriesIndex: number) => {
@@ -1544,8 +1541,8 @@ export class PulseChart implements IVisual {
         let selectionMerged = selection
             .enter()
             .append("circle")
-            .classed(node.className, true)
-            .merge(selection);
+            .merge(selection)
+        selectionMerged.classed(node.className, true);
 
         selectionMerged
             .attr("cx", (d: DataPoint) => xScale(d.categoryValue))
@@ -1576,9 +1573,9 @@ export class PulseChart implements IVisual {
 
     private renderGaps(data: ChartData, duration: number): void {
         let gaps: IRect[],
-            gapsSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
-            gapsEnterSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
-            gapNodeSelection: Selection<d3.BaseType, any, d3.BaseType, any>,
+            gapsSelection: Selection<any>,
+            gapsSelectionMerged: Selection<any>,
+            gapNodeSelection: Selection<any>,
             series: Series[] = data.series,
             isScalar: boolean = data.isScalar,
             xScale: LinearScale = <LinearScale>data.xScale;
@@ -1598,12 +1595,15 @@ export class PulseChart implements IVisual {
         gapsSelection = this.gaps.selectAll(PulseChart.Gap.selectorName)
             .data(series.slice(0, series.length - 1));
 
-        gapsEnterSelection = gapsSelection
+        debugger;
+        gapsSelectionMerged = gapsSelection
             .enter()
             .append("g")
             .merge(gapsSelection);
 
-        gapsSelection
+        gapsSelectionMerged.classed(PulseChart.Gap.className, true);
+
+        gapsSelectionMerged
             .attr("transform", (seriesElement: Series, index: number) => {
                 let x: number,
                     middleOfGap: number = seriesElement.widthOfGap / 2,
@@ -1615,27 +1615,35 @@ export class PulseChart implements IVisual {
                     x = xScale(<any>(new Date(middleOfGap + ((<Date>categoryValue).getTime()))));
                 }
 
-                return SVGUtilManipulations.translate(x, 0);
+                return SVGUtil.manipulation.translate(x, 0);
             });
 
-        gapNodeSelection = gapsSelection
+        gapNodeSelection = gapsSelectionMerged
             .selectAll(PulseChart.GapNode.selectorName)
             .data(gaps);
 
         let gapNodeSelectionMerged = gapNodeSelection
             .enter()
             .append("rect")
+            .merge(gapNodeSelection);
 
         gapNodeSelectionMerged
-            .attr("x", (gap: IRect) => gap.left)
-            .attr("y", (gap: IRect) => gap.top)
-            .attr("height", (gap: IRect) => gap.height)
-            .attr("width", (gap: IRect) => gap.width)
+            .attr(
+                "x", (gap: IRect) => gap.left
+            )
+            .attr(
+                "y", (gap: IRect) => gap.top,
+            )
+            .attr(
+                "height", (gap: IRect) => gap.height
+            )
+            .attr(
+                "width", (gap: IRect) => gap.width
+            )
             .classed(PulseChart.GapNode.className, true);
 
         gapNodeSelectionMerged.style("fill", data.settings.xAxis.color);
 
-        gapsEnterSelection.classed(PulseChart.Gap.className, true);
 
         gapsSelection
             .exit()
@@ -1668,7 +1676,7 @@ export class PulseChart implements IVisual {
             showTimeDisplayProperty: string = this.data.settings.popup.showTime ? "inherit" : "none",
             showTitleDisplayProperty: string = this.data.settings.popup.showTitle ? "inherit" : "none";
 
-        let rootSelection: Selection<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
+        let rootSelection: SelectionV4<d3.BaseType, any, d3.BaseType, any> = this.rootSelection;
 
         let line: Line = d3.line<PointXY>()
             .x((d: PointXY) => d.x)
@@ -1680,7 +1688,7 @@ export class PulseChart implements IVisual {
             return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
         };
 
-        let tooltipRoot: Selection<d3.BaseType, any, d3.BaseType, any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
+        let tooltipRoot: SelectionV4<d3.BaseType, any, d3.BaseType, any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
             .data(d => {
                 return _.filter(d.data, (value: DataPoint) => this.isPopupShow(value));
             });
@@ -1688,8 +1696,8 @@ export class PulseChart implements IVisual {
         let tooltipRootMerged = tooltipRoot
             .enter()
             .append("g")
-            .classed(node.className, true)
-            .merge(tooltipRoot);
+            .merge(tooltipRoot)
+        tooltipRootMerged.classed(node.className, true);
 
         tooltipRootMerged
             .attr("transform", (d: DataPoint) => {
@@ -1699,12 +1707,12 @@ export class PulseChart implements IVisual {
                 return SVGUtilManipulations.translate(x + d.popupInfo.offsetX, y);
             });
 
-        let tooltipRect: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipRect.selectorName).data(d => [d]);
+        let tooltipRect: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipRect.selectorName).data(d => [d]);
         let tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
-            .classed(PulseChart.TooltipRect.className, true)
-            .merge(tooltipRect);
+            .merge(tooltipRect)
+        tooltipRectMerged.classed(PulseChart.TooltipRect.className, true);
 
         tooltipRectMerged
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
@@ -1736,8 +1744,12 @@ export class PulseChart implements IVisual {
                 return line(points);
             });
 
-        let tooltipTriangle: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTriangle.selectorName).data(d => [d]);
-        let tooltipTriangleMerged = tooltipTriangle.enter().append("path").classed(PulseChart.TooltipTriangle.className, true).merge(tooltipTriangle);
+        let tooltipTriangle: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTriangle.selectorName).data(d => [d]);
+        let tooltipTriangleMerged = tooltipTriangle
+            .enter()
+            .append("path")
+            .merge(tooltipTriangle)
+        tooltipTriangleMerged.classed(PulseChart.TooltipTriangle.className, true);
         tooltipTriangleMerged
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1760,8 +1772,9 @@ export class PulseChart implements IVisual {
             })
             .style("stroke-width", "1px");
 
-        let tooltipLine: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipLine.selectorName).data(d => [d]);
-        let tooltipLineMerged = tooltipLine.enter().append("path").classed(PulseChart.TooltipLine.className, true).merge(tooltipLine);
+        let tooltipLine: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipLine.selectorName).data(d => [d]);
+        let tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine)
+        tooltipLineMerged.classed(PulseChart.TooltipLine.className, true);
         tooltipLineMerged
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke || this.data.settings.popup.color)
@@ -1781,8 +1794,9 @@ export class PulseChart implements IVisual {
                 return line(path as DataPoint[]);
             });
 
-        let timeRect: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
-        let timeRectMerged = timeRect.enter().append("path").classed(PulseChart.TooltipTimeRect.className, true).merge(timeRect);
+        let timeRect: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
+        let timeRectMerged = timeRect.enter().append("path").merge(timeRect)
+        timeRectMerged.classed(PulseChart.TooltipTimeRect.className, true);
         timeRectMerged
             .style("fill", this.data.settings.popup.timeFill)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1813,8 +1827,9 @@ export class PulseChart implements IVisual {
                 return line(path as DataPoint[]);
             });
 
-        let time: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
-        let timeMerged = time.enter().append("text").classed(PulseChart.TooltipTime.className, true).merge(time);
+        let time: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
+        let timeMerged = time.enter().append("text").merge(time)
+        timeMerged.classed(PulseChart.TooltipTime.className, true);
         timeMerged
             .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()), null)
             .style("display", showTimeDisplayProperty)
@@ -1825,7 +1840,7 @@ export class PulseChart implements IVisual {
                 : PulseChart.DefaultTooltipSettings.timeHeight - 3)
             .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
-        let title: Selection<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
+        let title: SelectionV4<d3.BaseType, any, d3.BaseType, any> = tooltipRootMerged.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
         let titleMerged = title.enter().append("text").classed(PulseChart.TooltipTitle.className, true).merge(title);
         titleMerged
             .style("display", showTitleDisplayProperty)
@@ -1862,7 +1877,8 @@ export class PulseChart implements IVisual {
         };
 
         let description = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
-        let descriptionMerged = description.enter().append("text").classed(PulseChart.TooltipDescription.className, true).merge(description);
+        let descriptionMerged = description.enter().append("text").merge(description)
+        descriptionMerged.classed(PulseChart.TooltipDescription.className, true);
         descriptionMerged
             .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)), null)
             .style("fill", this.data.settings.popup.fontColor)
