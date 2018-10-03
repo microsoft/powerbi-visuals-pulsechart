@@ -515,7 +515,7 @@ export class PulseChart implements IVisual {
 
         let formatter = valueFormatter.create(formatterOptions);
         let ticks: number = Math.max(2, Math.round(height / 40));
-        let yAxis: Axis<any> = d3.axisLeft(commonYScale)
+        let yAxis: Axis<any> = d3.axisRight(commonYScale)
             .scale(commonYScale)
             .ticks(ticks)
             .tickSizeOuter(0)
@@ -629,8 +629,9 @@ export class PulseChart implements IVisual {
         }
 
         maxTicks = Math.min(values.length, maxTicks);
-
-        let valuesIndexses = d3.scalePoint().domain(<any>d3.range(maxTicks)).range([0, values.length - 1]).range(); // randeRoundPoints is not defined
+        // [0, 36.166666666666664, 72.33333333333333, 108.5, 144.66666666666666, 180.83333333333331, 217, 253.16666666666666, 289.3333333333333, 325.5, 361.66666666666663, 397.8333333333333, 434]
+        let valuesIndexses = d3.scaleBand().domain(<any>d3.range(maxTicks)).rangeRound([0, values.length - 1]).range(); // randeRoundPoints is not defined
+        debugger;
         values = valuesIndexses.map(x => values[Math.round(x)]);
 
         for (let i = 1; i < values.length; i++) {
@@ -675,16 +676,10 @@ export class PulseChart implements IVisual {
         let scale: LinearScale | TimeScale;
 
         if (isScalar) {
-            scale = d3.scaleLinear();
-        } else {
-            scale = d3.scaleTime();
+            return d3.scaleLinear().domain(domain as any).range([minX, maxX]);
         }
 
-        const lin = d3.scaleLinear().domain([1, 2, 3]);
-
-        return scale
-            //.domain(domain as any)
-            .range([minX, maxX]);
+        return d3.scaleTime().domain(domain as any).range([minX, maxX]);
     }
 
     public data: ChartData;
@@ -993,8 +988,11 @@ export class PulseChart implements IVisual {
     }
 
     private renderAxes(data: ChartData, duration: number): void {
-        //this.renderXAxis(data, duration);
+        debugger;
+        this.renderXAxis(data, duration);
+        debugger;
         this.renderYAxis(data, duration);
+        debugger;
     }
 
     private renderXAxis(data: ChartData, duration: number): void {
@@ -1087,8 +1085,6 @@ export class PulseChart implements IVisual {
             isShow: boolean = false,
             color: string = data.settings.yAxis.color,
             fontColor: string = data.settings.yAxis.fontColor;
-
-        //yAxis.orient("right");
 
         if (this.data &&
             this.data.settings &&
@@ -1594,7 +1590,6 @@ export class PulseChart implements IVisual {
         gapsSelection = this.gaps.selectAll(PulseChart.Gap.selectorName)
             .data(series.slice(0, series.length - 1));
 
-        debugger;
         gapsSelectionMerged = gapsSelection
             .enter()
             .append("g")
