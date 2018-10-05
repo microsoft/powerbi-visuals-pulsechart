@@ -562,7 +562,7 @@ export class PulseChart implements IVisual {
             let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
 
             let formatter = valueFormatter.create(formatterOptions);
-            properties.axis = d3.axisTop(properties.scale)
+            properties.axis = d3.axisBottom(properties.scale)
                 .scale(properties.scale)
                 .tickValues(values)
                 .tickSizeOuter(0)
@@ -629,9 +629,13 @@ export class PulseChart implements IVisual {
         }
 
         maxTicks = Math.min(values.length, maxTicks);
-        // [0, 36.166666666666664, 72.33333333333333, 108.5, 144.66666666666666, 180.83333333333331, 217, 253.16666666666666, 289.3333333333333, 325.5, 361.66666666666663, 397.8333333333333, 434]
-        let valuesIndexses = d3.scaleBand().domain(<any>d3.range(maxTicks)).rangeRound([0, values.length - 1]).range(); // randeRoundPoints is not defined
-        debugger;
+        const step = (values.length - 1) / (maxTicks - 1);
+        let valuesIndexses: number[] = [];
+
+        for (let i = 0; i < values.length - 1; i = i + step) {
+            valuesIndexses.push(i);
+        }
+        valuesIndexses.push(values.length - 1);
         values = valuesIndexses.map(x => values[Math.round(x)]);
 
         for (let i = 1; i < values.length; i++) {
@@ -744,7 +748,6 @@ export class PulseChart implements IVisual {
     }
 
     public update(options: VisualUpdateOptions): void {
-        debugger;
         if (!options || !options.dataViews || !options.dataViews[0]) {
             return;
         }
@@ -988,11 +991,8 @@ export class PulseChart implements IVisual {
     }
 
     private renderAxes(data: ChartData, duration: number): void {
-        debugger;
         this.renderXAxis(data, duration);
-        debugger;
         this.renderYAxis(data, duration);
-        debugger;
     }
 
     private renderXAxis(data: ChartData, duration: number): void {
@@ -1013,12 +1013,7 @@ export class PulseChart implements IVisual {
 
         axisNodeUpdateSelectionMerged
             .each(function (series: Series) {
-                const scale: any = series.xAxisProperties.axis.scale;
-                const ticksCount: number = series.xAxisProperties.values.length;
-                const format: any = (domainValue: d3.AxisDomain, value: any) => series.xAxisProperties.values[value];
-
-                let axis = d3.axisBottom(scale);
-                d3.select(this).call(axis.tickArguments([ticksCount]).tickFormat(format));
+                d3.select(this).call(series.xAxisProperties.axis);
             });
         axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
             .selectAll(".tick")
@@ -1117,7 +1112,7 @@ export class PulseChart implements IVisual {
         }
         const data: ChartData = this.data,
             series: Series[] = this.data.series;
-        debugger;
+
         this.rootSelection = this.chart
             .selectAll(PulseChart.LineNode.selectorName)
             .data(series);
@@ -1251,7 +1246,7 @@ export class PulseChart implements IVisual {
             .duration(this.animationDuration)
             .ease(d3.easeLinear)
             .attrTween("d", (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
-            .each((series: Series) => {
+            .on("end", () => {
                 let position: AnimationPosition = this.animationHandler.flooredPosition;
                 this.handleSelection(position);
                 this.continueAnimation(position);
@@ -1706,9 +1701,8 @@ export class PulseChart implements IVisual {
             .enter()
             .append("path")
             .merge(tooltipRect)
-        tooltipRectMerged.classed(PulseChart.TooltipRect.className, true);
-
         tooltipRectMerged
+            .classed(PulseChart.TooltipRect.className, true)
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1824,8 +1818,11 @@ export class PulseChart implements IVisual {
         let time: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
         let timeMerged = time.enter().append("text").merge(time)
         timeMerged.classed(PulseChart.TooltipTime.className, true);
+        const timeFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties());
+        for (let fontStyleAttributeName in timeFontStyles) {
+            timeMerged.style(fontStyleAttributeName, timeFontStyles[fontStyleAttributeName]);
+        }
         timeMerged
-            .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties()), null)
             .style("display", showTimeDisplayProperty)
             .style("fill", this.data.settings.popup.timeColor)
             .attr("x", (d: DataPoint) => width - this.data.widthOfTooltipValueLabel)
@@ -1835,10 +1832,16 @@ export class PulseChart implements IVisual {
             .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
         let title: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
-        let titleMerged = title.enter().append("text").classed(PulseChart.TooltipTitle.className, true).merge(title);
+        let titleMerged = title.enter().append("text").merge(title);
+        titleMerged
+            .classed(PulseChart.TooltipTitle.className, true)
+
+        const titleFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties());
+        for (let fontStyleAttributeName in titleFontStyles) {
+            titleMerged.style(fontStyleAttributeName, titleFontStyles[fontStyleAttributeName]);
+        }
         titleMerged
             .style("display", showTitleDisplayProperty)
-            .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties()), null)
             .style("fill", this.data.settings.popup.fontColor)
             .attr("x", (d: DataPoint) => PulseChart.PopupTextPadding)
             .attr("y", (d: DataPoint) =>
@@ -1873,8 +1876,11 @@ export class PulseChart implements IVisual {
         let description = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
         let descriptionMerged = description.enter().append("text").merge(description)
         descriptionMerged.classed(PulseChart.TooltipDescription.className, true);
+        const descriptionFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
+        for (let fontStyleAttributeName in descriptionFontStyles) {
+            descriptionMerged.style(fontStyleAttributeName, descriptionFontStyles[fontStyleAttributeName]);
+        }
         descriptionMerged
-            .style(PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize)), null)
             .style("fill", this.data.settings.popup.fontColor)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
             .each(function (series: Series) {
@@ -1888,6 +1894,10 @@ export class PulseChart implements IVisual {
                 return SVGUtilManipulations.translate(0, descriptionDimenstions.y);
             });
         descriptionMerged.selectAll("tspan").attr("x", PulseChart.PopupTextPadding);
+
+        tooltipRect
+            .exit()
+            .remove();
 
         tooltipRoot
             .exit()
