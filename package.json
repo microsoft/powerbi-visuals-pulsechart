@@ -12,7 +12,7 @@
     "package": "pbiviz package",
     "cert": "pbiviz --create-cert",
     "lint": "npm run lint:ts && npm run lint:less",
-    "lint:ts": "node \"node_modules/tslint/bin/tslint \"+(src|test)/**/*.ts\"",
+    "lint:ts": "node node_modules/tslint/bin/tslint \"+(src|test)/**/*.ts\"",
     "lint:less": "stylelint -s less \"style/**/*.less\"",
     "pretest": "pbiviz package --resources --no-minify --no-pbiviz --no-plugin",
     "test": "karma start"

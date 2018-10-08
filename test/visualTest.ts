@@ -99,8 +99,10 @@ describe("PulseChartTests", () => {
                 d3Click(clickPoint, 5, 5);
 
                 setTimeout(() => {
-                    const timeRectWidth: number = (<SVGPathElement>d3.select(".tooltipTimeRect")[0][0]).getClientRects()[0].width,
-                        dataWidth: number = (<SVGPathElement>d3.select(".tooltipTime")[0][0]).getClientRects()[0].width;
+                    debugger;
+                    const timeRectWidth: number = (<HTMLElement>d3.select(".tooltipTimeRect").node()).getBoundingClientRect().width,
+                        dataWidth: number = (<HTMLElement>d3.select(".tooltipTime").node()).getBoundingClientRect().width;
+
                     expect(dataWidth).toBeLessThanOrEqual(timeRectWidth);
                     done();
                 }, DefaultTimeout);

@@ -178,6 +178,12 @@ export class PulseChart implements IVisual {
         };
     }
 
+    public static ApplyTextFontStyles(selection: Selection<any>, fontStyles: any) {
+        for (let fontStyleAttributeName in fontStyles) {
+            selection.style(fontStyleAttributeName, fontStyles[fontStyleAttributeName]);
+        }
+    }
+
     private static GetDateTimeFormatString(dateFormatType: XAxisDateFormat, dateFormat: string): string {
         switch (dateFormatType) {
             case XAxisDateFormat.DateOnly: return dateFormat;
@@ -1008,7 +1014,7 @@ export class PulseChart implements IVisual {
         let axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
             .enter()
             .insert("g", `g.${PulseChart.LineContainer.className}`)
-            .merge(axisNodeUpdateSelection)
+            .merge(axisNodeUpdateSelection);
         axisNodeUpdateSelectionMerged.classed(PulseChart.XAxisNode.className, true);
 
         axisNodeUpdateSelectionMerged
@@ -1120,7 +1126,7 @@ export class PulseChart implements IVisual {
         const lineNode: Selection<any> = this.rootSelection = this.rootSelection
             .enter()
             .append("g")
-            .merge(this.rootSelection)
+            .merge(this.rootSelection);
 
         lineNode.classed(PulseChart.LineNode.className, true);
 
@@ -1159,7 +1165,7 @@ export class PulseChart implements IVisual {
         let selectionMerged = selection
             .enter()
             .append("path")
-            .merge(selection)
+            .merge(selection);
 
         selectionMerged.classed(PulseChart.Line.className, true);
 
@@ -1186,7 +1192,7 @@ export class PulseChart implements IVisual {
         const animationSelectionMerged = this.animationSelection
             .enter()
             .append("path")
-            .merge(this.animationSelection)
+            .merge(this.animationSelection);
         animationSelectionMerged.classed(node.className, true);
 
         animationSelectionMerged
@@ -1531,7 +1537,7 @@ export class PulseChart implements IVisual {
         let selectionMerged = selection
             .enter()
             .append("circle")
-            .merge(selection)
+            .merge(selection);
         selectionMerged.classed(node.className, true);
 
         selectionMerged
@@ -1551,7 +1557,7 @@ export class PulseChart implements IVisual {
 
         if (this.interactivityService) {
             let behaviorOptions: BehaviorOptions = {
-                selection: selection,
+                selection: selectionMerged,
                 clearCatcher: this.svg,
                 interactivityService: this.interactivityService,
                 hasHighlights: this.data.hasHighlights,
@@ -1685,7 +1691,7 @@ export class PulseChart implements IVisual {
         let tooltipRootMerged = tooltipRoot
             .enter()
             .append("g")
-            .merge(tooltipRoot)
+            .merge(tooltipRoot);
         tooltipRootMerged.classed(node.className, true);
 
         tooltipRootMerged
@@ -1700,7 +1706,7 @@ export class PulseChart implements IVisual {
         let tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
-            .merge(tooltipRect)
+            .merge(tooltipRect);
         tooltipRectMerged
             .classed(PulseChart.TooltipRect.className, true)
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
@@ -1736,7 +1742,7 @@ export class PulseChart implements IVisual {
         let tooltipTriangleMerged = tooltipTriangle
             .enter()
             .append("path")
-            .merge(tooltipTriangle)
+            .merge(tooltipTriangle);
         tooltipTriangleMerged.classed(PulseChart.TooltipTriangle.className, true);
         tooltipTriangleMerged
             .style("fill", this.data.settings.popup.color)
@@ -1761,7 +1767,7 @@ export class PulseChart implements IVisual {
             .style("stroke-width", "1px");
 
         let tooltipLine: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipLine.selectorName).data(d => [d]);
-        let tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine)
+        let tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
         tooltipLineMerged.classed(PulseChart.TooltipLine.className, true);
         tooltipLineMerged
             .style("fill", this.data.settings.popup.color)
@@ -1783,7 +1789,7 @@ export class PulseChart implements IVisual {
             });
 
         let timeRect: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
-        let timeRectMerged = timeRect.enter().append("path").merge(timeRect)
+        let timeRectMerged = timeRect.enter().append("path").merge(timeRect);
         timeRectMerged.classed(PulseChart.TooltipTimeRect.className, true);
         timeRectMerged
             .style("fill", this.data.settings.popup.timeFill)
@@ -1816,12 +1822,11 @@ export class PulseChart implements IVisual {
             });
 
         let time: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
-        let timeMerged = time.enter().append("text").merge(time)
+        let timeMerged = time.enter().append("text").merge(time);
         timeMerged.classed(PulseChart.TooltipTime.className, true);
         const timeFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties());
-        for (let fontStyleAttributeName in timeFontStyles) {
-            timeMerged.style(fontStyleAttributeName, timeFontStyles[fontStyleAttributeName]);
-        }
+        PulseChart.ApplyTextFontStyles(timeMerged, timeFontStyles);
+
         timeMerged
             .style("display", showTimeDisplayProperty)
             .style("fill", this.data.settings.popup.timeColor)
@@ -1834,12 +1839,11 @@ export class PulseChart implements IVisual {
         let title: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
         let titleMerged = title.enter().append("text").merge(title);
         titleMerged
-            .classed(PulseChart.TooltipTitle.className, true)
+            .classed(PulseChart.TooltipTitle.className, true);
 
         const titleFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties());
-        for (let fontStyleAttributeName in titleFontStyles) {
-            titleMerged.style(fontStyleAttributeName, titleFontStyles[fontStyleAttributeName]);
-        }
+        PulseChart.ApplyTextFontStyles(titleMerged, titleFontStyles);
+
         titleMerged
             .style("display", showTitleDisplayProperty)
             .style("fill", this.data.settings.popup.fontColor)
@@ -1874,12 +1878,11 @@ export class PulseChart implements IVisual {
         };
 
         let description = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
-        let descriptionMerged = description.enter().append("text").merge(description)
+        let descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(PulseChart.TooltipDescription.className, true);
         const descriptionFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
-        for (let fontStyleAttributeName in descriptionFontStyles) {
-            descriptionMerged.style(fontStyleAttributeName, descriptionFontStyles[fontStyleAttributeName]);
-        }
+        PulseChart.ApplyTextFontStyles(descriptionMerged, descriptionFontStyles);
+
         descriptionMerged
             .style("fill", this.data.settings.popup.fontColor)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
