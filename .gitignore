@@ -8,5 +8,4 @@ typings
 .api
 *.log
 .idea/*
-package-lock.json
 webpack.statistics.html
