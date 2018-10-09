@@ -24,83 +24,79 @@
  *  THE SOFTWARE.
  */
 
-/// <reference path="_references.ts"/>
+import * as _ from "lodash";
 
-module powerbi.extensibility.visual.test.helpers {
-    // powerbi.extensibility.utils.test
-    import helpers = powerbi.extensibility.utils.test.helpers;
-    import RgbColor = powerbi.extensibility.utils.test.helpers.color.RgbColor;
-    import parseColorString = powerbi.extensibility.utils.test.helpers.color.parseColorString;
+import { getRandomNumber } from "powerbi-visuals-utils-testutils";
+import { RgbColor, parseColorString } from "powerbi-visuals-utils-colorutils";
 
-    const EnglishAlphabetLowerCase = "abcdefghijklmnopqrstuwxyz";
-    const EnglishAlphabetUpperCase = "ABCDEFGHIJKLMNOPQRSTUWXYZ";
+const EnglishAlphabetLowerCase = "abcdefghijklmnopqrstuwxyz";
+const EnglishAlphabetUpperCase = "ABCDEFGHIJKLMNOPQRSTUWXYZ";
 
-    export function areColorsEqual(firstColor: string, secondColor: string): boolean {
-        const firstConvertedColor: RgbColor = parseColorString(firstColor),
-            secondConvertedColor: RgbColor = parseColorString(secondColor);
+export function areColorsEqual(firstColor: string, secondColor: string): boolean {
+    const firstConvertedColor: RgbColor = parseColorString(firstColor),
+        secondConvertedColor: RgbColor = parseColorString(secondColor);
 
-        return firstConvertedColor.R === secondConvertedColor.R
-            && firstConvertedColor.G === secondConvertedColor.G
-            && firstConvertedColor.B === secondConvertedColor.B;
+    return firstConvertedColor.R === secondConvertedColor.R
+        && firstConvertedColor.G === secondConvertedColor.G
+        && firstConvertedColor.B === secondConvertedColor.B;
+}
+
+export function getRandomWords(
+    wordCount: number,
+    minLength: number,
+    maxLength: number,
+    alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string[] {
+    return _.range(wordCount).map(x => getRandomWord(minLength, maxLength, alphabet));
+}
+
+export function getHexColorFromNumber(value: number) {
+    let hex: string = value.toString(16).toUpperCase();
+    return "#" + (hex.length === 6 ? hex : _.range(0, 6 - hex.length, 0).join("") + hex);
+}
+
+export function getRandomInteger(min: number, max: number, exceptionList?: number[]): number {
+    return getRandomNumber(max, min, exceptionList, Math.floor);
+}
+
+export function getRandomHexColor(): string {
+    return getHexColorFromNumber(getRandomInteger(0, 16777215 + 1));
+}
+
+export function getRandomHexColors(count: number): string[] {
+    return _.range(count).map(x => getRandomHexColor());
+}
+
+export function getRandomUniqueNumbers(count: number, min: number = 0, max: number = 1): number[] {
+    let result: number[] = [];
+    for (let i = 0; i < count; i++) {
+        result.push(getRandomNumber(min, max, result));
     }
 
-    export function getRandomWords(
-        wordCount: number,
-        minLength: number,
-        maxLength: number,
-        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string[] {
-        return _.range(wordCount).map(x => getRandomWord(minLength, maxLength, alphabet));
-    }
+    return result;
+}
 
-    export function getHexColorFromNumber(value: number) {
-        let hex: string = value.toString(16).toUpperCase();
-        return "#" + (hex.length === 6 ? hex : _.range(0, 6 - hex.length, 0).join("") + hex);
-    }
+export function getRandomUniqueDates(count: number, start: Date, end: Date): Date[] {
+    return getRandomUniqueNumbers(count, start.getTime(), end.getTime()).map(x => new Date(x));
+}
 
-    export function getRandomInteger(min: number, max: number, exceptionList?: number[]): number {
-        return helpers.getRandomNumber(max, min, exceptionList, Math.floor);
-    }
+export function getRandomUniqueSortedDates(count: number, start: Date, end: Date): Date[] {
+    return getRandomUniqueDates(count, start, end).sort((a, b) => a.getTime() - b.getTime());
+}
 
-    export function getRandomHexColor(): string {
-        return getHexColorFromNumber(getRandomInteger(0, 16777215 + 1));
-    }
+export function getRandomWord(
+    minLength: number,
+    maxLength: number,
+    alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
+    let alphabetLength = alphabet.length;
+    let length = getRandomInteger(minLength, maxLength);
+    let strings = <string[]>_.range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
+    return strings.join("");
+}
 
-    export function getRandomHexColors(count: number): string[] {
-        return _.range(count).map(x => getRandomHexColor());
-    }
-
-    export function getRandomUniqueNumbers(count: number, min: number = 0, max: number = 1): number[] {
-        let result: number[] = [];
-        for (let i = 0; i < count; i++) {
-            result.push(helpers.getRandomNumber(min, max, result));
-        }
-
-        return result;
-    }
-
-    export function getRandomUniqueDates(count: number, start: Date, end: Date): Date[] {
-        return getRandomUniqueNumbers(count, start.getTime(), end.getTime()).map(x => new Date(x));
-    }
-
-    export function getRandomUniqueSortedDates(count: number, start: Date, end: Date): Date[] {
-        return getRandomUniqueDates(count, start, end).sort((a, b) => a.getTime() - b.getTime());
-    }
-
-    export function getRandomWord(
-        minLength: number,
-        maxLength: number,
-        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
-        let alphabetLength = alphabet.length;
-        let length = getRandomInteger(minLength, maxLength);
-        let strings = <string[]>_.range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
-        return strings.join("");
-    }
-
-    export function getRandomText(
-        wordCount: number,
-        minLength: number,
-        maxLength: number,
-        alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
-        return getRandomWords(wordCount, minLength, maxLength, alphabet).join(" ");
-    }
+export function getRandomText(
+    wordCount: number,
+    minLength: number,
+    maxLength: number,
+    alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
+    return getRandomWords(wordCount, minLength, maxLength, alphabet).join(" ");
 }
