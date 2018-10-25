@@ -456,7 +456,7 @@ describe("PulseChartTests", () => {
 
             it("should use theme background color as fill of rect of axis tick", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    const rects: JQuery[] = visualBuilder.xAxisNodeRect.toArray().map($);
+                    const rects: JQuery<any>[] = visualBuilder.xAxisNodeRect.toArray().map($);
 
                     expect(isColorAppliedToElements(rects, foregroundColor, "fill"));
 
