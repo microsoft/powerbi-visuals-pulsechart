@@ -1,3 +1,7 @@
+## 3.0.1
+* Azure Pipelines integration
+* Visual packages update 
+
 ## 3.0.0
 * Webpack integration
 
