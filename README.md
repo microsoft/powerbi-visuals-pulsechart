@@ -1,5 +1,5 @@
 # Pulse Chart
-[![Build Status](https://travis-ci.org/Microsoft/powerbi-visuals-pulsechart.svg?branch=master)](https://travis-ci.org/Microsoft/powerbi-visuals-pulsechart) [![Coverage Status](https://coveralls.io/repos/github/Microsoft/powerbi-visuals-pulsechart/badge.svg?branch=master)](https://coveralls.io/github/Microsoft/powerbi-visuals-pulsechart?branch=master)
+[![Build Status](https://travis-ci.org/Microsoft/powerbi-visuals-pulsechart.svg?branch=master)](https://travis-ci.org/Microsoft/powerbi-visuals-pulsechart) [![Coverage Status](https://coveralls.io/repos/github/Microsoft/powerbi-visuals-pulsechart/badge.svg?branch=master)](https://coveralls.io/github/Microsoft/powerbi-visuals-pulsechart?branch=master) [![Build Status](https://dev.azure.com/customvisuals/public/_apis/build/status/Microsoft.powerbi-visuals-chord)](https://dev.azure.com/customvisuals/public/_build/latest?definitionId=4)
 
 > Line chart annotated with key events. Perfect for story telling with data.
 

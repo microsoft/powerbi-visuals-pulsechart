@@ -69,7 +69,7 @@
     "powerbi-visuals-utils-chartutils": "2.1.0",
     "powerbi-visuals-utils-colorutils": "2.1.0",
     "powerbi-visuals-utils-dataviewutils": "2.1.0",
-    "powerbi-visuals-utils-formattingutils": "4.0.2",
+    "powerbi-visuals-utils-formattingutils": "4.1.0",
     "powerbi-visuals-utils-interactivityutils": "^5.1.0",
     "powerbi-visuals-utils-svgutils": "^2.1.0",
     "powerbi-visuals-utils-tooltiputils": "2.1.3",
