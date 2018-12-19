@@ -1,7 +1,7 @@
 {
   "name": "powerbi-visuals-pulsechart",
   "description": "Pulse chart shows a line chart annotated with key events.  Each events can be selected to filter and cross highlight other visuals to reveal insights or help tell a story. Pulse chart supports animation so you can load your report and watch it play through key events, without user interaction. This visualization is perfect for story telling with data, especially the Power BI publish to web feature. Use it anywhere you need to draw attention to events that shaped a trend.",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "author": {
     "name": "Microsoft",
     "email": "pbicvsupport@microsoft.com"
@@ -48,8 +48,8 @@
     "karma-webpack": "3.0.5",
     "less": "^3.8.1",
     "less-loader": "^4.1.0",
-    "powerbi-visuals-api": "^2.1.0",
-    "powerbi-visuals-tools": "3.0.4",
+    "powerbi-visuals-api": "^2.3.1",
+    "powerbi-visuals-tools": "3.0.9",
     "powerbi-visuals-utils-testutils": "^2.1.4",
     "puppeteer": "^1.6.1",
     "style-loader": "0.23.1",
@@ -62,6 +62,7 @@
     "webpack": "4.23.1"
   },
   "dependencies": {
+    "@babel/polyfill": "^7.0.0",
     "d3": "^5.4.0",
     "jquery": "3.3.1",
     "lodash": "4.17.11",
