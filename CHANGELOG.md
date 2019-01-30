@@ -1,3 +1,7 @@
+## 3.0.3
+* Packages update
+* IE 11 rendering axes fix
+
 ## 3.0.2
 * UPD: powerbi-visuals-tools has been updated to 3.0.9 to add IE11 support
 * UPD: API has been updated to 2.3.0 to add IE11 support

@@ -1066,7 +1066,7 @@ export class PulseChart implements IVisual {
         axisNodeUpdateSelectionMerged.selectAll(".domain")
             .each(function () {
                 let node = <Node>this;
-                node.parentElement.insertBefore(node, node.parentNode.firstChild);
+                node.parentNode.insertBefore(node, node.parentNode.firstChild);
             })
             .style("stroke", color);
 
