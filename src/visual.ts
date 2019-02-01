@@ -1008,7 +1008,11 @@ export class PulseChart implements IVisual {
             axisBoxUpdateSelection: Selection<any>,
             color: string = data.settings.xAxis.color,
             fontColor: string = data.settings.xAxis.fontColor;
-        axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selectorName);
+
+        axisNodeSelection = this.chart
+            .selectAll(PulseChart.LineNode.selectorName + ":first-child")
+            .selectAll(PulseChart.XAxisNode.selectorName);
+
         axisNodeSelection.selectAll("*").remove();
         axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
