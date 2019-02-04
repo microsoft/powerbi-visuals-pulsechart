@@ -1008,7 +1008,11 @@ export class PulseChart implements IVisual {
             axisBoxUpdateSelection: Selection<any>,
             color: string = data.settings.xAxis.color,
             fontColor: string = data.settings.xAxis.fontColor;
-        axisNodeSelection = this.rootSelection.selectAll(PulseChart.XAxisNode.selectorName);
+
+        axisNodeSelection = this.chart
+            .select(PulseChart.LineNode.selectorName)
+            .selectAll(PulseChart.XAxisNode.selectorName);
+
         axisNodeSelection.selectAll("*").remove();
         axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
@@ -1124,10 +1128,16 @@ export class PulseChart implements IVisual {
             .selectAll(PulseChart.LineNode.selectorName)
             .data(series);
 
-        const lineNode: Selection<any> = this.rootSelection = this.rootSelection
+        this.rootSelection
+            .exit()
+            .remove();
+
+        this.rootSelection = this.rootSelection
             .enter()
             .append("g")
             .merge(this.rootSelection);
+
+        const lineNode: Selection<any> = this.rootSelection;
 
         lineNode.classed(PulseChart.LineNode.className, true);
 
@@ -1149,10 +1159,6 @@ export class PulseChart implements IVisual {
         this.drawLines();
         this.drawDots(data);
         this.drawTooltips(data);
-
-        this.rootSelection
-            .exit()
-            .remove();
     }
 
     private drawLinesStatic(limit: number, isAnimated: boolean): void {
