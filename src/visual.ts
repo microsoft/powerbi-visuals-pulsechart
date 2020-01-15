@@ -26,7 +26,6 @@
 import powerbi from "powerbi-visuals-api";
 import * as d3 from "d3";
 import * as _ from "lodash";
-import "@babel/polyfill";
 
 import "../style/pulseChart.less";
 
@@ -731,6 +730,10 @@ export class PulseChart implements IVisual {
     }
 
     constructor(options: VisualConstructorOptions) {
+        if (window.location !== window.parent.location) {
+            require("core-js/stable");
+        }
+
         this.margin = PulseChart.DefaultMargin;
         this.host = options.host;
         this.interactivityService = createInteractivityService(this.host);
