@@ -37,7 +37,7 @@
     "istanbul-instrumenter-loader": "^3.0.1",
     "jasmine": "3.3.0",
     "jasmine-jquery": "2.1.1",
-    "jquery": "3.3.1",
+    "jquery": "3.5.0",
     "karma": "3.1.1",
     "karma-chrome-launcher": "^2.2.0",
     "karma-coverage": "1.1.2",
@@ -66,7 +66,7 @@
   "dependencies": {
     "core-js": "^3.1.4",
     "d3": "^5.4.0",
-    "jquery": "3.3.1",
+    "jquery": "3.5.0",
     "lodash": "4.17.11",
     "powerbi-models": "^1.0.8",
     "powerbi-visuals-utils-chartutils": "2.1.0",
