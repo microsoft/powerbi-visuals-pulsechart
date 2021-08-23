@@ -25,6 +25,7 @@
  */
 import powerbi from "powerbi-visuals-api";
 import * as d3 from "d3";
+import { select, Selection } from "d3-selection";
 import * as _ from "lodash";
 
 import "../style/pulseChart.less";
@@ -44,6 +45,7 @@ import IVisualHost = powerbi.extensibility.visual.IVisualHost;
 import IVisual = powerbi.extensibility.visual.IVisual;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
 import IVisualEventService = powerbi.extensibility.IVisualEventService;
 
 import Axis = d3.Axis;
@@ -99,6 +101,7 @@ import { PulseAnimator } from "./animator";
 
 export class PulseChart implements IVisual {
     private events: IVisualEventService;
+    private selectionManager: ISelectionManager;
     public static RoleDisplayNames = <DataRoles<string>>{
         Timestamp: "Timestamp",
         Category: "Category",
@@ -1021,6 +1024,22 @@ export class PulseChart implements IVisual {
         );
     }
 
+    public handleContextMenu() {
+        this.svg.on("contextmenu", (event) => {
+            let dataPoint: any = select(event.target).datum();
+            this.selectionManager.showContextMenu(
+                dataPoint && dataPoint.selectionIds && dataPoint.selectionIds[0]
+                    ? dataPoint.selectionIds[0]
+                    : {},
+                {
+                    x: event.clientX,
+                    y: event.clientY,
+                }
+            );
+            event.preventDefault();
+        });
+    }
+
     constructor(options: VisualConstructorOptions) {
         this.events = options.host.eventService;
 
@@ -1053,6 +1072,8 @@ export class PulseChart implements IVisual {
         this.animationHandler = new PulseAnimator(this, svg);
 
         this.colorHelper = new ColorHelper(this.host.colorPalette);
+
+        this.handleContextMenu();
     }
 
     public update(options: VisualUpdateOptions): void {
