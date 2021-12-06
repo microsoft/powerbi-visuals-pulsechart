@@ -730,10 +730,6 @@ export class PulseChart implements IVisual {
     }
 
     constructor(options: VisualConstructorOptions) {
-        if (window.location !== window.parent.location) {
-            require("core-js/stable");
-        }
-
         this.margin = PulseChart.DefaultMargin;
         this.host = options.host;
         this.interactivityService = createInteractivityService(this.host);
