@@ -24,8 +24,9 @@
  *  THE SOFTWARE.
  */
 import powerbi from "powerbi-visuals-api";
-import * as d3 from "d3";
 import * as _ from "lodash";
+import { select as d3Select } from "d3-selection";
+import 'd3-transition';
 
 import DataView = powerbi.DataView;
 import IVisualHost = powerbi.extensibility.visual.IVisualHost;
@@ -92,7 +93,7 @@ describe("PulseChartTests", () => {
 
             it("time data should fit time box", (done) => {
                 let view: DataView = defaultDataViewBuilder.getDataViewWithNumbersInsteadDate();
-
+               
                 visualBuilder.updateFlushAllD3Transitions(view);
                 expect(visualBuilder.tooltipContainer.first().get(0)).toBeDefined();
                 const clickPoint: JQuery = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
@@ -100,8 +101,8 @@ describe("PulseChartTests", () => {
 
                 setTimeout(() => {
                     debugger;
-                    const timeRectWidth: number = (<HTMLElement>d3.select(".tooltipTimeRect").node()).getBoundingClientRect().width,
-                        dataWidth: number = (<HTMLElement>d3.select(".tooltipTime").node()).getBoundingClientRect().width;
+                    const timeRectWidth: number = (<HTMLElement>d3Select(".tooltipTimeRect").node()).getBoundingClientRect().width,
+                        dataWidth: number = (<HTMLElement>d3Select(".tooltipTime").node()).getBoundingClientRect().width;
 
                     expect(dataWidth).toBeLessThanOrEqual(timeRectWidth);
                     done();

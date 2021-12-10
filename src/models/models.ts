@@ -1,7 +1,8 @@
 import powerbi from "powerbi-visuals-api";
-
-import Axis = d3.Axis;
-import Selection = d3.Selection;
+import { BaseType, Selection } from "d3-selection";
+import { Axis } from "d3-axis";
+import { ScaleLinear, ScaleTime } from "d3-scale";
+import { Line as d3Line } from "d3-shape";
 
 import DataViewCategoricalColumn = powerbi.DataViewCategoricalColumn;
 import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
@@ -28,9 +29,9 @@ import { PulseChartSettings } from "../settings";
 export type GenericScale = TimeScale | LinearScale;
 
 // INTERFACES
-export interface Line extends d3.Line<PointXY> { }
-export interface LinearScale extends d3.ScaleLinear<any, any> { }
-export interface TimeScale extends d3.ScaleTime<any, any> { }
+export interface Line extends d3Line<PointXY> { }
+export interface LinearScale extends ScaleLinear<any, any> { }
+export interface TimeScale extends ScaleTime<any, any> { }
 export interface VisualDataLabelsSettings {
     show: boolean;
     showLabelPerSeries?: boolean;
@@ -173,8 +174,8 @@ export interface ElementDimensions {
 }
 
 export interface BehaviorOptions {
-    selection: Selection<d3.BaseType, any, d3.BaseType, any>;
-    clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any>;
+    selection: Selection<BaseType, any, BaseType, any>;
+    clearCatcher: Selection<BaseType, any, BaseType, any>;
     interactivityService: IInteractivityService;
     hasHighlights: boolean;
     onSelectCallback(): void;

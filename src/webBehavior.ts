@@ -24,8 +24,7 @@
  *  THE SOFTWARE.
  */
 
-import * as d3 from "d3";
-import Selection = d3.Selection;
+import { BaseType, Selection } from "d3-selection";
 
 import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
 import SelectableDataPoint = interactivityService.SelectableDataPoint;
@@ -37,22 +36,22 @@ import { BehaviorOptions } from "./models/models";
 import { pulseChartUtils } from "./utils";
 
 export class PulseChartWebBehavior implements IInteractiveBehavior {
-    private selection: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private selection: Selection<BaseType, any, BaseType, any>;
     private selectionHandler: ISelectionHandler;
     private interactivityService: IInteractivityService;
     private hasHighlights: boolean;
     private onSelectCallback: any;
 
     public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
-        let clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any> = options.clearCatcher;
-        let selection: Selection<d3.BaseType, any, d3.BaseType, any> = this.selection = options.selection;
+        let clearCatcher: Selection<BaseType, any, BaseType, any> = options.clearCatcher;
+        let selection: Selection<BaseType, any, BaseType, any> = this.selection = options.selection;
         this.onSelectCallback = options.onSelectCallback;
         this.selectionHandler = selectionHandler;
         this.interactivityService = options.interactivityService;
         this.hasHighlights = options.hasHighlights;
 
-        selection.call(pulseChartUtils.AddOnTouchClick, function (d: SelectableDataPoint) {
-            selectionHandler.handleSelection(d, (d3.event as KeyboardEvent).ctrlKey);
+        selection.call(pulseChartUtils.AddOnTouchClick, function (event: any, d: SelectableDataPoint) {
+            selectionHandler.handleSelection(d, event.ctrlKey);
         });
 
         clearCatcher.call(pulseChartUtils.AddOnTouchClick, function () {

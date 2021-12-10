@@ -26,7 +26,7 @@
 
 import powerbi from "powerbi-visuals-api";
 import * as _ from "lodash";
-import Selection = d3.Selection;
+import { BaseType, Selection } from "d3-selection";
 
 import VisualObjectInstancesToPersist = powerbi.VisualObjectInstancesToPersist;
 
@@ -47,15 +47,15 @@ import { pulseChartUtils } from "./utils";
 
 export class PulseAnimator {
     private chart: PulseChart;
-    private svg: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPlay: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPause: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationReset: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationToEnd: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPrev: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationNext: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private runnerCounter: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private runnerCounterText: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private svg: Selection<BaseType, any, BaseType, any>;
+    private animationPlay: Selection<BaseType, any, BaseType, any>;
+    private animationPause: Selection<BaseType, any, BaseType, any>;
+    private animationReset: Selection<BaseType, any, BaseType, any>;
+    private animationToEnd: Selection<BaseType, any, BaseType, any>;
+    private animationPrev: Selection<BaseType, any, BaseType, any>;
+    private animationNext: Selection<BaseType, any, BaseType, any>;
+    private runnerCounter: Selection<BaseType, any, BaseType, any>;
+    private runnerCounterText: Selection<BaseType, any, BaseType, any>;
     private static AnimationPlay: ClassAndSelector = createClassAndSelector("animationPlay");
     private static AnimationPause: ClassAndSelector = createClassAndSelector("animationPause");
     private static AnimationReset: ClassAndSelector = createClassAndSelector("animationReset");
@@ -79,7 +79,7 @@ export class PulseAnimator {
     private static DimmedOpacity: number = 0.25;
     private static DefaultOpacity: number = 1;
     private static DefaultControlsColor: string = "#777";
-    private container: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private container: Selection<BaseType, any, BaseType, any>;
     public animationPlayingIndex: number = 0;
     private color: string;
     private isAutoPlayed: boolean = false;
@@ -123,13 +123,13 @@ export class PulseAnimator {
         return this.animatorState === AnimatorStates.Stopped;
     }
 
-    constructor(chart: PulseChart, svg: Selection<d3.BaseType, any, d3.BaseType, any>) {
+    constructor(chart: PulseChart, svg: Selection<BaseType, any, BaseType, any>) {
         this.chart = chart;
         this.svg = svg;
 
         this.setDefaultValues();
 
-        let container: Selection<d3.BaseType, any, d3.BaseType, any> = this.container = this.svg
+        let container: Selection<BaseType, any, BaseType, any> = this.container = this.svg
             .append("g")
             .classed(PulseAnimator.ControlsContainer.className, true)
             .style("display", "none");
@@ -346,7 +346,7 @@ export class PulseAnimator {
         this.drawCounterValue();
     }
 
-    private static setControlVisiblity(element: Selection<d3.BaseType, any, d3.BaseType, any>, isVisible: boolean, isDisabled: boolean = false): void {
+    private static setControlVisiblity(element: Selection<BaseType, any, BaseType, any>, isVisible: boolean, isDisabled: boolean = false): void {
         element
             .style("opacity", isVisible ? PulseAnimator.DefaultOpacity : PulseAnimator.DimmedOpacity);
         if (isVisible) {

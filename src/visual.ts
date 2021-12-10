@@ -23,10 +23,19 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
+import "regenerator-runtime/runtime"
 import powerbi from "powerbi-visuals-api";
-import * as d3 from "d3";
-import * as _ from "lodash";
+import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
+import { axisRight, axisBottom, Axis } from "d3-axis";
+import { Selection as d3Selection, select as d3Select } from "d3-selection";
+import { timeMinute, timeDay } from "d3-time";
+import { scaleLinear, scaleTime } from "d3-scale";
+import { line as d3Line, curveLinear } from "d3-shape";
+import { easeLinear } from "d3-ease";
+import { timerFlush } from "d3-timer";
+import 'd3-transition';
 
+import * as _ from "lodash";
 import "../style/pulseChart.less";
 
 import DataView = powerbi.DataView;
@@ -45,8 +54,7 @@ import IVisual = powerbi.extensibility.visual.IVisual;
 import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
 
-import Axis = d3.Axis;
-type Selection<T> = d3.Selection<any, T, any, any>;
+type Selection<T> = d3Selection<any, T, any, any>;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
 import IRect = SVGUtil.IRect;
@@ -301,7 +309,7 @@ export class PulseChart implements IVisual {
 
         let eventSizeScale: LinearScale = <LinearScale>PulseChart.createScale(
             true,
-            columns.EventSize ? [d3.min(<number[]>columns.EventSize.values), d3.max(<number[]>columns.EventSize.values)] : [0, 0],
+            columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
             minSize,
             maxSize);
 
@@ -521,7 +529,7 @@ export class PulseChart implements IVisual {
 
         let formatter = valueFormatter.create(formatterOptions);
         let ticks: number = Math.max(2, Math.round(height / 40));
-        let yAxis: Axis<any> = d3.axisRight(commonYScale)
+        let yAxis: Axis<any> = axisRight(commonYScale)
             .scale(commonYScale)
             .ticks(ticks)
             .tickSizeOuter(0)
@@ -568,7 +576,7 @@ export class PulseChart implements IVisual {
             let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
 
             let formatter = valueFormatter.create(formatterOptions);
-            properties.axis = d3.axisBottom(properties.scale)
+            properties.axis = axisBottom(properties.scale)
                 .scale(properties.scale)
                 .tickValues(values)
                 .tickSizeOuter(0)
@@ -620,9 +628,9 @@ export class PulseChart implements IVisual {
 
         let values = [];
         if (isScalar) {
-            values = d3.range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
+            values = d3Range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
         } else {
-            values = (dateFormat === XAxisDateFormat.TimeOnly ? d3.timeMinute : d3.timeDay)
+            values = (dateFormat === XAxisDateFormat.TimeOnly ? timeMinute : timeDay)
                 .range(<any>minValue, <any>maxValue);
         }
 
@@ -686,10 +694,10 @@ export class PulseChart implements IVisual {
         let scale: LinearScale | TimeScale;
 
         if (isScalar) {
-            return d3.scaleLinear().domain(domain as any).range([minX, maxX]);
+            return scaleLinear().domain(domain as any).range([minX, maxX]);
         }
 
-        return d3.scaleTime().domain(domain as any).range([minX, maxX]);
+        return scaleTime().domain(domain as any).range([minX, maxX]);
     }
 
     public data: ChartData;
@@ -735,7 +743,7 @@ export class PulseChart implements IVisual {
         this.interactivityService = createInteractivityService(this.host);
         this.behavior = new PulseChartWebBehavior();
 
-        let svg: Selection<any> = this.svg = d3.select(options.element)
+        let svg: Selection<any> = this.svg = d3Select(options.element)
             .append("svg")
             .classed("pulseChart", true);
 
@@ -914,7 +922,7 @@ export class PulseChart implements IVisual {
         this.data.yScales.forEach((scale: LinearScale) => domain = domain.concat(scale.domain()));
         this.data.commonYScale = <LinearScale>PulseChart.createScale(
             true,
-            [d3.max(domain), d3.min(domain)],
+            [d3Max(domain), d3Min(domain)],
             0,
             height);
 
@@ -975,7 +983,7 @@ export class PulseChart implements IVisual {
         let xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales;
 
-        this.lineX = d3.line<DataPoint>()
+        this.lineX = d3Line<DataPoint>()
             .x((d: DataPoint) => {
                 return xScale(d.categoryValue);
             })
@@ -1023,7 +1031,7 @@ export class PulseChart implements IVisual {
 
         axisNodeUpdateSelectionMerged
             .each(function (series: Series) {
-                d3.select(this).call(series.xAxisProperties.axis);
+                d3Select(this).call(series.xAxisProperties.axis);
             });
         axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
             .selectAll(".tick")
@@ -1256,7 +1264,7 @@ export class PulseChart implements IVisual {
             .transition()
             .delay(delay)
             .duration(this.animationDuration)
-            .ease(d3.easeLinear)
+            .ease(easeLinear)
             .attrTween("d", (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
             .on("end", () => {
                 let position: AnimationPosition = this.animationHandler.flooredPosition;
@@ -1281,7 +1289,7 @@ export class PulseChart implements IVisual {
 
     public stopAnimation() {
         this.pauseAnimation();
-        d3.timerFlush();
+        timerFlush();
     }
 
     public findNextPoint(position: AnimationPosition): AnimationPosition {
@@ -1370,10 +1378,10 @@ export class PulseChart implements IVisual {
 
         this.showAnimationDot();
 
-        let lineFunction: Line = d3.line<DataPoint>()
+        let lineFunction: Line = d3Line<DataPoint>()
             .x((d: DataPoint) => d.x)
             .y((d: DataPoint) => d.y)
-            .curve(d3.curveLinear);
+            .curve(curveLinear);
 
         let interpolatedLine = data.slice(0, start + 1).map((d: DataPoint): PointXY => {
             return {
@@ -1388,15 +1396,15 @@ export class PulseChart implements IVisual {
         let y0: number = yScales[data[start].groupIndex](data[start].y);
         let y1: number = yScales[data[stop].groupIndex](data[stop].y);
 
-        let interpolateIndex: LinearScale = d3.scaleLinear()
+        let interpolateIndex: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([start, stop]);
 
-        let interpolateX: LinearScale = d3.scaleLinear()
+        let interpolateX: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([x0, x1]);
 
-        let interpolateY: LinearScale = d3.scaleLinear()
+        let interpolateY: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([y0, y1]);
 
@@ -1679,7 +1687,7 @@ export class PulseChart implements IVisual {
 
         let rootSelection: Selection<any> = this.rootSelection;
 
-        let line: Line = d3.line<PointXY>()
+        let line: Line = d3Line<PointXY>()
             .x((d: PointXY) => d.x)
             .y((d: PointXY) => {
                 return d.y;
@@ -1883,7 +1891,7 @@ export class PulseChart implements IVisual {
             };
         };
 
-        let description = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
+        let description: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
         let descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(PulseChart.TooltipDescription.className, true);
         const descriptionFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
@@ -1923,8 +1931,8 @@ export class PulseChart implements IVisual {
         }
 
         let domain: number[] = this.data.commonYScale.domain(),
-            minValue: number = d3.min(domain),
-            middleValue = Math.abs((d3.max(domain) - minValue) / 2);
+            minValue: number = d3Min(domain),
+            middleValue = Math.abs((d3Max(domain) - minValue) / 2);
 
         middleValue = middleValue === 0
             ? middleValue

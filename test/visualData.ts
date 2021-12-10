@@ -25,7 +25,7 @@
  */
 
 import powerbi from "powerbi-visuals-api";
-import * as d3 from "d3";
+import { range as d3Range } from "d3-array";
 
 import { valueType as vt, pixelConverter as PixelConverter } from "powerbi-visuals-utils-typeutils";
 import ValueType = vt.ValueType;
@@ -177,8 +177,8 @@ export class PulseChartData extends TestDataViewBuilder {
     private generateEvents(valuesCount: number, eventCount: number): any[] {
         let startIndex = valuesCount / eventCount;
         let eventIndexesSpace = (valuesCount - startIndex) / eventCount;
-        let eventIndexes = d3.range(eventCount).map(x => startIndex + x * eventIndexesSpace);
-        let events = d3.range(valuesCount).map(x =>
+        let eventIndexes = d3Range(eventCount).map(x => startIndex + x * eventIndexesSpace);
+        let events = d3Range(valuesCount).map(x =>
             eventIndexes.some(index => index === x)
                 ? {
                     title: getRandomWord(6, 12),
