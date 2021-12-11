@@ -24,7 +24,6 @@
  *  THE SOFTWARE.
  */
 import powerbi from "powerbi-visuals-api";
-import * as _ from "lodash";
 import { select as d3Select } from "d3-selection";
 import 'd3-transition';
 

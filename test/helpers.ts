@@ -24,7 +24,7 @@
  *  THE SOFTWARE.
  */
 
-import * as _ from "lodash";
+import _range from "lodash-es/range";
 
 import { getRandomNumber } from "powerbi-visuals-utils-testutils";
 import { RgbColor, parseColorString } from "powerbi-visuals-utils-colorutils";
@@ -46,12 +46,12 @@ export function getRandomWords(
     minLength: number,
     maxLength: number,
     alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string[] {
-    return _.range(wordCount).map(x => getRandomWord(minLength, maxLength, alphabet));
+    return _range(wordCount).map(x => getRandomWord(minLength, maxLength, alphabet));
 }
 
 export function getHexColorFromNumber(value: number) {
     let hex: string = value.toString(16).toUpperCase();
-    return "#" + (hex.length === 6 ? hex : _.range(0, 6 - hex.length, 0).join("") + hex);
+    return "#" + (hex.length === 6 ? hex : _range(0, 6 - hex.length, 0).join("") + hex);
 }
 
 export function getRandomInteger(min: number, max: number, exceptionList?: number[]): number {
@@ -63,7 +63,7 @@ export function getRandomHexColor(): string {
 }
 
 export function getRandomHexColors(count: number): string[] {
-    return _.range(count).map(x => getRandomHexColor());
+    return _range(count).map(x => getRandomHexColor());
 }
 
 export function getRandomUniqueNumbers(count: number, min: number = 0, max: number = 1): number[] {
@@ -89,7 +89,7 @@ export function getRandomWord(
     alphabet: string | string[] = EnglishAlphabetLowerCase + EnglishAlphabetUpperCase): string {
     let alphabetLength = alphabet.length;
     let length = getRandomInteger(minLength, maxLength);
-    let strings = <string[]>_.range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
+    let strings = <string[]>_range(length).map(x => alphabet[getRandomInteger(0, alphabetLength)]);
     return strings.join("");
 }
 

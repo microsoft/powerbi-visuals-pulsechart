@@ -25,7 +25,8 @@
  */
 
 import powerbi from "powerbi-visuals-api";
-import * as _ from "lodash";
+import _isEqual from "lodash-es/isEqual";
+import _isNumber from "lodash-es/isNumber";
 import { BaseType, Selection } from "d3-selection";
 
 import VisualObjectInstancesToPersist = powerbi.VisualObjectInstancesToPersist;
@@ -269,7 +270,7 @@ export class PulseAnimator {
         if (this.chart.isAutoPlay && this.isAutoPlayed
             && this.animatorState === AnimatorStates.Play
             && !this.positionSaved
-            && !_.isEqual(this.autoPlayPosition, this.savedPosition)) {
+            && !_isEqual(this.autoPlayPosition, this.savedPosition)) {
             this.chart.stopAnimation();
             this.isAutoPlayed = false;
             this.positionSaved = true;
@@ -420,7 +421,7 @@ export class PulseAnimator {
             && this.chart.data.series
             && this.chart.data.series[this.position.series]
             && this.chart.data.series[this.position.series].data
-            && this.chart.data.series[this.position.series].data[_.isNumber(index) ? index : this.flooredPosition.index];
+            && this.chart.data.series[this.position.series].data[_isNumber(index) ? index : this.flooredPosition.index];
 
         let runnerCounterValue: string = (dataPoint && dataPoint.runnerCounterValue != null)
             ? dataPoint.runnerCounterValue

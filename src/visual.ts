@@ -35,7 +35,16 @@ import { easeLinear } from "d3-ease";
 import { timerFlush } from "d3-timer";
 import 'd3-transition';
 
-import * as _ from "lodash";
+import _mapValues from "lodash-es/mapValues";
+import _isEmpty from "lodash-es/isEmpty";
+import _isString from "lodash-es/isString";
+import _flatten from "lodash-es/flatten";
+import _last from "lodash-es/last";
+import _isEqual from "lodash-es/isEqual";
+import _isNumber from "lodash-es/isNumber";
+import _assign from "lodash-es/assign";
+import _filter from "lodash-es/filter";
+
 import "../style/pulseChart.less";
 
 import DataView = powerbi.DataView;
@@ -250,7 +259,7 @@ export class PulseChart implements IVisual {
             return null;
         }
 
-        let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_.mapValues(
+        let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_mapValues(
             PulseChart.RoleDisplayNames,
             (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i)
         );
@@ -268,7 +277,7 @@ export class PulseChart implements IVisual {
 
         let categoryValues: any[] = timeStampColumn.values;
 
-        if (!categoryValues || _.isEmpty(dataView.categorical.values) || !valuesColumn || _.isEmpty(valuesColumn.values)) {
+        if (!categoryValues || _isEmpty(dataView.categorical.values) || !valuesColumn || _isEmpty(valuesColumn.values)) {
             return null;
         }
         let minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
@@ -336,7 +345,7 @@ export class PulseChart implements IVisual {
 
         for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
             let categoryValue: string | Date = categoryValues[categoryIndex];
-            if (_.isString(categoryValue)) {
+            if (_isString(categoryValue)) {
                 let date: Date = new Date(categoryValue);
 
                 if (!isNaN(date.getTime())) {
@@ -518,7 +527,7 @@ export class PulseChart implements IVisual {
         let dataPointsArray: DataPoint[][] = series.map((d: Series): DataPoint[] => {
             return d.data.filter((d: DataPoint) => !!d.popupInfo);
         });
-        return <DataPoint[]>_.flatten(dataPointsArray);
+        return <DataPoint[]>_flatten(dataPointsArray);
     }
 
     private static createAxisY(
@@ -634,7 +643,7 @@ export class PulseChart implements IVisual {
                 .range(<any>minValue, <any>maxValue);
         }
 
-        if (!values.length || _.last(values) < maxValue) {
+        if (!values.length || _last(values) < maxValue) {
             values.push(maxValue);
         }
 
@@ -814,7 +823,7 @@ export class PulseChart implements IVisual {
 
         let oldDataObj = this.getDataArrayToCompare(this.data);
         let newDataObj = this.getDataArrayToCompare(data);
-        if (!_.isEqual(oldDataObj, newDataObj)) {
+        if (!_isEqual(oldDataObj, newDataObj)) {
             this.clearAll(false);
         }
 
@@ -826,9 +835,9 @@ export class PulseChart implements IVisual {
             return null;
         }
 
-        let dataPoints: DataPoint[] = <DataPoint[]>_.flatten(data.series.map(x => x.data));
-        return _.flatten(dataPoints.map(x => {
-            return x && _.flatten([
+        let dataPoints: DataPoint[] = <DataPoint[]>_flatten(data.series.map(x => x.data));
+        return _flatten(dataPoints.map(x => {
+            return x && _flatten([
                 [
                     x.categoryValue,
                     x.eventSize,
@@ -847,7 +856,7 @@ export class PulseChart implements IVisual {
             return false;
         }
 
-        if (data.categories.some(x => !(x instanceof Date || _.isNumber(x)))) {
+        if (data.categories.some(x => !(x instanceof Date || _isNumber(x)))) {
             return false;
         }
 
@@ -904,7 +913,7 @@ export class PulseChart implements IVisual {
             this.data.isScalar,
             this.data.series,
             <LinearScale>this.data.xScale,
-            _.assign({}, this.data.settings.xAxis.formatterOptions),
+            _assign({}, this.data.settings.xAxis.formatterOptions),
             this.data.settings.xAxis.dateFormat,
             this.data.settings.xAxis.position,
             this.data.widthOfXAxisLabel,
@@ -1540,7 +1549,7 @@ export class PulseChart implements IVisual {
             .select(nodeParent.selectorName)
             .selectAll(node.selectorName)
             .data((d: Series, seriesIndex: number) => {
-                return _.filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
+                return _filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
                     if (isAnimated && (seriesIndex === position.series) && (valueIndex > position.index)) {
                         return false;
                     }
@@ -1699,7 +1708,7 @@ export class PulseChart implements IVisual {
 
         let tooltipRoot: Selection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
             .data(d => {
-                return _.filter(d.data, (value: DataPoint) => this.isPopupShow(value));
+                return _filter(d.data, (value: DataPoint) => this.isPopupShow(value));
             });
 
         let tooltipRootMerged = tooltipRoot
