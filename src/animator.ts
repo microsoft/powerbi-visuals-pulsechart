@@ -36,10 +36,7 @@ import SVGManipulations = SVGUtil.manipulation;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
-import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
-import valueFormatter = vf.valueFormatter;
-import IValueFormatter = tms.TextProperties;
-import textMeasurementService = tms.textMeasurementService;
+import { valueFormatter, textMeasurementService } from "powerbi-visuals-utils-formattingutils";
 
 import { AnimationPosition, DataPoint } from "./models/models";
 import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";

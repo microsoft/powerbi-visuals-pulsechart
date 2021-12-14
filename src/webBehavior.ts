@@ -26,19 +26,19 @@
 
 import { BaseType, Selection } from "d3-selection";
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivityService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityService.IInteractiveBehavior;
-import IInteractivityService = interactivityService.IInteractivityService;
-import ISelectionHandler = interactivityService.ISelectionHandler;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
+import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
+import ISelectionHandler = interactivityBaseService.ISelectionHandler;
 
-import { BehaviorOptions } from "./models/models";
+import { BehaviorOptions, DataPoint } from "./models/models";
 import { pulseChartUtils } from "./utils";
 
 export class PulseChartWebBehavior implements IInteractiveBehavior {
     private selection: Selection<BaseType, any, BaseType, any>;
     private selectionHandler: ISelectionHandler;
-    private interactivityService: IInteractivityService;
+    private interactivityService: IInteractivityService<DataPoint>;
     private hasHighlights: boolean;
     private onSelectCallback: any;
 

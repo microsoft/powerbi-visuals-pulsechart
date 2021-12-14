@@ -10,10 +10,11 @@ import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
 
 import { TooltipEnabledDataPoint } from "powerbi-visuals-utils-tooltiputils";
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivityService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityService.IInteractiveBehavior;
-import IInteractivityService = interactivityService.IInteractivityService;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
+import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
+import IBehaviorOptions = interactivityBaseService.IBehaviorOptions;
 
 import { legendInterfaces, dataLabelInterfaces } from "powerbi-visuals-utils-chartutils";
 import LabelEnabledDataPoint = dataLabelInterfaces.LabelEnabledDataPoint;
@@ -173,10 +174,10 @@ export interface ElementDimensions {
     height: number;
 }
 
-export interface BehaviorOptions {
+export interface BehaviorOptions extends IBehaviorOptions<DataPoint> {
     selection: Selection<BaseType, any, BaseType, any>;
     clearCatcher: Selection<BaseType, any, BaseType, any>;
-    interactivityService: IInteractivityService;
+    interactivityService: IInteractivityService<DataPoint>;
     hasHighlights: boolean;
     onSelectCallback(): void;
 }

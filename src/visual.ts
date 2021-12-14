@@ -73,15 +73,13 @@ import IMargin = axisInterfaces.IMargin;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
-import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
-import valueFormatter = vf.valueFormatter;
-import ValueFormatterOptions = vf.ValueFormatterOptions;
-import TextProperties = tms.TextProperties;
-import textMeasurementService = tms.textMeasurementService;
+import { valueFormatter, textMeasurementService, interfaces } from "powerbi-visuals-utils-formattingutils";
+import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
+import TextProperties = interfaces.TextProperties;
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import createInteractivityService = interactivityService.createInteractivityService;
-import IInteractivityService = interactivityService.IInteractivityService;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import createInteractivityService = interactivitySelectionService.createInteractivitySelectionService;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
 
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
@@ -247,7 +245,7 @@ export class PulseChart implements IVisual {
         dataView: DataView,
         host: IVisualHost,
         colorHelper: ColorHelper,
-        interactivityService: IInteractivityService
+        interactivityService: IInteractivityService<DataPoint>
     ): ChartData {
         if (!dataView
             || !dataView.categorical
@@ -728,7 +726,7 @@ export class PulseChart implements IVisual {
 
     public host: IVisualHost;
 
-    private interactivityService: IInteractivityService;
+    private interactivityService: IInteractivityService<DataPoint>;
     private colorHelper: ColorHelper;
 
     private settings: PulseChartSettings;
@@ -1580,13 +1578,15 @@ export class PulseChart implements IVisual {
 
         if (this.interactivityService) {
             let behaviorOptions: BehaviorOptions = {
+                behavior: this.behavior,
+                dataPoints: this.data.dots,
                 selection: selectionMerged,
                 clearCatcher: this.svg,
                 interactivityService: this.interactivityService,
                 hasHighlights: this.data.hasHighlights,
                 onSelectCallback: () => this.renderChart(),
             };
-            this.interactivityService.bind(this.data.dots, this.behavior, behaviorOptions);
+            this.interactivityService.bind(behaviorOptions);
         }
     }
 
