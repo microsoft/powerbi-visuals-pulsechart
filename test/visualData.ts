@@ -24,7 +24,7 @@
  *  THE SOFTWARE.
  */
 
-import powerbi from "powerbi-visuals-api";
+import powerbiVisualsApi from "powerbi-visuals-api";
 import { range as d3Range } from "d3-array";
 
 import { valueType as vt, pixelConverter as PixelConverter } from "powerbi-visuals-utils-typeutils";
@@ -34,7 +34,7 @@ import { getRandomNumber, getRandomNumbers, testDataViewBuilder } from "powerbi-
 import TestDataViewBuilder = testDataViewBuilder.TestDataViewBuilder;
 import { getRandomUniqueSortedDates, getRandomWord, getRandomText } from "./helpers";
 
-export class PulseChartData extends TestDataViewBuilder {
+export class VisualData extends TestDataViewBuilder {
     public static ColumnTimestamp: string = "Timestamp";
     public static ColumnValue: string = "Value";
     public static ColumnEventTitle: string = "Event Title";
@@ -43,7 +43,7 @@ export class PulseChartData extends TestDataViewBuilder {
     public valuesTimestamp = getRandomUniqueSortedDates(100, new Date(2014, 0, 1), new Date(2015, 5, 10));
     public valuesValue: number[] = getRandomNumbers(this.valuesTimestamp.length, 100, 1000);
     public valuesEvents: any[] = this.generateEvents(this.valuesValue.length, 5);
-    public getDataView(columnNames?: string[], isDateAsString?: boolean): powerbi.DataView {
+    public getDataView(columnNames?: string[], isDateAsString?: boolean): powerbiVisualsApi.DataView {
         let dateValues: string[] | Date[] = this.valuesTimestamp;
 
         if (isDateAsString) {
@@ -53,7 +53,7 @@ export class PulseChartData extends TestDataViewBuilder {
         return this.createCategoricalDataViewBuilder([
             {
                 source: {
-                    displayName: PulseChartData.ColumnTimestamp,
+                    displayName: VisualData.ColumnTimestamp,
                     format: "G",
                     type: ValueType.fromDescriptor({ dateTime: true }),
                     roles: { Timestamp: true }
@@ -62,7 +62,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventTitle,
+                    displayName: VisualData.ColumnEventTitle,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventTitle: true }
                 },
@@ -70,7 +70,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventDescription,
+                    displayName: VisualData.ColumnEventDescription,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventDescription: true }
                 },
@@ -78,7 +78,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventSize,
+                    displayName: VisualData.ColumnEventSize,
                     type: ValueType.fromDescriptor({ integer: true }),
                     roles: { EventSize: true }
                 },
@@ -87,7 +87,7 @@ export class PulseChartData extends TestDataViewBuilder {
         ], [
                 {
                     source: {
-                        displayName: PulseChartData.ColumnValue,
+                        displayName: VisualData.ColumnValue,
                         type: ValueType.fromDescriptor({ integer: true }),
                         roles: { Value: true }
                     },
@@ -96,11 +96,11 @@ export class PulseChartData extends TestDataViewBuilder {
             ], columnNames).build();
     }
 
-    public getDataViewWithNumbersInsteadDate(columnNames?: string[], isDateAsString?: boolean): powerbi.DataView {
+    public getDataViewWithNumbersInsteadDate(columnNames?: string[], isDateAsString?: boolean): powerbiVisualsApi.DataView {
         return this.createCategoricalDataViewBuilder([
             {
                 source: {
-                    displayName: PulseChartData.ColumnTimestamp,
+                    displayName: VisualData.ColumnTimestamp,
                     format: "G",
                     type: ValueType.fromDescriptor({ dateTime: true }),
                     roles: { Timestamp: true }
@@ -109,7 +109,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventTitle,
+                    displayName: VisualData.ColumnEventTitle,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventTitle: true }
                 },
@@ -117,7 +117,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventDescription,
+                    displayName: VisualData.ColumnEventDescription,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventDescription: true }
                 },
@@ -126,7 +126,7 @@ export class PulseChartData extends TestDataViewBuilder {
         ], [
                 {
                     source: {
-                        displayName: PulseChartData.ColumnValue,
+                        displayName: VisualData.ColumnValue,
                         type: ValueType.fromDescriptor({ integer: true }),
                         roles: { Value: true }
                     },
@@ -135,11 +135,11 @@ export class PulseChartData extends TestDataViewBuilder {
             ], columnNames).build();
     }
 
-    public getDataViewWithSingleDate(columnNames?: string[]): powerbi.DataView {
+    public getDataViewWithSingleDate(columnNames?: string[]): powerbiVisualsApi.DataView {
         return this.createCategoricalDataViewBuilder([
             {
                 source: {
-                    displayName: PulseChartData.ColumnTimestamp,
+                    displayName: VisualData.ColumnTimestamp,
                     format: "G",
                     type: ValueType.fromDescriptor({ dateTime: true }),
                     roles: { Timestamp: true }
@@ -148,7 +148,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventTitle,
+                    displayName: VisualData.ColumnEventTitle,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventTitle: true }
                 },
@@ -156,7 +156,7 @@ export class PulseChartData extends TestDataViewBuilder {
             },
             {
                 source: {
-                    displayName: PulseChartData.ColumnEventDescription,
+                    displayName: VisualData.ColumnEventDescription,
                     type: ValueType.fromDescriptor({ text: true }),
                     roles: { EventDescription: true }
                 },
@@ -165,7 +165,7 @@ export class PulseChartData extends TestDataViewBuilder {
         ], [
                 {
                     source: {
-                        displayName: PulseChartData.ColumnValue,
+                        displayName: VisualData.ColumnValue,
                         type: ValueType.fromDescriptor({ integer: true }),
                         roles: { Value: true }
                     },
@@ -178,14 +178,12 @@ export class PulseChartData extends TestDataViewBuilder {
         let startIndex = valuesCount / eventCount;
         let eventIndexesSpace = (valuesCount - startIndex) / eventCount;
         let eventIndexes = d3Range(eventCount).map(x => startIndex + x * eventIndexesSpace);
-        let events = d3Range(valuesCount).map(x =>
+        return d3Range(valuesCount).map(x =>
             eventIndexes.some(index => index === x)
                 ? {
                     title: getRandomWord(6, 12),
                     description: getRandomText(20, 4, 12)
                 }
                 : null);
-
-        return events;
     }
 }

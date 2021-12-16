@@ -24,13 +24,13 @@
  *  THE SOFTWARE.
  */
 
-import powerbi from "powerbi-visuals-api";
+import powerbiVisualsApi from "powerbi-visuals-api";
 
 import { VisualBuilderBase } from "powerbi-visuals-utils-testutils";
-import { PulseChart as VisualClass } from "./../src/visual";
-import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
+import { Visual as VisualClass } from "../src/visual";
+import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualConstructorOptions;
 
-export class PulseChartBuilder extends VisualBuilderBase<VisualClass> {
+export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     constructor(width: number, height: number) {
         super(width, height);
     }
@@ -47,88 +47,83 @@ export class PulseChartBuilder extends VisualBuilderBase<VisualClass> {
         return this.visual;
     }
 
-    public get mainElement(): JQuery {
-        return this.element.children(".pulseChart");
+    public get mainElement(): SVGElement {
+        return this.element.querySelector(".pulseChart");
     }
-    public get gaps(): JQuery {
+    public get gaps(): NodeListOf<SVGElement> {
         return this.mainElement
-            .children("g.gaps")
-            .children("g.gap");
+            .querySelectorAll("g.gap");
     }
 
-    public get animationDot(): JQuery {
+    public get animationDot(): SVGElement {
         return this.mainElement
-            .children("g.dots")
-            .children("circle.animationDot");
+            .querySelector("circle.animationDot");
     }
 
-    public get chart(): JQuery {
-        return this.mainElement.children("g.chart");
+    public get chart(): SVGElement {
+        return this.mainElement.querySelector("g.chart");
     }
 
-    public get lineNode(): JQuery {
-        return this.chart.children("g.lineNode");
+    public get lineNode(): SVGElement {
+        return this.chart.querySelector("g.lineNode");
     }
 
-    public get lineContainer(): JQuery {
-        return this.lineNode.children("g.lineContainer");
+    public get lineContainer(): SVGElement {
+        return this.lineNode.querySelector("g.lineContainer");
     }
 
-    public get linePath() {
-        return this.lineContainer.children("path.line");
+    public get linePath(): SVGElement {
+        return this.lineContainer.querySelector("path.line");
     }
 
-    public get dotsContainer(): JQuery {
-        return this.lineNode.children("g.dotsContainer");
+    public get dotsContainer(): SVGElement {
+        return this.lineNode.querySelector("g.dotsContainer");
     }
 
-    public get dotsContainerDot(): JQuery {
-        return this.dotsContainer.children("circle.dot");
+    public get dotsContainerDot(): SVGElement {
+        return this.dotsContainer.querySelector("circle.dot");
     }
 
-    public get xAxisNode(): JQuery {
-        return this.lineNode.children("g.xAxisNode");
+    public get xAxisNode(): SVGElement {
+        return this.lineNode.querySelector("g.xAxisNode");
     }
 
-    public get xAxisNodeTick(): JQuery {
-        return this.xAxisNode.children("g.tick");
+    public get xAxisNodeTick(): SVGElement {
+        return this.xAxisNode.querySelector("g.tick");
     }
 
-    public get xAxisNodeRect(): JQuery {
-        return this.xAxisNodeTick.children("rect");
+    public get xAxisNodeRect(): SVGElement {
+        return this.xAxisNodeTick.querySelector("rect");
     }
 
-    public get yAxis(): JQuery {
-        return this.mainElement.children("g.y.axis");
+    public get yAxis(): SVGElement {
+        return this.mainElement.querySelector("g.y.axis");
     }
 
-    public get yAxisTicks(): JQuery {
-        return this.yAxis.children("g.tick");
+    public get yAxisTicks(): NodeListOf<SVGElement> {
+        return this.yAxis.querySelectorAll("g.tick");
     }
 
-    public get tooltipContainer(): JQuery {
-        return this.lineNode.children(".tooltipContainer");
+    public get tooltipContainer(): SVGElement {
+        return this.lineNode.querySelector(".tooltipContainer");
     }
 
-    public get tooltipContainerTooltip(): JQuery {
-        return this.tooltipContainer.children("g.Tooltip");
+    public get tooltipContainerTooltip(): SVGElement {
+        return this.tooltipContainer.querySelector("g.Tooltip");
     }
 
-    public get animationPlay(): JQuery {
+    public get animationPlay(): SVGElement {
         return this.mainElement
-            .children("g")
-            .children("g.animationPlay");
+            .querySelector("g.animationPlay");
     }
 
-    public get animationPrev(): JQuery {
+    public get animationPrev(): SVGElement {
         return this.mainElement
-            .children("g")
-            .children("g.animationPrev");
+            .querySelector("g.animationPrev");
     }
 
-    public get animationNext(): JQuery {
+    public get animationNext(): SVGElement {
         return this.mainElement
-            .children("g")
-            .children("g.animationNext");
+            .querySelector("g.animationNext");
     }
 }
