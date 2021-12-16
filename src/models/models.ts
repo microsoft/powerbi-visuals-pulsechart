@@ -1,12 +1,12 @@
-import powerbi from "powerbi-visuals-api";
+import powerbiVisualsApi from "powerbi-visuals-api";
 import { BaseType, Selection } from "d3-selection";
 import { Axis } from "d3-axis";
 import { ScaleLinear, ScaleTime } from "d3-scale";
 import { Line as d3Line } from "d3-shape";
 
-import DataViewCategoricalColumn = powerbi.DataViewCategoricalColumn;
-import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
-import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
+import DataViewCategoricalColumn = powerbiVisualsApi.DataViewCategoricalColumn;
+import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
+import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
 
 import { TooltipEnabledDataPoint } from "powerbi-visuals-utils-tooltiputils";
 

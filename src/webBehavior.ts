@@ -35,7 +35,7 @@ import ISelectionHandler = interactivityBaseService.ISelectionHandler;
 import { BehaviorOptions, DataPoint } from "./models/models";
 import { pulseChartUtils } from "./utils";
 
-export class PulseChartWebBehavior implements IInteractiveBehavior {
+export class WebBehavior implements IInteractiveBehavior {
     private selection: Selection<BaseType, any, BaseType, any>;
     private selectionHandler: ISelectionHandler;
     private interactivityService: IInteractivityService<DataPoint>;
@@ -50,11 +50,11 @@ export class PulseChartWebBehavior implements IInteractiveBehavior {
         this.interactivityService = options.interactivityService;
         this.hasHighlights = options.hasHighlights;
 
-        selection.call(pulseChartUtils.AddOnTouchClick, function (event: any, d: SelectableDataPoint) {
+        selection.call(pulseChartUtils.addOnTouchClick, (event: any, d: SelectableDataPoint) => {
             selectionHandler.handleSelection(d, event.ctrlKey);
         });
 
-        clearCatcher.call(pulseChartUtils.AddOnTouchClick, function () {
+        clearCatcher.call(pulseChartUtils.addOnTouchClick, () => {
             selectionHandler.handleClearSelection();
         });
     }

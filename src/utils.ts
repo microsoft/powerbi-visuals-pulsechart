@@ -38,7 +38,7 @@ export module pulseChartUtils {
         return DefaultOpacity;
     }
 
-    export function AddOnTouchClick(selection: Selection<BaseType, any, BaseType, any>, callback: (event: any, data: any, index: number) => any): Selection<BaseType, any, BaseType, any> {
+    export function addOnTouchClick(selection: Selection<BaseType, any, BaseType, any>, callback: (event: any, data: any, index: number) => any): Selection<BaseType, any, BaseType, any> {
         let preventDefaultCallback = (event: any, d: any) => {
             (event).preventDefault();
                 (event).stopPropagation();
@@ -56,7 +56,7 @@ export module PulseChartDataLabelUtils {
     export function getDefaultPulseChartLabelSettings(): ChartDataLabelsSettings {
         return {
             show: false,
-            position: 1, /* PointLabelPosition.Above, */
+            position: 1, // PointLabelPosition.Above
             displayUnits: 0,
             precision: undefined,
             labelColor: "#777777",
