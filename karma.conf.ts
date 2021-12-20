@@ -50,7 +50,7 @@ module.exports = (config) => {
       "karma-webpack",
       "karma-jasmine",
       "karma-sourcemap-loader",
-      "karma-chrome-launcher",
+      "karma-chrome-launcher"
     ],
     files: [
       testRecursivePath,

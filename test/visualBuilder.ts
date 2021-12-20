@@ -80,8 +80,8 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
         return this.lineNode.querySelector("g.dotsContainer");
     }
 
-    public get dotsContainerDot(): SVGElement {
-        return this.dotsContainer.querySelector("circle.dot");
+    public get dotsContainerDot(): NodeListOf<SVGElement> {
+        return this.dotsContainer.querySelectorAll("circle.dot");
     }
 
     public get xAxisNode(): SVGElement {
@@ -92,8 +92,8 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
         return this.xAxisNode.querySelector("g.tick");
     }
 
-    public get xAxisNodeRect(): SVGElement {
-        return this.xAxisNodeTick.querySelector("rect");
+    public get xAxisNodeRect(): NodeListOf<SVGElement> {
+        return this.xAxisNodeTick.querySelectorAll("rect");
     }
 
     public get yAxis(): SVGElement {
