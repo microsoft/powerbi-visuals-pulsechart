@@ -55,6 +55,8 @@
     "powerbi-visuals-utils-testutils": "^2.4.2",
     "puppeteer": "^13.0.0",
     "style-loader": "^3.3.1",
+    "stylelint": "^13.13.1",
+    "stylelint-suitcss": "^4.0.0",
     "ts-loader": "^9.2.6",
     "ts-node": "^10.4.0",
     "tslint": "^6.1.2",
