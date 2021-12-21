@@ -83,7 +83,6 @@ describe("PulseChartTests", () => {
             it("click", (done) => {
                 visualBuilder.updateFlushAllD3Transitions(dataView);
                 expect(visualBuilder.tooltipContainer).toBeDefined();
-                //const clickPoint: SVGElement = visualBuilder.mainElement.find(visualBuilder.dotsContainerDot).first();
                 const clickPoint: SVGElement = Array.from(visualBuilder.dotsContainerDot)[0];
                 d3Click(clickPoint, 5, 5);
                 setTimeout(() => {
@@ -297,7 +296,7 @@ describe("PulseChartTests", () => {
             it("should respond on transparancy change", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
                     renderTimeout(() => {
-                        expect(Array.from(visualBuilder.dotsContainerDot)[0].style.opacity).toBe(opacity.toString()); // "circle.dot"
+                        expect(Array.from(visualBuilder.dotsContainerDot)[0].style.opacity).toBe(opacity.toString());
                         done();
                     });
                 });
