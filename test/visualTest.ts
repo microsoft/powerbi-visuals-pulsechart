@@ -127,7 +127,7 @@ describe("PulseChartTests", () => {
         describe("playback", () => {
             let originalTimeout;
 
-            beforeEach(function () {
+            beforeEach(() => {
                 originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
                 jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000;
             });
@@ -255,7 +255,7 @@ describe("PulseChartTests", () => {
                 });
             });
 
-            afterEach(function () {
+            afterEach(() => {
                 jasmine.DEFAULT_TIMEOUT_INTERVAL = originalTimeout;
             });
         });
@@ -282,10 +282,12 @@ describe("PulseChartTests", () => {
         });
 
         describe("dots rendering", () => {
-            const transparency: number = 50,
-                opacity: number = 1 - (transparency / 100);
+            const transparency: number = 50;
+            let opacity: number;
 
             beforeEach(() => {
+                opacity = 1 - (transparency / 100);
+
                 dataView.metadata.objects = {
                     dots: {
                         transparency: transparency
@@ -342,7 +344,7 @@ describe("PulseChartTests", () => {
             const jsonData = require("../capabilities.json");
 
             let objectsChecker: Function = (obj) => {
-                for (let property in obj) {
+                for (let property of Object.keys(obj)) {
                     let value: any = obj[property];
 
                     if (value.displayName) {
@@ -360,29 +362,26 @@ describe("PulseChartTests", () => {
     });
 
     describe("Popup", () => {
-        it("should not be shown when data point empty", done => {
+        it("should not be shown when data point empty", () => {
             let result = visualBuilder.visualInstance.isPopupShow(<any>{});
             expect(result).toBeFalsy();
-            done();
         });
 
-        it("should not be shown when selected false or undefined", done => {
+        it("should not be shown when selected false or undefined", () => {
             let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: false });
             expect(result).toBeFalsy();
 
             result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {} });
             expect(result).toBeFalsy();
-            done();
         });
 
-        it("should not be shown when animation is playing", done => {
+        it("should not be shown when animation is playing", () => {
             visualBuilder.visualInstance.animationIsPlaying = () => true;
             let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: true });
             expect(result).toBeFalsy();
-            done();
         });
 
-        it("should be shown when all good", done => {
+        it("should be shown when all good", () => {
             let visual = visualBuilder.visualInstance;
             visual.data = <any>{
                 settings: {
@@ -396,7 +395,6 @@ describe("PulseChartTests", () => {
             visualBuilder.visualInstance.animationIsPlaying = () => false;
             let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: true });
             expect(result).toBeTruthy();
-            done();
         });
     });
 
