@@ -34,7 +34,10 @@ module.exports = {
         "powerbi-visuals-api": '{}'
     },
     resolve: {
-        extensions: ['.tsx', '.ts', '.js', '.css']
+        extensions: ['.tsx', '.ts', '.js', '.css'],
+        fallback: {
+            util: require.resolve("util/"),
+        }
     },
     output: {
         path: path.resolve(__dirname, ".tmp/test")
