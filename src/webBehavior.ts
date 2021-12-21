@@ -24,38 +24,37 @@
  *  THE SOFTWARE.
  */
 
-import * as d3 from "d3";
-import Selection = d3.Selection;
+import { BaseType, Selection } from "d3-selection";
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivityService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityService.IInteractiveBehavior;
-import IInteractivityService = interactivityService.IInteractivityService;
-import ISelectionHandler = interactivityService.ISelectionHandler;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
+import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
+import ISelectionHandler = interactivityBaseService.ISelectionHandler;
 
-import { BehaviorOptions } from "./models/models";
+import { BehaviorOptions, DataPoint } from "./models/models";
 import { pulseChartUtils } from "./utils";
 
-export class PulseChartWebBehavior implements IInteractiveBehavior {
-    private selection: Selection<d3.BaseType, any, d3.BaseType, any>;
+export class WebBehavior implements IInteractiveBehavior {
+    private selection: Selection<BaseType, any, BaseType, any>;
     private selectionHandler: ISelectionHandler;
-    private interactivityService: IInteractivityService;
+    private interactivityService: IInteractivityService<DataPoint>;
     private hasHighlights: boolean;
     private onSelectCallback: any;
 
     public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
-        let clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any> = options.clearCatcher;
-        let selection: Selection<d3.BaseType, any, d3.BaseType, any> = this.selection = options.selection;
+        let clearCatcher: Selection<BaseType, any, BaseType, any> = options.clearCatcher;
+        let selection: Selection<BaseType, any, BaseType, any> = this.selection = options.selection;
         this.onSelectCallback = options.onSelectCallback;
         this.selectionHandler = selectionHandler;
         this.interactivityService = options.interactivityService;
         this.hasHighlights = options.hasHighlights;
 
-        selection.call(pulseChartUtils.AddOnTouchClick, function (d: SelectableDataPoint) {
-            selectionHandler.handleSelection(d, (d3.event as KeyboardEvent).ctrlKey);
+        selection.call(pulseChartUtils.addOnTouchClick, (event: any, d: SelectableDataPoint) => {
+            selectionHandler.handleSelection(d, event.ctrlKey);
         });
 
-        clearCatcher.call(pulseChartUtils.AddOnTouchClick, function () {
+        clearCatcher.call(pulseChartUtils.addOnTouchClick, () => {
             selectionHandler.handleClearSelection();
         });
     }

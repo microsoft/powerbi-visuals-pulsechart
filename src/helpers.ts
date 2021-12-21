@@ -24,13 +24,13 @@
  *  THE SOFTWARE.
  */
 
-import powerbi from "powerbi-visuals-api";
+import powerbiVisualsApi from "powerbi-visuals-api";
 
-import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
-import DataViewMetadata = powerbi.DataViewMetadata;
-import DataViewObject = powerbi.DataViewObject;
+import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
+import DataViewMetadata = powerbiVisualsApi.DataViewMetadata;
+import DataViewObject = powerbiVisualsApi.DataViewObject;
 
-export module PulseChartAxisPropertiesHelper {
+export module Helpers {
     export function getCategoryAxisProperties(dataViewMetadata: DataViewMetadata, axisTitleOnByDefault?: boolean): DataViewObject {
         let toReturn: DataViewObject = {};
 

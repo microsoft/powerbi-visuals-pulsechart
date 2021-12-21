@@ -56,7 +56,7 @@ export class PopupSettings {
     public showTitle: boolean = true;
     public timeColor: string = "#ffffff";
     public timeFill: string = "#010101";
-    public stroke: string = undefined;
+    public stroke: string;
 }
 
 export class DotsSettings {

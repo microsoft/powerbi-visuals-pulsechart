@@ -23,53 +23,67 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-import powerbi from "powerbi-visuals-api";
-import * as d3 from "d3";
-import * as _ from "lodash";
+import "regenerator-runtime/runtime.js";
+import powerbiVisualsApi from "powerbi-visuals-api";
+
+import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
+import { axisRight, axisBottom, Axis } from "d3-axis";
+import { Selection as d3Selection, select as d3Select } from "d3-selection";
+import { timeMinute, timeDay } from "d3-time";
+import { scaleLinear, scaleTime } from "d3-scale";
+import { line as d3Line, curveLinear } from "d3-shape";
+import { easeLinear } from "d3-ease";
+import { timerFlush } from "d3-timer";
+import 'd3-transition';
+
+import mapValues from "lodash-es/mapValues";
+import isEmpty from "lodash-es/isEmpty";
+import isString from "lodash-es/isString";
+import flatten from "lodash-es/flatten";
+import last from "lodash-es/last";
+import isEqual from "lodash-es/isEqual";
+import isNumber from "lodash-es/isNumber";
+import assign from "lodash-es/assign";
+import filter from "lodash-es/filter";
 
 import "../style/pulseChart.less";
 
-import DataView = powerbi.DataView;
-import DataViewObject = powerbi.DataViewObject;
-import IViewport = powerbi.IViewport;
-import DataViewValueColumn = powerbi.DataViewValueColumn;
-import DataViewCategoryColumn = powerbi.DataViewCategoryColumn;
-import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
-import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
-import VisualObjectInstanceEnumeration = powerbi.VisualObjectInstanceEnumeration;
-import EnumerateVisualObjectInstancesOptions = powerbi.EnumerateVisualObjectInstancesOptions;
-import PrimitiveValue = powerbi.PrimitiveValue;
+import DataView = powerbiVisualsApi.DataView;
+import DataViewObject = powerbiVisualsApi.DataViewObject;
+import IViewport = powerbiVisualsApi.IViewport;
+import DataViewValueColumn = powerbiVisualsApi.DataViewValueColumn;
+import DataViewCategoryColumn = powerbiVisualsApi.DataViewCategoryColumn;
+import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
+import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
+import VisualObjectInstanceEnumeration = powerbiVisualsApi.VisualObjectInstanceEnumeration;
+import EnumerateVisualObjectInstancesOptions = powerbiVisualsApi.EnumerateVisualObjectInstancesOptions;
+import PrimitiveValue = powerbiVisualsApi.PrimitiveValue;
+import IVisualHost = powerbiVisualsApi.extensibility.visual.IVisualHost;
+import IVisual = powerbiVisualsApi.extensibility.visual.IVisual;
+import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualConstructorOptions;
+import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdateOptions;
+import ISelectionId = powerbiVisualsApi.visuals.ISelectionId;
 
-import IVisualHost = powerbi.extensibility.visual.IVisualHost;
-import IVisual = powerbi.extensibility.visual.IVisual;
-import VisualConstructorOptions = powerbi.extensibility.visual.VisualConstructorOptions;
-import VisualUpdateOptions = powerbi.extensibility.visual.VisualUpdateOptions;
-
-import Axis = d3.Axis;
-type Selection<T> = d3.Selection<any, T, any, any>;
+type Selection<T> = d3Selection<any, T, any, any>;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
 import IRect = SVGUtil.IRect;
-import SVGUtilManipulations = SVGUtil.manipulation;
+import manipulation = SVGUtil.manipulation;
 import { axisInterfaces } from "powerbi-visuals-utils-chartutils";
 import IMargin = axisInterfaces.IMargin;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
-import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
-import valueFormatter = vf.valueFormatter;
-import ValueFormatterOptions = vf.ValueFormatterOptions;
-import TextProperties = tms.TextProperties;
-import textMeasurementService = tms.textMeasurementService;
+import { valueFormatter, textMeasurementService, interfaces } from "powerbi-visuals-utils-formattingutils";
+import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
+import TextProperties = interfaces.TextProperties;
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import createInteractivityService = interactivityService.createInteractivityService;
-import IInteractivityService = interactivityService.IInteractivityService;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import createInteractivitySelectionService = interactivitySelectionService.createInteractivitySelectionService;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
 
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
-
-import ISelectionId = powerbi.visuals.ISelectionId;
 
 import {
     TooltipSettings,
@@ -91,12 +105,12 @@ import {
 } from "./models/models";
 import { XAxisDateFormat, XAxisPosition } from "./enum/enums";
 import { PulseChartSettings } from "./settings";
-import { PulseChartAxisPropertiesHelper } from "./helpers";
+import { Helpers } from "./helpers";
 import { PulseChartDataLabelUtils, pulseChartUtils } from "./utils";
-import { PulseChartWebBehavior } from "./webBehavior";
-import { PulseAnimator } from "./animator";
+import { WebBehavior } from "./webBehavior";
+import { Animator } from "./animator";
 
-export class PulseChart implements IVisual {
+export class Visual implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
         Timestamp: "Timestamp",
         Category: "Category",
@@ -137,7 +151,7 @@ export class PulseChart implements IVisual {
         timeHeight: 15,
     };
 
-    private static GetPopupValueTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+    private static getPopupValueTextProperties(text?: string, fontSizeValue = 12): TextProperties {
         return {
             text: text || "",
             fontFamily: "sans-serif",
@@ -145,7 +159,7 @@ export class PulseChart implements IVisual {
         };
     }
 
-    private static GetPopupTitleTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+    private static getPopupTitleTextProperties(text?: string, fontSizeValue = 12): TextProperties {
         return {
             text: text || "",
             fontFamily: "sans-serif",
@@ -154,7 +168,7 @@ export class PulseChart implements IVisual {
         };
     }
 
-    private static GetPopupDescriptionTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+    private static getPopupDescriptionTextProperties(text?: string, fontSizeValue = 12): TextProperties {
         return {
             text: text || "",
             fontFamily: "sans-serif",
@@ -162,7 +176,7 @@ export class PulseChart implements IVisual {
         };
     }
 
-    public static GetRunnerCounterTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+    public static GET_RUNNER_COUNTER_TEXT_PROPERTIES(text?: string, fontSizeValue = 12): TextProperties {
         return {
             text: text || "",
             fontFamily: "sans-serif",
@@ -170,7 +184,7 @@ export class PulseChart implements IVisual {
         };
     }
 
-    public static ConvertTextPropertiesToStyle(textProperties: TextProperties): any {
+    public static CONVERT_TEXT_PROPERTIES_TO_STYLE(textProperties: TextProperties): any {
         return {
             "font-family": textProperties.fontFamily,
             "font-weight": textProperties.fontWeight,
@@ -178,13 +192,13 @@ export class PulseChart implements IVisual {
         };
     }
 
-    public static ApplyTextFontStyles(selection: Selection<any>, fontStyles: any) {
-        for (let fontStyleAttributeName in fontStyles) {
-            selection.style(fontStyleAttributeName, fontStyles[fontStyleAttributeName]);
+    public static APPLY_TEXT_FONT_STYLES(selection: Selection<any>, fontStyles: any) {
+        for (const [key, value] of (<any>Object).entries(fontStyles)) {
+            selection.style(key, value);
         }
     }
 
-    private static GetDateTimeFormatString(dateFormatType: XAxisDateFormat, dateFormat: string): string {
+    private static getDateTimeFormatString(dateFormatType: XAxisDateFormat, dateFormat: string): string {
         switch (dateFormatType) {
             case XAxisDateFormat.DateOnly: return dateFormat;
             case XAxisDateFormat.TimeOnly: return "H:mm";
@@ -192,7 +206,7 @@ export class PulseChart implements IVisual {
         }
     }
 
-    private static GetFullWidthOfDateFormat(dateFormat: string, textProperties: TextProperties): number {
+    private static getFullWidthOfDateFormat(dateFormat: string, textProperties: TextProperties): number {
         textProperties.text = valueFormatter.create({ format: dateFormat }).format(new Date(2000, 10, 20, 20, 20, 20));
         return textMeasurementService.measureSvgTextWidth(textProperties);
     }
@@ -226,11 +240,12 @@ export class PulseChart implements IVisual {
         return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
     }
 
-    public static converter(
+    /* tslint:disable:max-func-body-length */
+    public static CONVERTER(
         dataView: DataView,
         host: IVisualHost,
         colorHelper: ColorHelper,
-        interactivityService: IInteractivityService
+        interactivityService: IInteractivityService<DataPoint>
     ): ChartData {
         if (!dataView
             || !dataView.categorical
@@ -242,9 +257,9 @@ export class PulseChart implements IVisual {
             return null;
         }
 
-        let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>_.mapValues(
-            PulseChart.RoleDisplayNames,
-            (x, i) => PulseChart.getCategoricalColumnOfRole(dataView, i)
+        let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>mapValues(
+            Visual.RoleDisplayNames,
+            (x, i) => Visual.getCategoricalColumnOfRole(dataView, i)
         );
 
         let valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
@@ -256,11 +271,11 @@ export class PulseChart implements IVisual {
 
         let isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
 
-        const settings: PulseChartSettings = PulseChart.parseSettings(dataView, colorHelper);
+        const settings: PulseChartSettings = Visual.parseSettings(dataView, colorHelper);
 
         let categoryValues: any[] = timeStampColumn.values;
 
-        if (!categoryValues || _.isEmpty(dataView.categorical.values) || !valuesColumn || _.isEmpty(valuesColumn.values)) {
+        if (!categoryValues || isEmpty(dataView.categorical.values) || !valuesColumn || isEmpty(valuesColumn.values)) {
             return null;
         }
         let minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
@@ -284,13 +299,13 @@ export class PulseChart implements IVisual {
         if (isScalar) {
             settings.xAxis.formatterOptions.format = valueFormatter.getFormatString(timeStampColumn.source, null);
         } else {
-            settings.xAxis.formatterOptions.format = PulseChart.GetDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
+            settings.xAxis.formatterOptions.format = Visual.getDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
         }
 
-        let widthOfTooltipValueLabel = isScalar ? PulseChart.ScalarTooltipLabelWidth : PulseChart.GetFullWidthOfDateFormat(timeStampColumn.source.format, PulseChart.GetPopupValueTextProperties()) + PulseChart.DefaultTooltipLabelPadding;
-        let heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(PulseChart.GetPopupDescriptionTextProperties("lj", settings.popup.fontSize));
+        let widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
+        let heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize));
         let runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
-        settings.popup.width = Math.max(widthOfTooltipValueLabel + 2 * PulseChart.DefaultTooltipLabelMargin, settings.popup.width);
+        settings.popup.width = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width);
 
         let minSize: number = settings.dots.minSize;
         let maxSize: number = settings.dots.maxSize;
@@ -299,19 +314,19 @@ export class PulseChart implements IVisual {
             maxSize = settings.dots.maxSize;
         }
 
-        let eventSizeScale: LinearScale = <LinearScale>PulseChart.createScale(
+        let eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
             true,
-            columns.EventSize ? [d3.min(<number[]>columns.EventSize.values), d3.max(<number[]>columns.EventSize.values)] : [0, 0],
+            columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
             minSize,
             maxSize);
 
-        let xAxisCardProperties: DataViewObject = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
+        let xAxisCardProperties: DataViewObject = Helpers.getCategoryAxisProperties(dataView.metadata);
 
         let hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
         let hasHighlights: boolean = !!valuesColumn.highlights;
 
         let dataPointLabelSettings = PulseChartDataLabelUtils.getDefaultPulseChartLabelSettings();
-        let gapWidths = PulseChart.getGapWidths(categoryValues);
+        let gapWidths = Visual.getGapWidths(categoryValues);
         let maxGapWidth = Math.max.apply(null, gapWidths);
 
         let firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
@@ -328,7 +343,7 @@ export class PulseChart implements IVisual {
 
         for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
             let categoryValue: string | Date = categoryValues[categoryIndex];
-            if (_.isString(categoryValue)) {
+            if (isString(categoryValue)) {
                 let date: Date = new Date(categoryValue);
 
                 if (!isNaN(date.getTime())) {
@@ -344,7 +359,7 @@ export class PulseChart implements IVisual {
                 .withCategory(timeStampColumn, categoryIndex)
                 .createSelectionId();
 
-            let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / PulseChart.MaxGapCount, <number>settings.xAxis.dateFormat);
+            let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / Visual.MaxGapCount, <number>settings.xAxis.dateFormat);
             let gapWidth: number = gapWidths[categoryIndex];
             let isGap: boolean = settings.gaps.show
                 && gapWidth > 0
@@ -391,7 +406,7 @@ export class PulseChart implements IVisual {
             if (isNaN(y_value)) {
                 y_value = 0;
             }
-            let eventSizeValue: number = columns.EventSize ? eventSizeScale(eventSize as number) : 0;
+            let eventSizeValue: number = columns.EventSize ? eventSizeScale(<number>eventSize) : 0;
             if (isNaN(eventSizeValue)) {
                 eventSizeValue = 0;
             }
@@ -410,7 +425,7 @@ export class PulseChart implements IVisual {
                 x: <any>categoryValue,
                 y: y_value,
                 pointColor: settings.series.fill,
-                groupIndex: PulseChart.getGroupIndex(categoryIndex, grouped),
+                groupIndex: Visual.getGroupIndex(categoryIndex, grouped),
                 eventSize: eventSizeValue,
                 runnerCounterValue: runnerCounterValue,
                 runnerCounterFormatString: runnerCounterFormatString,
@@ -437,13 +452,13 @@ export class PulseChart implements IVisual {
             });
         }
 
-        xAxisCardProperties = PulseChartAxisPropertiesHelper.getCategoryAxisProperties(dataView.metadata);
-        let valueAxisProperties = PulseChartAxisPropertiesHelper.getValueAxisProperties(dataView.metadata);
+        xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
+        let valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
 
         let values = dataView.categorical.categories;
 
         // Convert to DataViewMetadataColumn
-        let valuesMetadataArray: powerbi.DataViewMetadataColumn[] = [];
+        let valuesMetadataArray: powerbiVisualsApi.DataViewMetadataColumn[] = [];
         if (values) {
             for (let i = 0; i < values.length; i++) {
                 if (values[i] && values[i].source && values[i].source.displayName) {
@@ -452,8 +467,8 @@ export class PulseChart implements IVisual {
             }
         }
 
-        let axesLabels = PulseChart.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
-        let dots: DataPoint[] = PulseChart.getDataPointsFromSeries(series);
+        let axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
+        let dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
 
         if (interactivityService) {
             interactivityService.applySelectionStateToData(dots);
@@ -471,13 +486,14 @@ export class PulseChart implements IVisual {
             settings: settings,
             grouped: grouped,
             hasHighlights: !!valuesColumn.highlights,
-            widthOfXAxisLabel: PulseChart.DefaultXAxisLabelWidth,
+            widthOfXAxisLabel: Visual.DefaultXAxisLabelWidth,
             widthOfTooltipValueLabel: widthOfTooltipValueLabel,
             heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
             runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
-                PulseChart.GetRunnerCounterTextProperties("lj", settings.runnerCounter.fontSize))
+                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize))
         };
     }
+    /* tslint:enable:max-func-body-length */
 
     private static createAxesLabels(categoryAxisProperties: DataViewObject,
         valueAxisProperties: DataViewObject,
@@ -510,7 +526,7 @@ export class PulseChart implements IVisual {
         let dataPointsArray: DataPoint[][] = series.map((d: Series): DataPoint[] => {
             return d.data.filter((d: DataPoint) => !!d.popupInfo);
         });
-        return <DataPoint[]>_.flatten(dataPointsArray);
+        return <DataPoint[]>flatten(dataPointsArray);
     }
 
     private static createAxisY(
@@ -521,12 +537,11 @@ export class PulseChart implements IVisual {
 
         let formatter = valueFormatter.create(formatterOptions);
         let ticks: number = Math.max(2, Math.round(height / 40));
-        let yAxis: Axis<any> = d3.axisRight(commonYScale)
+        return axisRight(commonYScale)
             .scale(commonYScale)
             .ticks(ticks)
             .tickSizeOuter(0)
             .tickFormat(formatter.format);
-        return yAxis;
     }
 
     private static createAxisX(
@@ -539,16 +554,17 @@ export class PulseChart implements IVisual {
         widthOfXAxisLabel: number,
         locale: string): XAxisProperties[] {
 
-        let scales = PulseChart.getXAxisScales(series, isScalar, originalScale);
-        let xAxisProperties = new Array<XAxisProperties>(scales.length);
+        let scales = Visual.getXAxisScales(series, isScalar, originalScale);
+        let xAxisProperties = [];
+        xAxisProperties.length = scales.length;
 
         for (let i: number = 0, rotate = false; i < xAxisProperties.length; i++) {
-            let values = PulseChart.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
+            let values = Visual.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
 
             if (!rotate
                 && position === XAxisPosition.Bottom
-                && values.length < PulseChart.MinimumTicksToRotate) {
-                let rotatedValues = PulseChart.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
+                && values.length < Visual.MinimumTicksToRotate) {
+                let rotatedValues = Visual.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
                 if (rotatedValues.length > values.length) {
                     rotate = true;
                     i = -1;
@@ -568,7 +584,7 @@ export class PulseChart implements IVisual {
             let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
 
             let formatter = valueFormatter.create(formatterOptions);
-            properties.axis = d3.axisBottom(properties.scale)
+            properties.axis = axisBottom(properties.scale)
                 .scale(properties.scale)
                 .tickValues(values)
                 .tickSizeOuter(0)
@@ -588,7 +604,7 @@ export class PulseChart implements IVisual {
                 maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue,
                 minX: number = originalScale(dataPoints[0].categoryValue),
                 maxX: number = originalScale(dataPoints[dataPoints.length - 1].categoryValue);
-            return PulseChart.createScale(isScalar, [minValue, maxValue], minX, maxX);
+            return Visual.createScale(isScalar, [minValue, maxValue], minX, maxX);
         });
     }
 
@@ -601,9 +617,9 @@ export class PulseChart implements IVisual {
         let genScale = <any>scale;
 
         let tickWidth = rotate
-            ? PulseChart.XAxisTickHeight * (rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0)
+            ? Visual.XAxisTickHeight * (rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0)
             : widthOfXAxisLabel;
-        let tickSpace = PulseChart.XAxisTickSpace;
+        let tickSpace = Visual.XAxisTickSpace;
 
         if (scale.range()[1] < tickWidth) {
             return [];
@@ -615,18 +631,18 @@ export class PulseChart implements IVisual {
 
         let maxTicks: number = Math.floor((width + tickSpace) / (tickWidth + tickSpace));
         if (rotate) {
-            maxTicks = Math.min(PulseChart.MinimumTicksToRotate, maxTicks);
+            maxTicks = Math.min(Visual.MinimumTicksToRotate, maxTicks);
         }
 
         let values = [];
         if (isScalar) {
-            values = d3.range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
+            values = d3Range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
         } else {
-            values = (dateFormat === XAxisDateFormat.TimeOnly ? d3.timeMinute : d3.timeDay)
+            values = (dateFormat === XAxisDateFormat.TimeOnly ? timeMinute : timeDay)
                 .range(<any>minValue, <any>maxValue);
         }
 
-        if (!values.length || _.last(values) < maxValue) {
+        if (!values.length || last(values) < maxValue) {
             values.push(maxValue);
         }
 
@@ -686,10 +702,10 @@ export class PulseChart implements IVisual {
         let scale: LinearScale | TimeScale;
 
         if (isScalar) {
-            return d3.scaleLinear().domain(domain as any).range([minX, maxX]);
+            return scaleLinear().domain(<any>domain).range([minX, maxX]);
         }
 
-        return d3.scaleTime().domain(domain as any).range([minX, maxX]);
+        return scaleTime().domain(<any>domain).range([minX, maxX]);
     }
 
     public data: ChartData;
@@ -705,20 +721,20 @@ export class PulseChart implements IVisual {
     private gaps: Selection<any>;
     private animationDot: Selection<any>;
     private lineX: Line;
-    private animationHandler: PulseAnimator;
+    private animationHandler: Animator;
     private rootSelection: Selection<any>;
     private animationSelection: Selection<any>;
 
     public host: IVisualHost;
 
-    private interactivityService: IInteractivityService;
+    private interactivityService: IInteractivityService<DataPoint>;
     private colorHelper: ColorHelper;
 
     private settings: PulseChartSettings;
     private skipDoubleSelectionForCurrentPosition: boolean;
 
     public get runnerCounterPlaybackButtonsHeight(): number {
-        return Math.max(PulseChart.PlaybackButtonsHeight, this.data && (this.data.runnerCounterHeight / 2 + 17));
+        return Math.max(Visual.PlaybackButtonsHeight, this.data && (this.data.runnerCounterHeight / 2 + 17));
     }
 
     public get popupHeight(): number {
@@ -730,29 +746,25 @@ export class PulseChart implements IVisual {
     }
 
     constructor(options: VisualConstructorOptions) {
-        if (window.location !== window.parent.location) {
-            require("core-js/stable");
-        }
-
-        this.margin = PulseChart.DefaultMargin;
+        this.margin = Visual.DefaultMargin;
         this.host = options.host;
-        this.interactivityService = createInteractivityService(this.host);
-        this.behavior = new PulseChartWebBehavior();
+        this.interactivityService = createInteractivitySelectionService(this.host);
+        this.behavior = new WebBehavior();
 
-        let svg: Selection<any> = this.svg = d3.select(options.element)
+        let svg: Selection<any> = this.svg = d3Select(options.element)
             .append("svg")
             .classed("pulseChart", true);
 
-        this.gaps = svg.append("g").classed(PulseChart.Gaps.className, true);
-        this.yAxis = svg.append("g").classed(PulseChart.Y.className, true).classed(PulseChart.Axis.className, true);
-        this.chart = svg.append("g").classed(PulseChart.Chart.className, true);
-        this.dots = svg.append("g").classed(PulseChart.Dots.className, true);
+        this.gaps = svg.append("g").classed(Visual.Gaps.className, true);
+        this.yAxis = svg.append("g").classed(Visual.Y.className, true).classed(Visual.Axis.className, true);
+        this.chart = svg.append("g").classed(Visual.Chart.className, true);
+        this.dots = svg.append("g").classed(Visual.Dots.className, true);
         this.animationDot = this.dots
             .append("circle")
-            .classed(PulseChart.AnimationDot.className, true)
+            .classed(Visual.AnimationDot.className, true)
             .style("display", "none");
 
-        this.animationHandler = new PulseAnimator(this, svg);
+        this.animationHandler = new Animator(this, svg);
 
         this.colorHelper = new ColorHelper(this.host.colorPalette);
     }
@@ -766,7 +778,7 @@ export class PulseChart implements IVisual {
 
         const dataView: DataView = options.dataViews[0];
 
-        let pulseChartData: ChartData = PulseChart.converter(
+        let pulseChartData: ChartData = Visual.CONVERTER(
             dataView,
             this.host,
             this.colorHelper,
@@ -810,7 +822,7 @@ export class PulseChart implements IVisual {
 
         let oldDataObj = this.getDataArrayToCompare(this.data);
         let newDataObj = this.getDataArrayToCompare(data);
-        if (!_.isEqual(oldDataObj, newDataObj)) {
+        if (!isEqual(oldDataObj, newDataObj)) {
             this.clearAll(false);
         }
 
@@ -822,9 +834,9 @@ export class PulseChart implements IVisual {
             return null;
         }
 
-        let dataPoints: DataPoint[] = <DataPoint[]>_.flatten(data.series.map(x => x.data));
-        return _.flatten(dataPoints.map(x => {
-            return x && _.flatten([
+        let dataPoints: DataPoint[] = <DataPoint[]>flatten(data.series.map(x => x.data));
+        return flatten(dataPoints.map(x => {
+            return x && flatten([
                 [
                     x.categoryValue,
                     x.eventSize,
@@ -843,7 +855,7 @@ export class PulseChart implements IVisual {
             return false;
         }
 
-        if (data.categories.some(x => !(x instanceof Date || _.isNumber(x)))) {
+        if (data.categories.some(x => !(x instanceof Date || isNumber(x)))) {
             return false;
         }
 
@@ -853,16 +865,16 @@ export class PulseChart implements IVisual {
     private getChartWidth(): number {
         let marginRight: number = this.margin.right;
         if (this.data.settings.yAxis && this.data.settings.yAxis.show) {
-            marginRight += PulseChart.MaxWidthOfYAxis;
+            marginRight += Visual.MaxWidthOfYAxis;
         }
 
         let width: number = this.viewport.width - this.margin.left - marginRight;
-        return Math.max(width, PulseChart.DefaultViewport.width);
+        return Math.max(width, Visual.DefaultViewport.width);
     }
 
     private getChartHeight(xAxisRotated: boolean): number {
         let marginBottom = 10 + (xAxisRotated
-            ? this.data.widthOfXAxisLabel * Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180))
+            ? this.data.widthOfXAxisLabel * Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180))
             : 3);
 
         if (!this.data.settings.popup.alwaysOnTop && this.popupHeight) {
@@ -875,7 +887,7 @@ export class PulseChart implements IVisual {
             - marginBottom
             - this.popupHeight;
 
-        return Math.max(height, PulseChart.DefaultViewport.height);
+        return Math.max(height, Visual.DefaultViewport.height);
     }
 
     private updateElements(): void {
@@ -883,24 +895,24 @@ export class PulseChart implements IVisual {
         this.svg.attr("width", this.viewport.width)
             .attr("height", this.viewport.height);
         this.svg.style("display", undefined);
-        this.gaps.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
-        this.chart.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop));
-        this.yAxis.attr("transform", SVGUtilManipulations.translate(this.size.width + this.margin.left, chartMarginTop));
-        this.dots.attr("transform", SVGUtilManipulations.translate(this.margin.left, chartMarginTop));
+        this.gaps.attr("transform", manipulation.translate(this.margin.left, chartMarginTop + (this.size.height / 2)));
+        this.chart.attr("transform", manipulation.translate(this.margin.left, chartMarginTop));
+        this.yAxis.attr("transform", manipulation.translate(this.size.width + this.margin.left, chartMarginTop));
+        this.dots.attr("transform", manipulation.translate(this.margin.left, chartMarginTop));
     }
 
     public calculateXAxisProperties(width: number) {
-        this.data.xScale = PulseChart.createScale(
+        this.data.xScale = Visual.createScale(
             this.data.isScalar,
             [this.data.categories[0], this.data.categories[this.data.categories.length - 1]],
             0,
             width);
 
-        let xAxisProperties: XAxisProperties[] = PulseChart.createAxisX(
+        let xAxisProperties: XAxisProperties[] = Visual.createAxisX(
             this.data.isScalar,
             this.data.series,
             <LinearScale>this.data.xScale,
-            _.assign({}, this.data.settings.xAxis.formatterOptions),
+            assign({}, this.data.settings.xAxis.formatterOptions),
             this.data.settings.xAxis.dateFormat,
             this.data.settings.xAxis.position,
             this.data.widthOfXAxisLabel,
@@ -916,13 +928,13 @@ export class PulseChart implements IVisual {
 
         let domain: number[] = [];
         this.data.yScales.forEach((scale: LinearScale) => domain = domain.concat(scale.domain()));
-        this.data.commonYScale = <LinearScale>PulseChart.createScale(
+        this.data.commonYScale = <LinearScale>Visual.createScale(
             true,
-            [d3.max(domain), d3.min(domain)],
+            [d3Max(domain), d3Min(domain)],
             0,
             height);
 
-        this.data.yAxis = PulseChart.createAxisY(this.data.commonYScale, height, this.data.settings.yAxis.formatterOptions);
+        this.data.yAxis = Visual.createAxisY(this.data.commonYScale, height, this.data.settings.yAxis.formatterOptions);
     }
 
     private getYAxisScales(height: number): LinearScale[] {
@@ -950,7 +962,7 @@ export class PulseChart implements IVisual {
                 minValue -= offset;
             }
 
-            return PulseChart.createScale(true, [maxValue, minValue], stepOfHeight * index, stepOfHeight * (index + 1));
+            return Visual.createScale(true, [maxValue, minValue], stepOfHeight * index, stepOfHeight * (index + 1));
         });
     }
 
@@ -973,13 +985,13 @@ export class PulseChart implements IVisual {
     }
 
     public render(suppressAnimations: boolean) {
-        let duration: number = PulseChart.DefaultAnimationDuration;
+        let duration: number = Visual.DefaultAnimationDuration;
         let data = this.data;
 
         let xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales;
 
-        this.lineX = d3.line<DataPoint>()
+        this.lineX = d3Line<DataPoint>()
             .x((d: DataPoint) => {
                 return xScale(d.categoryValue);
             })
@@ -1013,21 +1025,21 @@ export class PulseChart implements IVisual {
             fontColor: string = data.settings.xAxis.fontColor;
 
         axisNodeSelection = this.chart
-            .select(PulseChart.LineNode.selectorName)
-            .selectAll(PulseChart.XAxisNode.selectorName);
+            .select(Visual.LineNode.selectorName)
+            .selectAll(Visual.XAxisNode.selectorName);
 
         axisNodeSelection.selectAll("*").remove();
         axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
         let axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
             .enter()
-            .insert("g", `g.${PulseChart.LineContainer.className}`)
+            .insert("g", `g.${Visual.LineContainer.className}`)
             .merge(axisNodeUpdateSelection);
-        axisNodeUpdateSelectionMerged.classed(PulseChart.XAxisNode.className, true);
+        axisNodeUpdateSelectionMerged.classed(Visual.XAxisNode.className, true);
 
         axisNodeUpdateSelectionMerged
             .each(function (series: Series) {
-                d3.select(this).call(series.xAxisProperties.axis);
+                d3Select(this).call(series.xAxisProperties.axis);
             });
         axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
             .selectAll(".tick")
@@ -1046,7 +1058,7 @@ export class PulseChart implements IVisual {
         axisBoxUpdateSelectionMerged.attr("x", -(this.data.widthOfXAxisLabel / 2))
             .attr("y", tickRectY + "px")
             .attr("width", this.data.widthOfXAxisLabel)
-            .attr("height", PulseChart.XAxisTickHeight + "px");
+            .attr("height", Visual.XAxisTickHeight + "px");
 
         axisBoxUpdateSelectionMerged
             .exit()
@@ -1058,12 +1070,12 @@ export class PulseChart implements IVisual {
 
         axisNodeUpdateSelectionMerged.call(selection => {
             let rotate = selection.datum().xAxisProperties.rotate;
-            let rotateCoeff = rotate ? Math.abs(Math.sin(PulseChart.AxisTickRotateAngle * Math.PI / 180)) : 0;
+            let rotateCoeff = rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0;
             let dy = tickRectY + 3;
             selection.selectAll("text")
                 .attr("transform", function (element: SVGTextElement): string {
                     let node = <SVGTextElement>this;
-                    return `translate(0, ${(dy + 9 + node.getBoundingClientRect().width * rotateCoeff)}) rotate(${rotate ? PulseChart.AxisTickRotateAngle : 0})`;
+                    return `translate(0, ${(dy + 9 + node.getBoundingClientRect().width * rotateCoeff)}) rotate(${rotate ? Visual.AxisTickRotateAngle : 0})`;
                 })
                 .style("fill", fontColor)
                 .style("stroke", "none")
@@ -1086,7 +1098,7 @@ export class PulseChart implements IVisual {
                 break;
         }
 
-        axisNodeUpdateSelectionMerged.attr("transform", SVGUtilManipulations.translate(0, xAxisTop));
+        axisNodeUpdateSelectionMerged.attr("transform", manipulation.translate(0, xAxisTop));
     }
 
     private renderYAxis(data: ChartData, duration: number): void {
@@ -1128,7 +1140,7 @@ export class PulseChart implements IVisual {
             series: Series[] = this.data.series;
 
         this.rootSelection = this.chart
-            .selectAll(PulseChart.LineNode.selectorName)
+            .selectAll(Visual.LineNode.selectorName)
             .data(series);
 
         this.rootSelection
@@ -1142,17 +1154,17 @@ export class PulseChart implements IVisual {
 
         const lineNode: Selection<any> = this.rootSelection;
 
-        lineNode.classed(PulseChart.LineNode.className, true);
+        lineNode.classed(Visual.LineNode.className, true);
 
         lineNode
             .append("g")
-            .classed(PulseChart.LineContainer.className, true);
+            .classed(Visual.LineContainer.className, true);
         lineNode
             .append("g")
-            .classed(PulseChart.TooltipContainer.className, true);
+            .classed(Visual.TooltipContainer.className, true);
         lineNode
             .append("g")
-            .classed(PulseChart.DotsContainer.className, true);
+            .classed(Visual.DotsContainer.className, true);
 
         if (this.animationHandler.isAnimated) {
             this.showAnimationDot();
@@ -1169,15 +1181,15 @@ export class PulseChart implements IVisual {
 
         let selection: Selection<any> = rootSelection
             .filter((d, index) => !isAnimated || index < limit)
-            .select(PulseChart.LineContainer.selectorName)
-            .selectAll(PulseChart.Line.selectorName).data(d => [d]);
+            .select(Visual.LineContainer.selectorName)
+            .selectAll(Visual.Line.selectorName).data(d => [d]);
 
         let selectionMerged = selection
             .enter()
             .append("path")
             .merge(selection);
 
-        selectionMerged.classed(PulseChart.Line.className, true);
+        selectionMerged.classed(Visual.Line.className, true);
 
         selectionMerged
             .style("fill", "none")
@@ -1191,8 +1203,8 @@ export class PulseChart implements IVisual {
     }
 
     private drawLinesStaticBeforeAnimation(limit: number) {
-        let node: ClassAndSelector = PulseChart.Line,
-            nodeParent: ClassAndSelector = PulseChart.LineContainer,
+        let node: ClassAndSelector = Visual.Line,
+            nodeParent: ClassAndSelector = Visual.LineContainer,
             rootSelection: Selection<any> = this.rootSelection;
 
         this.animationSelection = rootSelection.filter((d, index) => {
@@ -1260,7 +1272,7 @@ export class PulseChart implements IVisual {
             .transition()
             .delay(delay)
             .duration(this.animationDuration)
-            .ease(d3.easeLinear)
+            .ease(easeLinear)
             .attrTween("d", (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
             .on("end", () => {
                 let position: AnimationPosition = this.animationHandler.flooredPosition;
@@ -1285,7 +1297,7 @@ export class PulseChart implements IVisual {
 
     public stopAnimation() {
         this.pauseAnimation();
-        d3.timerFlush();
+        timerFlush();
     }
 
     public findNextPoint(position: AnimationPosition): AnimationPosition {
@@ -1374,10 +1386,10 @@ export class PulseChart implements IVisual {
 
         this.showAnimationDot();
 
-        let lineFunction: Line = d3.line<DataPoint>()
+        let lineFunction: Line = d3Line<DataPoint>()
             .x((d: DataPoint) => d.x)
             .y((d: DataPoint) => d.y)
-            .curve(d3.curveLinear);
+            .curve(curveLinear);
 
         let interpolatedLine = data.slice(0, start + 1).map((d: DataPoint): PointXY => {
             return {
@@ -1392,15 +1404,15 @@ export class PulseChart implements IVisual {
         let y0: number = yScales[data[start].groupIndex](data[start].y);
         let y1: number = yScales[data[stop].groupIndex](data[stop].y);
 
-        let interpolateIndex: LinearScale = d3.scaleLinear()
+        let interpolateIndex: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([start, stop]);
 
-        let interpolateX: LinearScale = d3.scaleLinear()
+        let interpolateX: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([x0, x1]);
 
-        let interpolateY: LinearScale = d3.scaleLinear()
+        let interpolateY: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([y0, y1]);
 
@@ -1408,7 +1420,7 @@ export class PulseChart implements IVisual {
 
         return (t: number) => {
             if (!this.animationHandler.isPlaying) {
-                return lineFunction(interpolatedLine as DataPoint[]);
+                return lineFunction(<DataPoint[]>interpolatedLine);
             }
 
             let x: number = interpolateX(t);
@@ -1420,7 +1432,7 @@ export class PulseChart implements IVisual {
 
             interpolatedLine.push({ "x": x, "y": y });
             this.animationHandler.position.index = interpolateIndex(t);
-            return lineFunction(interpolatedLine as DataPoint[]);
+            return lineFunction(<DataPoint[]>interpolatedLine);
         };
     }
 
@@ -1428,7 +1440,7 @@ export class PulseChart implements IVisual {
         if (this.interactivityService) {
             this.interactivityService.clearSelection();
         }
-        this.chart.selectAll(PulseChart.Tooltip.selectorName).remove();
+        this.chart.selectAll(Visual.Tooltip.selectorName).remove();
     }
 
     public getDatapointFromPosition(position: AnimationPosition): DataPoint {
@@ -1522,8 +1534,8 @@ export class PulseChart implements IVisual {
 
         let xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
-            node: ClassAndSelector = PulseChart.Dot,
-            nodeParent: ClassAndSelector = PulseChart.DotsContainer,
+            node: ClassAndSelector = Visual.Dot,
+            nodeParent: ClassAndSelector = Visual.DotsContainer,
             rootSelection: Selection<any> = this.rootSelection,
             dotColor: string = this.data.settings.dots.color,
             dotSize: number = this.data.settings.dots.size,
@@ -1536,7 +1548,7 @@ export class PulseChart implements IVisual {
             .select(nodeParent.selectorName)
             .selectAll(node.selectorName)
             .data((d: Series, seriesIndex: number) => {
-                return _.filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
+                return filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
                     if (isAnimated && (seriesIndex === position.series) && (valueIndex > position.index)) {
                         return false;
                     }
@@ -1567,13 +1579,15 @@ export class PulseChart implements IVisual {
 
         if (this.interactivityService) {
             let behaviorOptions: BehaviorOptions = {
+                behavior: this.behavior,
+                dataPoints: this.data.dots,
                 selection: selectionMerged,
                 clearCatcher: this.svg,
                 interactivityService: this.interactivityService,
                 hasHighlights: this.data.hasHighlights,
                 onSelectCallback: () => this.renderChart(),
             };
-            this.interactivityService.bind(this.data.dots, this.behavior, behaviorOptions);
+            this.interactivityService.bind(behaviorOptions);
         }
     }
 
@@ -1598,7 +1612,7 @@ export class PulseChart implements IVisual {
             width: 3
         }];
 
-        gapsSelection = this.gaps.selectAll(PulseChart.Gap.selectorName)
+        gapsSelection = this.gaps.selectAll(Visual.Gap.selectorName)
             .data(series.slice(0, series.length - 1));
 
         gapsSelectionMerged = gapsSelection
@@ -1606,7 +1620,7 @@ export class PulseChart implements IVisual {
             .append("g")
             .merge(gapsSelection);
 
-        gapsSelectionMerged.classed(PulseChart.Gap.className, true);
+        gapsSelectionMerged.classed(Visual.Gap.className, true);
 
         gapsSelectionMerged
             .attr("transform", (seriesElement: Series, index: number) => {
@@ -1624,7 +1638,7 @@ export class PulseChart implements IVisual {
             });
 
         gapNodeSelection = gapsSelectionMerged
-            .selectAll(PulseChart.GapNode.selectorName)
+            .selectAll(Visual.GapNode.selectorName)
             .data(gaps);
 
         let gapNodeSelectionMerged = gapNodeSelection
@@ -1645,7 +1659,7 @@ export class PulseChart implements IVisual {
             .attr(
                 "width", (gap: IRect) => gap.width
             )
-            .classed(PulseChart.GapNode.className, true);
+            .classed(Visual.GapNode.className, true);
 
         gapNodeSelectionMerged.style("fill", data.settings.xAxis.color);
 
@@ -1670,32 +1684,33 @@ export class PulseChart implements IVisual {
         return this.animationHandler.isPlaying;
     }
 
+    /* tslint:disable:max-func-body-length */
     private drawTooltips(data: ChartData): void {
         let xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
-            node: ClassAndSelector = PulseChart.Tooltip,
-            nodeParent: ClassAndSelector = PulseChart.TooltipContainer,
+            node: ClassAndSelector = Visual.Tooltip,
+            nodeParent: ClassAndSelector = Visual.TooltipContainer,
             width: number = this.data.settings.popup.width,
             height: number = this.data.settings.popup.height,
-            marginTop: number = PulseChart.DefaultTooltipSettings.marginTop,
+            marginTop: number = Visual.DefaultTooltipSettings.marginTop,
             showTimeDisplayProperty: string = this.data.settings.popup.showTime ? "inherit" : "none",
             showTitleDisplayProperty: string = this.data.settings.popup.showTitle ? "inherit" : "none";
 
         let rootSelection: Selection<any> = this.rootSelection;
 
-        let line: Line = d3.line<PointXY>()
+        let line: Line = d3Line<PointXY>()
             .x((d: PointXY) => d.x)
             .y((d: PointXY) => {
                 return d.y;
             });
 
         let tooltipShiftY = (y: number, groupIndex: number): number => {
-            return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + PulseChart.topShift) : this.size.height + marginTop;
+            return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + Visual.topShift) : this.size.height + marginTop;
         };
 
         let tooltipRoot: Selection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
             .data(d => {
-                return _.filter(d.data, (value: DataPoint) => this.isPopupShow(value));
+                return filter(d.data, (value: DataPoint) => this.isPopupShow(value));
             });
 
         let tooltipRootMerged = tooltipRoot
@@ -1709,16 +1724,16 @@ export class PulseChart implements IVisual {
                 let x: number = xScale(d.x) - width / 2;
                 let y: number = tooltipShiftY(d.y, d.groupIndex);
                 d.popupInfo.offsetX = Math.min(this.viewport.width - this.margin.right - width, Math.max(-this.margin.left, x)) - x;
-                return SVGUtilManipulations.translate(x + d.popupInfo.offsetX, y);
+                return manipulation.translate(x + d.popupInfo.offsetX, y);
             });
 
-        let tooltipRect: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipRect.selectorName).data(d => [d]);
+        let tooltipRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipRect.selectorName).data(d => [d]);   
         let tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
             .merge(tooltipRect);
         tooltipRectMerged
-            .classed(PulseChart.TooltipRect.className, true)
+            .classed(Visual.TooltipRect.className, true)
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1748,12 +1763,12 @@ export class PulseChart implements IVisual {
                 return line(points);
             });
 
-        let tooltipTriangle: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTriangle.selectorName).data(d => [d]);
+        let tooltipTriangle: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTriangle.selectorName).data(d => [d]);
         let tooltipTriangleMerged = tooltipTriangle
             .enter()
             .append("path")
             .merge(tooltipTriangle);
-        tooltipTriangleMerged.classed(PulseChart.TooltipTriangle.className, true);
+        tooltipTriangleMerged.classed(Visual.TooltipTriangle.className, true);
         tooltipTriangleMerged
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1772,13 +1787,13 @@ export class PulseChart implements IVisual {
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
                     },
                 ];
-                return line(path as DataPoint[]);
+                return line(<DataPoint[]>path);
             })
             .style("stroke-width", "1px");
 
-        let tooltipLine: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipLine.selectorName).data(d => [d]);
+        let tooltipLine: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipLine.selectorName).data(d => [d]);
         let tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
-        tooltipLineMerged.classed(PulseChart.TooltipLine.className, true);
+        tooltipLineMerged.classed(Visual.TooltipLine.className, true);
         tooltipLineMerged
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke || this.data.settings.popup.color)
@@ -1795,12 +1810,12 @@ export class PulseChart implements IVisual {
                         "x": width / 2 - d.popupInfo.offsetX,
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0, // end
                     }];
-                return line(path as DataPoint[]);
+                return line(<DataPoint[]>path);
             });
 
-        let timeRect: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTimeRect.selectorName).data(d => [d]);
+        let timeRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTimeRect.selectorName).data(d => [d]);
         let timeRectMerged = timeRect.enter().append("path").merge(timeRect);
-        timeRectMerged.classed(PulseChart.TooltipTimeRect.className, true);
+        timeRectMerged.classed(Visual.TooltipTimeRect.className, true);
         timeRectMerged
             .style("fill", this.data.settings.popup.timeFill)
             .style("stroke", this.data.settings.popup.stroke)
@@ -1814,65 +1829,65 @@ export class PulseChart implements IVisual {
                     {
                         "x": width - this.data.widthOfTooltipValueLabel - 2,
                         "y": this.isHigherMiddle(d.y, d.groupIndex)
-                            ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight))
-                            : PulseChart.DefaultTooltipSettings.timeHeight,
+                            ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight))
+                            : Visual.DefaultTooltipSettings.timeHeight,
                     },
                     {
                         "x": width - 2,
                         "y": this.isHigherMiddle(d.y, d.groupIndex)
-                            ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight))
-                            : PulseChart.DefaultTooltipSettings.timeHeight,
+                            ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight))
+                            : Visual.DefaultTooltipSettings.timeHeight,
                     },
                     {
                         "x": width - 2,
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height)) : 0,
                     }
                 ];
-                return line(path as DataPoint[]);
+                return line(<DataPoint[]>path);
             });
 
-        let time: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTime.selectorName).data(d => [d]);
+        let time: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTime.selectorName).data(d => [d]);
         let timeMerged = time.enter().append("text").merge(time);
-        timeMerged.classed(PulseChart.TooltipTime.className, true);
-        const timeFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupValueTextProperties());
-        PulseChart.ApplyTextFontStyles(timeMerged, timeFontStyles);
+        timeMerged.classed(Visual.TooltipTime.className, true);
+        const timeFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupValueTextProperties());
+        Visual.APPLY_TEXT_FONT_STYLES(timeMerged, timeFontStyles);
 
         timeMerged
             .style("display", showTimeDisplayProperty)
             .style("fill", this.data.settings.popup.timeColor)
             .attr("x", (d: DataPoint) => width - this.data.widthOfTooltipValueLabel)
             .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
-                ? (-1 * (marginTop + height - PulseChart.DefaultTooltipSettings.timeHeight + 3))
-                : PulseChart.DefaultTooltipSettings.timeHeight - 3)
-            .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
+                ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight + 3))
+                : Visual.DefaultTooltipSettings.timeHeight - 3)
+            .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(Visual.getPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
-        let title: Selection<any> = tooltipRootMerged.selectAll(PulseChart.TooltipTitle.selectorName).data(d => [d]);
+        let title: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTitle.selectorName).data(d => [d]);
         let titleMerged = title.enter().append("text").merge(title);
         titleMerged
-            .classed(PulseChart.TooltipTitle.className, true);
+            .classed(Visual.TooltipTitle.className, true);
 
-        const titleFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupTitleTextProperties());
-        PulseChart.ApplyTextFontStyles(titleMerged, titleFontStyles);
+        const titleFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupTitleTextProperties());
+        Visual.APPLY_TEXT_FONT_STYLES(titleMerged, titleFontStyles);
 
         titleMerged
             .style("display", showTitleDisplayProperty)
             .style("fill", this.data.settings.popup.fontColor)
-            .attr("x", (d: DataPoint) => PulseChart.PopupTextPadding)
+            .attr("x", (d: DataPoint) => Visual.PopupTextPadding)
             .attr("y", (d: DataPoint) =>
-                (this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height - 12)) : 12) + PulseChart.PopupTextPadding)
+                (this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height - 12)) : 12) + Visual.PopupTextPadding)
             .text((d: DataPoint) => {
                 if (!d.popupInfo) {
                     return "";
                 }
-                let maxWidth = width - PulseChart.PopupTextPadding * 2 -
-                    (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - PulseChart.PopupTextPadding) : 0) - 10;
-                return textMeasurementService.getTailoredTextOrDefault(PulseChart.GetPopupTitleTextProperties(d.popupInfo.title), maxWidth);
+                let maxWidth = width - Visual.PopupTextPadding * 2 -
+                    (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - Visual.PopupTextPadding) : 0) - 10;
+                return textMeasurementService.getTailoredTextOrDefault(Visual.getPopupTitleTextProperties(d.popupInfo.title), maxWidth);
             });
 
         let getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
-            let shiftY: number = PulseChart.PopupTextPadding + this.data.settings.popup.fontSize;
+            let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize;
 
-            let descriptionYOffset: number = shiftY + PulseChart.DefaultTooltipSettings.timeHeight;
+            let descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
             if (d.popupInfo) {
                 shiftY = ((showTitleDisplayProperty && d.popupInfo.title) || (showTimeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
             }
@@ -1881,32 +1896,32 @@ export class PulseChart implements IVisual {
                 y: this.isHigherMiddle(d.y, d.groupIndex)
                     ? (-1 * (marginTop + height - shiftY))
                     : shiftY,
-                x: PulseChart.PopupTextPadding,
-                width: width - PulseChart.PopupTextPadding * 2,
+                x: Visual.PopupTextPadding,
+                width: width - Visual.PopupTextPadding * 2,
                 height: height - shiftY,
             };
         };
 
-        let description = tooltipRootMerged.selectAll(PulseChart.TooltipDescription.selectorName).data(d => [d]);
+        let description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
         let descriptionMerged = description.enter().append("text").merge(description);
-        descriptionMerged.classed(PulseChart.TooltipDescription.className, true);
-        const descriptionFontStyles = PulseChart.ConvertTextPropertiesToStyle(PulseChart.GetPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
-        PulseChart.ApplyTextFontStyles(descriptionMerged, descriptionFontStyles);
+        descriptionMerged.classed(Visual.TooltipDescription.className, true);
+        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
+        Visual.APPLY_TEXT_FONT_STYLES(descriptionMerged, descriptionFontStyles);
 
         descriptionMerged
             .style("fill", this.data.settings.popup.fontColor)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
             .each(function (series: Series) {
                 let node = <SVGTextElement>this;
-                const allowedWidth = width - 2 - PulseChart.PopupTextPadding * 2;
-                const allowedHeight = height - PulseChart.DefaultTooltipSettings.timeHeight - PulseChart.PopupTextPadding * 2;
+                const allowedWidth = width - 2 - Visual.PopupTextPadding * 2;
+                const allowedHeight = height - Visual.DefaultTooltipSettings.timeHeight - Visual.PopupTextPadding * 2;
                 textMeasurementService.wordBreak(node, allowedWidth, allowedHeight);
             })
-            .attr("transform", function (d: DataPoint) {
+            .attr("transform", (d: DataPoint) => {
                 let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
-                return SVGUtilManipulations.translate(0, descriptionDimenstions.y);
+                return manipulation.translate(0, descriptionDimenstions.y);
             });
-        descriptionMerged.selectAll("tspan").attr("x", PulseChart.PopupTextPadding);
+        descriptionMerged.selectAll("tspan").attr("x", Visual.PopupTextPadding);
 
         tooltipRect
             .exit()
@@ -1916,6 +1931,7 @@ export class PulseChart implements IVisual {
             .exit()
             .remove();
     }
+    /* tslint:disable:max-func-body-length */
 
     private isHigherMiddle(value: number, groupIndex: number): boolean {
         if (this.data.settings.popup.alwaysOnTop) {
@@ -1927,8 +1943,8 @@ export class PulseChart implements IVisual {
         }
 
         let domain: number[] = this.data.commonYScale.domain(),
-            minValue: number = d3.min(domain),
-            middleValue = Math.abs((d3.max(domain) - minValue) / 2);
+            minValue: number = d3Min(domain),
+            middleValue = Math.abs((d3Max(domain) - minValue) / 2);
 
         middleValue = middleValue === 0
             ? middleValue
@@ -1938,7 +1954,7 @@ export class PulseChart implements IVisual {
     }
 
     private clearAll(hide: boolean): void {
-        this.gaps.selectAll(PulseChart.Gap.selectorName).remove();
+        this.gaps.selectAll(Visual.Gap.selectorName).remove();
 
         if (this.animationHandler) {
             this.animationHandler.reset();
@@ -1954,8 +1970,8 @@ export class PulseChart implements IVisual {
     public clearChart(): void {
         this.onClearSelection();
         this.hideAnimationDot();
-        this.chart.selectAll(PulseChart.Line.selectorName).remove();
-        this.chart.selectAll(PulseChart.Dot.selectorName).remove();
+        this.chart.selectAll(Visual.Line.selectorName).remove();
+        this.chart.selectAll(Visual.Dot.selectorName).remove();
     }
 
     private static parseSettings(dataView: DataView, colorHelper: ColorHelper): PulseChartSettings {
@@ -2005,7 +2021,7 @@ export class PulseChart implements IVisual {
 
     public clearTooltips(): void {
         this.chart
-            .selectAll(PulseChart.Tooltip.className)
+            .selectAll(Visual.Tooltip.className)
             .style("display", "none");
     }
 }

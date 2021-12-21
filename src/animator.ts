@@ -24,38 +24,36 @@
  *  THE SOFTWARE.
  */
 
-import powerbi from "powerbi-visuals-api";
-import * as _ from "lodash";
-import Selection = d3.Selection;
+import powerbiVisualsApi from "powerbi-visuals-api";
+import isEqual from "lodash-es/isEqual";
+import isNumber from "lodash-es/isNumber";
+import { BaseType, Selection } from "d3-selection";
 
-import VisualObjectInstancesToPersist = powerbi.VisualObjectInstancesToPersist;
+import VisualObjectInstancesToPersist = powerbiVisualsApi.VisualObjectInstancesToPersist;
 
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
-import SVGManipulations = SVGUtil.manipulation;
+import manipulation = SVGUtil.manipulation;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
 
-import { valueFormatter as vf, textMeasurementService as tms } from "powerbi-visuals-utils-formattingutils";
-import valueFormatter = vf.valueFormatter;
-import IValueFormatter = tms.TextProperties;
-import textMeasurementService = tms.textMeasurementService;
+import { valueFormatter, textMeasurementService } from "powerbi-visuals-utils-formattingutils";
 
 import { AnimationPosition, DataPoint } from "./models/models";
 import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";
-import { PulseChart } from "./visual";
+import { Visual } from "./visual";
 import { pulseChartUtils } from "./utils";
 
-export class PulseAnimator {
-    private chart: PulseChart;
-    private svg: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPlay: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPause: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationReset: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationToEnd: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationPrev: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private animationNext: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private runnerCounter: Selection<d3.BaseType, any, d3.BaseType, any>;
-    private runnerCounterText: Selection<d3.BaseType, any, d3.BaseType, any>;
+export class Animator {
+    private chart: Visual;
+    private svg: Selection<BaseType, any, BaseType, any>;
+    private animationPlay: Selection<BaseType, any, BaseType, any>;
+    private animationPause: Selection<BaseType, any, BaseType, any>;
+    private animationReset: Selection<BaseType, any, BaseType, any>;
+    private animationToEnd: Selection<BaseType, any, BaseType, any>;
+    private animationPrev: Selection<BaseType, any, BaseType, any>;
+    private animationNext: Selection<BaseType, any, BaseType, any>;
+    private runnerCounter: Selection<BaseType, any, BaseType, any>;
+    private runnerCounterText: Selection<BaseType, any, BaseType, any>;
     private static AnimationPlay: ClassAndSelector = createClassAndSelector("animationPlay");
     private static AnimationPause: ClassAndSelector = createClassAndSelector("animationPause");
     private static AnimationReset: ClassAndSelector = createClassAndSelector("animationReset");
@@ -79,7 +77,7 @@ export class PulseAnimator {
     private static DimmedOpacity: number = 0.25;
     private static DefaultOpacity: number = 1;
     private static DefaultControlsColor: string = "#777";
-    private container: Selection<d3.BaseType, any, d3.BaseType, any>;
+    private container: Selection<BaseType, any, BaseType, any>;
     public animationPlayingIndex: number = 0;
     private color: string;
     private isAutoPlayed: boolean = false;
@@ -102,7 +100,7 @@ export class PulseAnimator {
 
     private get maxTextWidthOfRunnerCounterValue(): number {
         const top: boolean = this.runnerCounterPosition === RunnerCounterPosition.TopLeft || this.runnerCounterPosition === RunnerCounterPosition.TopRight;
-        return this.chart.viewport.width - (top ? this.runnerCounterTopLeftPosition : PulseAnimator.runnerCounterDefaultPosition);
+        return this.chart.viewport.width - (top ? this.runnerCounterTopLeftPosition : Animator.runnerCounterDefaultPosition);
     }
 
     public get isAnimated(): boolean {
@@ -123,134 +121,136 @@ export class PulseAnimator {
         return this.animatorState === AnimatorStates.Stopped;
     }
 
-    constructor(chart: PulseChart, svg: Selection<d3.BaseType, any, d3.BaseType, any>) {
+    /* tslint:disable:max-func-body-length */
+    constructor(chart: Visual, svg: Selection<BaseType, any, BaseType, any>) {
         this.chart = chart;
         this.svg = svg;
 
         this.setDefaultValues();
 
-        let container: Selection<d3.BaseType, any, d3.BaseType, any> = this.container = this.svg
+        let container: Selection<BaseType, any, BaseType, any> = this.container = this.svg
             .append("g")
-            .classed(PulseAnimator.ControlsContainer.className, true)
+            .classed(Animator.ControlsContainer.className, true)
             .style("display", "none");
 
         this.animationPlay = container
             .append("g")
-            .classed(PulseAnimator.AnimationPlay.className, true);
+            .classed(Animator.AnimationPlay.className, true);
 
         this.animationPlay
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
 
         this.animationPlay
-            .call(pulseChartUtils.AddOnTouchClick, () => this.play());
+            .call(pulseChartUtils.addOnTouchClick, () => this.play());
 
         this.animationPlay
             .append("path")
-            .attr("d", PulseAnimator.PlayButtonMarkup);
+            .attr("d", Animator.PlayButtonMarkup);
 
         this.animationPause = container
             .append("g")
-            .classed(PulseAnimator.AnimationPause.className, true);
+            .classed(Animator.AnimationPause.className, true);
 
         this.animationPause
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
         this.animationPause
-            .call(pulseChartUtils.AddOnTouchClick, () => this.stop());
+            .call(pulseChartUtils.addOnTouchClick, () => this.stop());
 
         this.animationPause
             .append("path")
-            .attr("d", PulseAnimator.PauseButtonMarkup);
+            .attr("d", Animator.PauseButtonMarkup);
 
         this.animationReset = container
             .append("g")
-            .classed(PulseAnimator.AnimationReset.className, true);
+            .classed(Animator.AnimationReset.className, true);
 
         this.animationReset
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
         this.animationReset
-            .call(pulseChartUtils.AddOnTouchClick, () => this.reset());
+            .call(pulseChartUtils.addOnTouchClick, () => this.reset());
 
         this.animationReset
             .append("path")
-            .attr("d", PulseAnimator.ResetButtonMarkup);
+            .attr("d", Animator.ResetButtonMarkup);
 
-        /* Prev */
+        // Prev
         this.animationPrev = container
             .append("g")
-            .classed(PulseAnimator.AnimationPrev.className, true);
+            .classed(Animator.AnimationPrev.className, true);
 
         this.animationPrev
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
         this.animationPrev
-            .call(pulseChartUtils.AddOnTouchClick, () => this.prev());
+            .call(pulseChartUtils.addOnTouchClick, () => this.prev());
 
         this.animationPrev
             .append("path")
-            .attr("d", PulseAnimator.PrevButtonMarkup);
+            .attr("d", Animator.PrevButtonMarkup);
 
-        /* Next */
+        // Next
         this.animationNext = container
             .append("g")
-            .classed(PulseAnimator.AnimationNext.className, true);
+            .classed(Animator.AnimationNext.className, true);
 
         this.animationNext
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
         this.animationNext
-            .call(pulseChartUtils.AddOnTouchClick, () => this.next());
+            .call(pulseChartUtils.addOnTouchClick, () => this.next());
 
         this.animationNext
             .append("path")
-            .attr("d", PulseAnimator.NextButtonMarkup)
-            .attr("rotate", PulseAnimator.buttonRotate);
+            .attr("d", Animator.NextButtonMarkup)
+            .attr("rotate", Animator.buttonRotate);
 
         this.animationToEnd = container
             .append("g")
-            .classed(PulseAnimator.AnimationToEnd.className, true);
+            .classed(Animator.AnimationToEnd.className, true);
 
         this.animationToEnd
             .append("circle")
-            .attr("cx", PulseAnimator.buttonCenter)
-            .attr("cy", PulseAnimator.buttonCenter)
-            .attr("r", PulseAnimator.buttonRadius)
+            .attr("cx", Animator.buttonCenter)
+            .attr("cy", Animator.buttonCenter)
+            .attr("r", Animator.buttonRadius)
             .attr("fill", "transparent");
 
         this.animationToEnd
-            .call(pulseChartUtils.AddOnTouchClick, () => this.toEnd());
+            .call(pulseChartUtils.addOnTouchClick, () => this.toEnd());
 
         this.animationToEnd
             .append("path")
-            .attr("d", PulseAnimator.EndButtonMarkup);
+            .attr("d", Animator.EndButtonMarkup);
 
         this.runnerCounter = container
             .append("g")
-            .classed(PulseAnimator.RunnerCounter.className, true);
+            .classed(Animator.RunnerCounter.className, true);
 
         this.runnerCounterText = this.runnerCounter.append("text");
-        this.setControlsColor(PulseAnimator.DefaultControlsColor);
+        this.setControlsColor(Animator.DefaultControlsColor);
     }
+    /* tslint:enable:max-func-body-length */
 
     private setDefaultValues(): void {
-        this.position = PulseAnimator.AnimationMinPosition;
+        this.position = Animator.AnimationMinPosition;
         this.animatorState = AnimatorStates.Ready;
         this.runnerCounterValue = "";
     }
@@ -269,7 +269,7 @@ export class PulseAnimator {
         if (this.chart.isAutoPlay && this.isAutoPlayed
             && this.animatorState === AnimatorStates.Play
             && !this.positionSaved
-            && !_.isEqual(this.autoPlayPosition, this.savedPosition)) {
+            && !isEqual(this.autoPlayPosition, this.savedPosition)) {
             this.chart.stopAnimation();
             this.isAutoPlayed = false;
             this.positionSaved = true;
@@ -300,55 +300,55 @@ export class PulseAnimator {
     private renderControls(): void {
         this.show();
         let counter: number = 0;
-        let shiftX = (): number => PulseAnimator.buttonShiftX * counter++;
+        let shiftX = (): number => Animator.buttonShiftX * counter++;
         let color: string = this.color;
 
         this.animationPlay
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationPause
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationReset
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationPrev
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationNext
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.animationToEnd
-            .attr("transform", SVGManipulations.translate(shiftX(), 0))
+            .attr("transform", manipulation.translate(shiftX(), 0))
             .attr("fill", color);
 
         this.runnerCounter
             .attr("fill", color)
             .attr("transform",
-                SVGManipulations.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
+                manipulation.translate(this.runnerCounterPosition === RunnerCounterPosition.TopLeft
                     ? this.runnerCounterTopLeftPosition
-                    : this.chart.viewport.width - PulseAnimator.runnerCounterShiftX,
-                    this.chart.data.runnerCounterHeight / 2 + PulseAnimator.runnerCounterShiftY));
+                    : this.chart.viewport.width - Animator.runnerCounterShiftX,
+                    this.chart.data.runnerCounterHeight / 2 + Animator.runnerCounterShiftY));
         this.runnerCounterText
             .style("text-anchor", this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end");
 
         if (this.chart.data && this.chart.data.settings) {
-            this.runnerCounterText.style(<any>PulseChart.ConvertTextPropertiesToStyle(
-                PulseChart.GetRunnerCounterTextProperties(null, this.chart.data.settings.runnerCounter.fontSize)));
+            this.runnerCounterText.style(<any>Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(
+                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES(null, this.chart.data.settings.runnerCounter.fontSize)));
             this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor);
         }
 
         this.drawCounterValue();
     }
 
-    private static setControlVisiblity(element: Selection<d3.BaseType, any, d3.BaseType, any>, isVisible: boolean, isDisabled: boolean = false): void {
+    private static setControlVisiblity(element: Selection<BaseType, any, BaseType, any>, isVisible: boolean, isDisabled: boolean = false): void {
         element
-            .style("opacity", isVisible ? PulseAnimator.DefaultOpacity : PulseAnimator.DimmedOpacity);
+            .style("opacity", isVisible ? Animator.DefaultOpacity : Animator.DimmedOpacity);
         if (isVisible) {
             element.attr("display", "inline");
         } else if (isDisabled) {
@@ -358,55 +358,55 @@ export class PulseAnimator {
 
     private disableControls(): void {
         let showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
-        PulseAnimator.setControlVisiblity(this.animationReset, true);
-        PulseAnimator.setControlVisiblity(this.animationToEnd, true);
+        Animator.setControlVisiblity(this.animationReset, true);
+        Animator.setControlVisiblity(this.animationToEnd, true);
 
         switch (this.animatorState) {
             case AnimatorStates.Play:
-                PulseAnimator.setControlVisiblity(this.animationPlay, false);
+                Animator.setControlVisiblity(this.animationPlay, false);
 
-                PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                PulseAnimator.setControlVisiblity(this.animationNext, true);
+                Animator.setControlVisiblity(this.animationPrev, true);
+                Animator.setControlVisiblity(this.animationNext, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPause, true);
-                PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
+                Animator.setControlVisiblity(this.animationPause, true);
+                Animator.setControlVisiblity(this.runnerCounter, showRunner, true);
                 break;
             case AnimatorStates.Paused:
-                PulseAnimator.setControlVisiblity(this.animationPlay, true);
-                PulseAnimator.setControlVisiblity(this.animationPause, true);
+                Animator.setControlVisiblity(this.animationPlay, true);
+                Animator.setControlVisiblity(this.animationPause, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                PulseAnimator.setControlVisiblity(this.animationNext, true);
+                Animator.setControlVisiblity(this.animationPrev, true);
+                Animator.setControlVisiblity(this.animationNext, true);
 
-                PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
+                Animator.setControlVisiblity(this.runnerCounter, showRunner, true);
                 break;
             case AnimatorStates.Stopped:
-                PulseAnimator.setControlVisiblity(this.animationPlay, true);
+                Animator.setControlVisiblity(this.animationPlay, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPrev, true);
-                PulseAnimator.setControlVisiblity(this.animationNext, true);
+                Animator.setControlVisiblity(this.animationPrev, true);
+                Animator.setControlVisiblity(this.animationNext, true);
 
-                PulseAnimator.setControlVisiblity(this.runnerCounter, showRunner, true);
+                Animator.setControlVisiblity(this.runnerCounter, showRunner, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPause, false);
+                Animator.setControlVisiblity(this.animationPause, false);
                 break;
             case AnimatorStates.Ready:
-                PulseAnimator.setControlVisiblity(this.animationPlay, true);
+                Animator.setControlVisiblity(this.animationPlay, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPrev, false);
-                PulseAnimator.setControlVisiblity(this.animationNext, false);
+                Animator.setControlVisiblity(this.animationPrev, false);
+                Animator.setControlVisiblity(this.animationNext, false);
 
-                PulseAnimator.setControlVisiblity(this.animationPause, false);
-                PulseAnimator.setControlVisiblity(this.runnerCounter, false, true);
+                Animator.setControlVisiblity(this.animationPause, false);
+                Animator.setControlVisiblity(this.runnerCounter, false, true);
                 break;
             default:
-                PulseAnimator.setControlVisiblity(this.animationPlay, true);
+                Animator.setControlVisiblity(this.animationPlay, true);
 
-                PulseAnimator.setControlVisiblity(this.animationPrev, false);
-                PulseAnimator.setControlVisiblity(this.animationNext, false);
+                Animator.setControlVisiblity(this.animationPrev, false);
+                Animator.setControlVisiblity(this.animationNext, false);
 
-                PulseAnimator.setControlVisiblity(this.animationPause, false);
-                PulseAnimator.setControlVisiblity(this.runnerCounter, false, true);
+                Animator.setControlVisiblity(this.animationPause, false);
+                Animator.setControlVisiblity(this.runnerCounter, false, true);
                 break;
         }
     }
@@ -420,7 +420,7 @@ export class PulseAnimator {
             && this.chart.data.series
             && this.chart.data.series[this.position.series]
             && this.chart.data.series[this.position.series].data
-            && this.chart.data.series[this.position.series].data[_.isNumber(index) ? index : this.flooredPosition.index];
+            && this.chart.data.series[this.position.series].data[isNumber(index) ? index : this.flooredPosition.index];
 
         let runnerCounterValue: string = (dataPoint && dataPoint.runnerCounterValue != null)
             ? dataPoint.runnerCounterValue
@@ -479,7 +479,7 @@ export class PulseAnimator {
         } else {
             this.position = {
                 series: this.position.series + 1,
-                index: PulseAnimator.AnimationMinPosition.index,
+                index: Animator.AnimationMinPosition.index,
             };
             this.play();
         }
