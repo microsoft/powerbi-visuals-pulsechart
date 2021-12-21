@@ -3,24 +3,16 @@ const webpack = require("webpack");
 
 module.exports = {
     devtool: 'source-map',
+    mode: 'development',
+    optimization: {
+        minimize: false
+    },
     module: {
         rules: [
             {
                 test: /\.tsx?$/,
                 use: 'ts-loader',
                 exclude: /node_modules/
-            },
-            {
-                test: /\.tsx?$/i,
-                enforce: 'post',
-                include: /(src)/,
-                exclude: /(node_modules|resources\/js\/vendor)/,
-                loader: 'istanbul-instrumenter-loader',
-                options: { esModules: true }
-            },
-            {
-                test: /\.json$/,
-                loader: 'json-loader'
             },
             {
                 test: /\.less$/,
@@ -32,10 +24,7 @@ module.exports = {
                         loader: 'css-loader'
                     },
                     {
-                        loader: 'less-loader',
-                        options: {
-                            paths: [path.resolve(__dirname, 'node_modules')]
-                        }
+                        loader: 'less-loader'
                     }
                 ]
             }
@@ -45,14 +34,18 @@ module.exports = {
         "powerbi-visuals-api": '{}'
     },
     resolve: {
-        extensions: ['.tsx', '.ts', '.js', '.css']
+        extensions: ['.tsx', '.ts', '.js', '.css'],
+        fallback: {
+            util: require.resolve("util/"),
+        }
     },
     output: {
         path: path.resolve(__dirname, ".tmp/test")
     },
     plugins: [
         new webpack.ProvidePlugin({
-            'powerbi-visuals-api': null
+            'powerbi-visuals-api': null,
+            process: "process/browser"
         })
     ]
 };

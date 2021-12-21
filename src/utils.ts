@@ -23,8 +23,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-import * as d3 from "d3";
-import Selection = d3.Selection;
+import { BaseType, Selection } from "d3-selection";
 
 import { ChartDataLabelsSettings } from "./models/models";
 
@@ -39,11 +38,13 @@ export module pulseChartUtils {
         return DefaultOpacity;
     }
 
-    export function AddOnTouchClick(selection: Selection<d3.BaseType, any, d3.BaseType, any>, callback: (data: any, index: number) => any): Selection<d3.BaseType, any, d3.BaseType, any> {
-        let preventDefaultCallback = (data: any, index: number): void => {
-            (d3.event as MouseEvent).preventDefault();
-            (d3.event as MouseEvent).stopPropagation();
-            callback(data, index);
+    export function addOnTouchClick(selection: Selection<BaseType, any, BaseType, any>, callback: (event: any, data: any, index: number) => any): Selection<BaseType, any, BaseType, any> {
+        let preventDefaultCallback = (event: any, d: any) => {
+            (event).preventDefault();
+                (event).stopPropagation();
+                const e = selection.nodes();
+                const i = e.indexOf(this);
+                callback(event, d, i);
         };
         return selection
             .on("click", preventDefaultCallback)
@@ -55,7 +56,7 @@ export module PulseChartDataLabelUtils {
     export function getDefaultPulseChartLabelSettings(): ChartDataLabelsSettings {
         return {
             show: false,
-            position: 1, /* PointLabelPosition.Above, */
+            position: 1, // PointLabelPosition.Above
             displayUnits: 0,
             precision: undefined,
             labelColor: "#777777",

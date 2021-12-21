@@ -1,18 +1,20 @@
-import powerbi from "powerbi-visuals-api";
+import powerbiVisualsApi from "powerbi-visuals-api";
+import { BaseType, Selection } from "d3-selection";
+import { Axis } from "d3-axis";
+import { ScaleLinear, ScaleTime } from "d3-scale";
+import { Line as d3Line } from "d3-shape";
 
-import Axis = d3.Axis;
-import Selection = d3.Selection;
-
-import DataViewCategoricalColumn = powerbi.DataViewCategoricalColumn;
-import DataViewMetadataColumn = powerbi.DataViewMetadataColumn;
-import DataViewValueColumnGroup = powerbi.DataViewValueColumnGroup;
+import DataViewCategoricalColumn = powerbiVisualsApi.DataViewCategoricalColumn;
+import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
+import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
 
 import { TooltipEnabledDataPoint } from "powerbi-visuals-utils-tooltiputils";
 
-import { interactivityService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivityService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityService.IInteractiveBehavior;
-import IInteractivityService = interactivityService.IInteractivityService;
+import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
+import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
+import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
+import IInteractivityService = interactivityBaseService.IInteractivityService;
+import IBehaviorOptions = interactivityBaseService.IBehaviorOptions;
 
 import { legendInterfaces, dataLabelInterfaces } from "powerbi-visuals-utils-chartutils";
 import LabelEnabledDataPoint = dataLabelInterfaces.LabelEnabledDataPoint;
@@ -28,9 +30,9 @@ import { PulseChartSettings } from "../settings";
 export type GenericScale = TimeScale | LinearScale;
 
 // INTERFACES
-export interface Line extends d3.Line<PointXY> { }
-export interface LinearScale extends d3.ScaleLinear<any, any> { }
-export interface TimeScale extends d3.ScaleTime<any, any> { }
+export interface Line extends d3Line<PointXY> { }
+export interface LinearScale extends ScaleLinear<any, any> { }
+export interface TimeScale extends ScaleTime<any, any> { }
 export interface VisualDataLabelsSettings {
     show: boolean;
     showLabelPerSeries?: boolean;
@@ -172,10 +174,10 @@ export interface ElementDimensions {
     height: number;
 }
 
-export interface BehaviorOptions {
-    selection: Selection<d3.BaseType, any, d3.BaseType, any>;
-    clearCatcher: Selection<d3.BaseType, any, d3.BaseType, any>;
-    interactivityService: IInteractivityService;
+export interface BehaviorOptions extends IBehaviorOptions<DataPoint> {
+    selection: Selection<BaseType, any, BaseType, any>;
+    clearCatcher: Selection<BaseType, any, BaseType, any>;
+    interactivityService: IInteractivityService<DataPoint>;
     hasHighlights: boolean;
     onSelectCallback(): void;
 }
