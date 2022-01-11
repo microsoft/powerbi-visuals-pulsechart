@@ -64,6 +64,7 @@ import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualC
 import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdateOptions;
 import ISelectionId = powerbiVisualsApi.visuals.ISelectionId;
 import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
+import VisualTooltipDataItem = powerbiVisualsApi.extensibility.VisualTooltipDataItem;
 
 type Selection<T> = d3Selection<any, T, any, any>;
 
@@ -110,6 +111,7 @@ import { Helpers } from "./helpers";
 import { PulseChartDataLabelUtils, pulseChartUtils } from "./utils";
 import { WebBehavior } from "./webBehavior";
 import { Animator } from "./animator";
+import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
 
 export class Visual implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
@@ -731,6 +733,7 @@ export class Visual implements IVisual {
 
     private interactivityService: IInteractivityService<DataPoint>;
     private colorHelper: ColorHelper;
+    private tooltipService: ITooltipServiceWrapper;
 
     private settings: PulseChartSettings;
     private skipDoubleSelectionForCurrentPosition: boolean;
@@ -752,6 +755,11 @@ export class Visual implements IVisual {
         this.host = options.host;
         this.interactivityService = createInteractivitySelectionService(this.host);
         this.behavior = new WebBehavior();
+
+        this.tooltipService = createTooltipServiceWrapper(
+            this.host.tooltipService,
+            options.element
+        );
 
         let svg: Selection<any> = this.svg = d3Select(options.element)
             .append("svg")
@@ -835,11 +843,28 @@ export class Visual implements IVisual {
         this.data = data;
     }
 
+    private renderTooltip(selection: Selection<any>): void {
+        if (!this.tooltipService) {
+            return;
+        }
+
+        this.tooltipService.addTooltip(
+            selection,
+            (data: DataPoint) => this.getTooltipData(data),
+            (data: DataPoint) => data.identity
+        );
+    }
+
+    private getTooltipData(value: any): VisualTooltipDataItem[] {
+        return [{
+            displayName: value.popupInfo.title,
+            value: value.popupInfo.value,
+        }];
+    }
+
     private renderContextMenu() {
         this.svg.on('contextmenu', (event) => {
             let dataPoint: any = d3Select(event.target).datum();
-            console.log('datapoint', dataPoint);
-            debugger;
 
             this.selectionManager.showContextMenu((dataPoint && dataPoint.identity) ? dataPoint.identity : {}, {​​
                 x: event.clientX,
@@ -1609,6 +1634,8 @@ export class Visual implements IVisual {
             };
             this.interactivityService.bind(behaviorOptions);
         }
+
+        this.renderTooltip(selectionMerged);
     }
 
     private renderGaps(data: ChartData, duration: number): void {
