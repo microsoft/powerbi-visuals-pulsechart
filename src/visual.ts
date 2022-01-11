@@ -63,6 +63,7 @@ import IVisual = powerbiVisualsApi.extensibility.visual.IVisual;
 import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdateOptions;
 import ISelectionId = powerbiVisualsApi.visuals.ISelectionId;
+import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
 
 type Selection<T> = d3Selection<any, T, any, any>;
 
@@ -724,6 +725,7 @@ export class Visual implements IVisual {
     private animationHandler: Animator;
     private rootSelection: Selection<any>;
     private animationSelection: Selection<any>;
+    private selectionManager: ISelectionManager;
 
     public host: IVisualHost;
 
@@ -755,6 +757,8 @@ export class Visual implements IVisual {
             .append("svg")
             .classed("pulseChart", true);
 
+        this.selectionManager = options.host.createSelectionManager();
+
         this.gaps = svg.append("g").classed(Visual.Gaps.className, true);
         this.yAxis = svg.append("g").classed(Visual.Y.className, true).classed(Visual.Axis.className, true);
         this.chart = svg.append("g").classed(Visual.Chart.className, true);
@@ -767,6 +771,8 @@ export class Visual implements IVisual {
         this.animationHandler = new Animator(this, svg);
 
         this.colorHelper = new ColorHelper(this.host.colorPalette);
+        
+        this.renderContextMenu();
     }
 
     public update(options: VisualUpdateOptions): void {
@@ -827,6 +833,20 @@ export class Visual implements IVisual {
         }
 
         this.data = data;
+    }
+
+    private renderContextMenu() {
+        this.svg.on('contextmenu', (event) => {
+            let dataPoint: any = d3Select(event.target).datum();
+            console.log('datapoint', dataPoint);
+            debugger;
+
+            this.selectionManager.showContextMenu((dataPoint && dataPoint.identity) ? dataPoint.identity : {}, {​​
+                x: event.clientX,
+                y: event.clientY
+            });
+            event.preventDefault();
+        });
     }
 
     private getDataArrayToCompare(data: ChartData): any[] {
