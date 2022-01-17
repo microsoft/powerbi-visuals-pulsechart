@@ -23,7 +23,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-import "regenerator-runtime/runtime.js";
+
 import powerbiVisualsApi from "powerbi-visuals-api";
 
 import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
