@@ -1,7 +1,7 @@
 {
   "visual": {
     "name": "PulseChart",
-    "displayName": "Pulse Chart 3.3.2",
+    "displayName": "Pulse Chart 3.3.3",
     "guid": "PulseChart1459209850231",
     "visualClassName": "Visual",
     "version": "3.3.2",
@@ -9,7 +9,7 @@
     "supportUrl": "https://community.powerbi.com",
     "gitHubUrl": "https://github.com/Microsoft/powerbi-visuals-pulsechart"
   },
-  "apiVersion": "4.1.0",
+  "apiVersion": "4.2.0",
   "author": {
     "name": "Microsoft",
     "email": "pbicvsupport@microsoft.com"
