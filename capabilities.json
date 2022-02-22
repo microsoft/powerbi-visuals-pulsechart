@@ -30,6 +30,13 @@
         "name": "RunnerCounter",
         "kind": "GroupingOrMeasure"
     }],
+    "privileges": [
+        {
+            "name": "LocalStorage",
+            "essential": false,
+            "parameters": []
+        }
+    ],
     "dataViewMappings": [{
         "conditions": [{
             "Timestamp": {
