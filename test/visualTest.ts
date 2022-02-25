@@ -270,7 +270,6 @@ describe("PulseChartTests", () => {
             it("select click", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
                     expect(() => {
-                        // apply filtered date
                         visualBuilder.updateRenderTimeout(dataViewSingleDate, () => {
                             const clickPoint: SVGElement = visualBuilder.mainElement;
                             d3Click(clickPoint, 5, 5);
