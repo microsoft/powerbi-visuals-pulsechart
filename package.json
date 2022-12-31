@@ -52,7 +52,7 @@
     "less-loader": "^10.2.0",
     "powerbi-visuals-api": "^4.2.0",
     "powerbi-visuals-tools": "^4.0.4",
-    "powerbi-visuals-utils-testutils": "^2.6.0",
+    "powerbi-visuals-utils-testutils": "^3.2.1",
     "puppeteer": "^13.3.2",
     "style-loader": "^3.3.1",
     "stylelint": "^13.13.1",
