@@ -1,5 +1,6 @@
 ## 3.4.0.0
 * Migrate from tslint to eslint, fix eslint errors
+* Update API to 5.10.0, tools to 5.5.0 and other packages
 
 ## 3.0.3
 * Packages update
