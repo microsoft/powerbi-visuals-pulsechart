@@ -1,6 +1,9 @@
 ## 3.4.0.0
 * Migrate from tslint to eslint, fix eslint errors
 * Update API to 5.10.0, tools to 5.5.0 and other packages
+* Update README.md to include build status
+* Remove .travis.yml, azure-pipelines.yml
+* Update build.yml and code-ql pipelines
 
 ## 3.0.3
 * Packages update
