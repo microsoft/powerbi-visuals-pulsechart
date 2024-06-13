@@ -1,3 +1,4 @@
+/* eslint-disable prefer-const */
 /*
  *  Power BI Visualizations
  *
@@ -107,8 +108,8 @@ import {
 } from "./models/models";
 import { XAxisDateFormat, XAxisPosition } from "./enum/enums";
 import { PulseChartSettings } from "./settings";
-import { Helpers } from "./helpers";
-import { PulseChartDataLabelUtils, pulseChartUtils } from "./utils";
+import * as Helpers from "./helpers";
+import * as pulseChartUtils from "./utils";
 import { WebBehavior } from "./webBehavior";
 import { Animator } from "./animator";
 import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
@@ -238,12 +239,12 @@ export class Visual implements IVisual {
     private static Y: ClassAndSelector = createClassAndSelector("y");
     private static Axis: ClassAndSelector = createClassAndSelector("axis");
     private static getCategoricalColumnOfRole(dataView: DataView, roleName: string): DataViewValueColumn | DataViewCategoryColumn {
-        let filterFunc = (cols: (DataViewValueColumn | DataViewCategoryColumn)[]): DataViewValueColumn | DataViewCategoryColumn =>
+        const filterFunc = (cols: (DataViewValueColumn | DataViewCategoryColumn)[]): DataViewValueColumn | DataViewCategoryColumn =>
             cols.filter((x: DataViewValueColumn | DataViewCategoryColumn) => x.source && x.source.roles && x.source.roles[roleName])[0];
         return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
     }
 
-    /* tslint:disable:max-func-body-length */
+    // eslint-disable-next-line max-lines-per-function
     public static CONVERTER(
         dataView: DataView,
         host: IVisualHost,
@@ -260,29 +261,29 @@ export class Visual implements IVisual {
             return null;
         }
 
-        let columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>mapValues(
+        const columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>mapValues(
             Visual.RoleDisplayNames,
             (x, i) => Visual.getCategoricalColumnOfRole(dataView, i)
         );
 
-        let valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
-        let timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
+        const valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
+        const timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
         if (!timeStampColumn) {
             return null;
         }
 
-        let isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
+        const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
 
         const settings: PulseChartSettings = Visual.parseSettings(dataView, colorHelper);
 
-        let categoryValues: any[] = timeStampColumn.values;
+        const categoryValues: any[] = timeStampColumn.values;
 
         if (!categoryValues || isEmpty(dataView.categorical.values) || !valuesColumn || isEmpty(valuesColumn.values)) {
             return null;
         }
-        let minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
-        let minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
+        const minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
+        const minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
         settings.xAxis.dateFormat =
             (maxCategoryValue - minCategoryValue < (24 * 60 * 60 * 1000)
                 && new Date(maxCategoryValue).getDate() === new Date(minCategoryValue).getDate())
@@ -305,9 +306,9 @@ export class Visual implements IVisual {
             settings.xAxis.formatterOptions.format = Visual.getDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
         }
 
-        let widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
-        let heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize));
-        let runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
+        const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
+        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize));
+        const runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
         settings.popup.width = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width);
 
         let minSize: number = settings.dots.minSize;
@@ -317,7 +318,7 @@ export class Visual implements IVisual {
             maxSize = settings.dots.maxSize;
         }
 
-        let eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
+        const eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
             true,
             columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
             minSize,
@@ -325,29 +326,29 @@ export class Visual implements IVisual {
 
         let xAxisCardProperties: DataViewObject = Helpers.getCategoryAxisProperties(dataView.metadata);
 
-        let hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
-        let hasHighlights: boolean = !!valuesColumn.highlights;
+        const hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
+        const hasHighlights: boolean = !!valuesColumn.highlights;
 
-        let dataPointLabelSettings = PulseChartDataLabelUtils.getDefaultPulseChartLabelSettings();
-        let gapWidths = Visual.getGapWidths(categoryValues);
-        let maxGapWidth = Math.max.apply(null, gapWidths);
+        const dataPointLabelSettings = pulseChartUtils.getDefaultPulseChartLabelSettings();
+        const gapWidths = Visual.getGapWidths(categoryValues);
+        const maxGapWidth = Math.max.apply(null, gapWidths);
 
-        let firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
-        let grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
-        let y_group0Values = grouped[firstGroupIndex]
+        const firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
+        const grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
+        const y_group0Values = grouped[firstGroupIndex]
             && grouped[firstGroupIndex].values[firstValueMeasureIndex]
             && grouped[firstGroupIndex].values[firstValueMeasureIndex].values;
-        let y_group1Values = grouped[secondGroupIndex]
+        const y_group1Values = grouped[secondGroupIndex]
             && grouped[secondGroupIndex].values[firstValueMeasureIndex]
             && grouped[secondGroupIndex].values[firstValueMeasureIndex].values;
 
-        let series: Series[] = [];
+        const series: Series[] = [];
         let dataPoints: DataPoint[] = [];
 
         for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
             let categoryValue: string | Date = categoryValues[categoryIndex];
             if (isString(categoryValue)) {
-                let date: Date = new Date(categoryValue);
+                const date: Date = new Date(categoryValue);
 
                 if (!isNaN(date.getTime())) {
                     categoryValue = date;
@@ -355,16 +356,16 @@ export class Visual implements IVisual {
                 }
             }
 
-            let valueFormatterLocalized = valueFormatter.create({ cultureSelector: host.locale });
-            let value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-            let runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
-            let identity: ISelectionId = host.createSelectionIdBuilder()
+            const valueFormatterLocalized = valueFormatter.create({ cultureSelector: host.locale });
+            const value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
+            const runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
+            const identity: ISelectionId = host.createSelectionIdBuilder()
                 .withCategory(timeStampColumn, categoryIndex)
                 .createSelectionId();
 
-            let minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / Visual.MaxGapCount, <number>settings.xAxis.dateFormat);
-            let gapWidth: number = gapWidths[categoryIndex];
-            let isGap: boolean = settings.gaps.show
+            const minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / Visual.MaxGapCount, <number>settings.xAxis.dateFormat);
+            const gapWidth: number = gapWidths[categoryIndex];
+            const isGap: boolean = settings.gaps.show
                 && gapWidth > 0
                 && gapWidth > (minGapWidth + (100 - settings.gaps.transparency) * (maxGapWidth - minGapWidth) / 100);
 
@@ -389,7 +390,7 @@ export class Visual implements IVisual {
             }
 
             let popupInfo: TooltipData = null;
-            let eventSize: PrimitiveValue = (columns.EventSize && columns.EventSize.values && columns.EventSize.values[categoryIndex]) || 0;
+            const eventSize: PrimitiveValue = (columns.EventSize && columns.EventSize.values && columns.EventSize.values[categoryIndex]) || 0;
 
             if ((columns.EventTitle && columns.EventTitle.values && columns.EventTitle.values[categoryIndex]) ||
                 (columns.EventDescription && columns.EventDescription.values && columns.EventDescription.values[categoryIndex])) {
@@ -413,7 +414,7 @@ export class Visual implements IVisual {
             if (isNaN(eventSizeValue)) {
                 eventSizeValue = 0;
             }
-            let dataPoint: DataPoint = {
+            const dataPoint: DataPoint = {
                 categoryValue: categoryValue,
                 value: value,
                 categoryIndex: categoryIndex,
@@ -456,12 +457,12 @@ export class Visual implements IVisual {
         }
 
         xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
-        let valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
+        const valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
 
-        let values = dataView.categorical.categories;
+        const values = dataView.categorical.categories;
 
         // Convert to DataViewMetadataColumn
-        let valuesMetadataArray: powerbiVisualsApi.DataViewMetadataColumn[] = [];
+        const valuesMetadataArray: powerbiVisualsApi.DataViewMetadataColumn[] = [];
         if (values) {
             for (let i = 0; i < values.length; i++) {
                 if (values[i] && values[i].source && values[i].source.displayName) {
@@ -470,8 +471,8 @@ export class Visual implements IVisual {
             }
         }
 
-        let axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
-        let dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
+        const axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
+        const dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
 
         if (interactivityService) {
             interactivityService.applySelectionStateToData(dots);
@@ -496,7 +497,6 @@ export class Visual implements IVisual {
                 Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize))
         };
     }
-    /* tslint:enable:max-func-body-length */
 
     private static createAxesLabels(categoryAxisProperties: DataViewObject,
         valueAxisProperties: DataViewObject,
@@ -526,7 +526,7 @@ export class Visual implements IVisual {
     }
 
     private static getDataPointsFromSeries(series: Series[]): DataPoint[] {
-        let dataPointsArray: DataPoint[][] = series.map((d: Series): DataPoint[] => {
+        const dataPointsArray: DataPoint[][] = series.map((d: Series): DataPoint[] => {
             return d.data.filter((d: DataPoint) => !!d.popupInfo);
         });
         return <DataPoint[]>flatten(dataPointsArray);
@@ -535,11 +535,10 @@ export class Visual implements IVisual {
     private static createAxisY(
         commonYScale: LinearScale,
         height: number,
-        formatterOptions: ValueFormatterOptions,
-        show: boolean = true): Axis<any> {
+        formatterOptions: ValueFormatterOptions): Axis<any> {
 
-        let formatter = valueFormatter.create(formatterOptions);
-        let ticks: number = Math.max(2, Math.round(height / 40));
+        const formatter = valueFormatter.create(formatterOptions);
+        const ticks: number = Math.max(2, Math.round(height / 40));
         return axisRight(commonYScale)
             .scale(commonYScale)
             .ticks(ticks)
@@ -557,17 +556,17 @@ export class Visual implements IVisual {
         widthOfXAxisLabel: number,
         locale: string): XAxisProperties[] {
 
-        let scales = Visual.getXAxisScales(series, isScalar, originalScale);
-        let xAxisProperties = [];
+        const scales = Visual.getXAxisScales(series, isScalar, originalScale);
+        const xAxisProperties = [];
         xAxisProperties.length = scales.length;
 
         for (let i: number = 0, rotate = false; i < xAxisProperties.length; i++) {
-            let values = Visual.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
+            const values = Visual.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
 
             if (!rotate
                 && position === XAxisPosition.Bottom
                 && values.length < Visual.MinimumTicksToRotate) {
-                let rotatedValues = Visual.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
+                const rotatedValues = Visual.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
                 if (rotatedValues.length > values.length) {
                     rotate = true;
                     i = -1;
@@ -584,9 +583,9 @@ export class Visual implements IVisual {
         formatterOptions.cultureSelector = locale;
 
         xAxisProperties.forEach((properties: XAxisProperties) => {
-            let values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
+            const values: (Date | number)[] = properties.values.filter((value: Date | number) => value !== null);
 
-            let formatter = valueFormatter.create(formatterOptions);
+            const formatter = valueFormatter.create(formatterOptions);
             properties.axis = axisBottom(properties.scale)
                 .scale(properties.scale)
                 .tickValues(values)
@@ -602,7 +601,7 @@ export class Visual implements IVisual {
         isScalar: boolean,
         originalScale: any): GenericScale[] {
         return series.map((seriesElement: Series) => {
-            let dataPoints: DataPoint[] = seriesElement.data,
+            const dataPoints: DataPoint[] = seriesElement.data,
                 minValue: number | Date = dataPoints[0].categoryValue,
                 maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue,
                 minX: number = originalScale(dataPoints[0].categoryValue),
@@ -617,20 +616,20 @@ export class Visual implements IVisual {
         isScalar: boolean,
         dateFormat: XAxisDateFormat,
         widthOfXAxisLabel: number): (Date | number)[] {
-        let genScale = <any>scale;
+        const genScale = <any>scale;
 
-        let tickWidth = rotate
+        const tickWidth = rotate
             ? Visual.XAxisTickHeight * (rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0)
             : widthOfXAxisLabel;
-        let tickSpace = Visual.XAxisTickSpace;
+        const tickSpace = Visual.XAxisTickSpace;
 
         if (scale.range()[1] < tickWidth) {
             return [];
         }
 
-        let minValue = scale.invert(scale.range()[0] + tickWidth / 2);
-        let maxValue = scale.invert(scale.range()[1] - tickWidth / 2);
-        let width = scale.range()[1] - scale.range()[0];
+        const minValue = scale.invert(scale.range()[0] + tickWidth / 2);
+        const maxValue = scale.invert(scale.range()[1] - tickWidth / 2);
+        const width = scale.range()[1] - scale.range()[0];
 
         let maxTicks: number = Math.floor((width + tickSpace) / (tickWidth + tickSpace));
         if (rotate) {
@@ -655,7 +654,7 @@ export class Visual implements IVisual {
 
         maxTicks = Math.min(values.length, maxTicks);
         const step = (values.length - 1) / (maxTicks - 1);
-        let valuesIndexses: number[] = [];
+        const valuesIndexses: number[] = [];
 
         for (let i = 0; i < values.length - 1; i = i + step) {
             valuesIndexses.push(i);
@@ -664,8 +663,8 @@ export class Visual implements IVisual {
         values = valuesIndexses.map(x => values[Math.round(x)]);
 
         for (let i = 1; i < values.length; i++) {
-            let prevXValue = genScale(values[i - 1]);
-            let curXValue = genScale(values[i]);
+            const prevXValue = genScale(values[i - 1]);
+            const curXValue = genScale(values[i]);
             if (curXValue - prevXValue < tickWidth + tickSpace / 3) {
                 values.splice(i--, 1);
             }
@@ -687,7 +686,7 @@ export class Visual implements IVisual {
     }
 
     private static getGapWidths(values: Date[] | number[]): number[] {
-        let result: number[] = [];
+        const result: number[] = [];
         for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
             if (!prevVal || !values[i]) {
                 result.push(0);
@@ -702,8 +701,6 @@ export class Visual implements IVisual {
     }
 
     private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
-        let scale: LinearScale | TimeScale;
-
         if (isScalar) {
             return scaleLinear().domain(<any>domain).range([minX, maxX]);
         }
@@ -761,7 +758,7 @@ export class Visual implements IVisual {
             options.element
         );
 
-        let svg: Selection<any> = this.svg = d3Select(options.element)
+        const svg: Selection<any> = this.svg = d3Select(options.element)
             .append("svg")
             .classed("pulseChart", true);
 
@@ -792,7 +789,7 @@ export class Visual implements IVisual {
 
         const dataView: DataView = options.dataViews[0];
 
-        let pulseChartData: ChartData = Visual.CONVERTER(
+        const pulseChartData: ChartData = Visual.CONVERTER(
             dataView,
             this.host,
             this.colorHelper,
@@ -808,10 +805,10 @@ export class Visual implements IVisual {
             return;
         }
 
-        let width = this.getChartWidth();
+        const width = this.getChartWidth();
         this.calculateXAxisProperties(width);
 
-        let height = this.getChartHeight(this.data.settings.xAxis.show
+        const height = this.getChartHeight(this.data.settings.xAxis.show
             && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
 
         this.calculateYAxisProperties(height);
@@ -825,7 +822,7 @@ export class Visual implements IVisual {
 
         this.updateElements();
 
-        this.render(true);
+        this.render();
     }
 
     private updateData(data: ChartData): void {
@@ -834,8 +831,8 @@ export class Visual implements IVisual {
             return;
         }
 
-        let oldDataObj = this.getDataArrayToCompare(this.data);
-        let newDataObj = this.getDataArrayToCompare(data);
+        const oldDataObj = this.getDataArrayToCompare(this.data);
+        const newDataObj = this.getDataArrayToCompare(data);
         if (!isEqual(oldDataObj, newDataObj)) {
             this.clearAll(false);
         }
@@ -864,9 +861,9 @@ export class Visual implements IVisual {
 
     private renderContextMenu() {
         this.svg.on('contextmenu', (event) => {
-            let dataPoint: any = d3Select(event.target).datum();
+            const dataPoint: any = d3Select(event.target).datum();
 
-            this.selectionManager.showContextMenu((dataPoint && dataPoint.identity) ? dataPoint.identity : {}, {​​
+            this.selectionManager.showContextMenu((dataPoint && dataPoint.identity) ? dataPoint.identity : {}, {
                 x: event.clientX,
                 y: event.clientY
             });
@@ -879,7 +876,7 @@ export class Visual implements IVisual {
             return null;
         }
 
-        let dataPoints: DataPoint[] = <DataPoint[]>flatten(data.series.map(x => x.data));
+        const dataPoints: DataPoint[] = <DataPoint[]>flatten(data.series.map(x => x.data));
         return flatten(dataPoints.map(x => {
             return x && flatten([
                 [
@@ -913,7 +910,7 @@ export class Visual implements IVisual {
             marginRight += Visual.MaxWidthOfYAxis;
         }
 
-        let width: number = this.viewport.width - this.margin.left - marginRight;
+        const width: number = this.viewport.width - this.margin.left - marginRight;
         return Math.max(width, Visual.DefaultViewport.width);
     }
 
@@ -926,7 +923,7 @@ export class Visual implements IVisual {
             marginBottom = Math.max(this.margin.bottom + this.popupHeight, marginBottom);
         }
 
-        let height: number = this.viewport.height
+        const height: number = this.viewport.height
             - this.margin.top
             - this.runnerCounterPlaybackButtonsHeight
             - marginBottom
@@ -936,7 +933,7 @@ export class Visual implements IVisual {
     }
 
     private updateElements(): void {
-        let chartMarginTop = this.margin.top + this.runnerCounterPlaybackButtonsHeight + this.popupHeight;
+        const chartMarginTop = this.margin.top + this.runnerCounterPlaybackButtonsHeight + this.popupHeight;
         this.svg.attr("width", this.viewport.width)
             .attr("height", this.viewport.height);
         this.svg.style("display", undefined);
@@ -953,7 +950,7 @@ export class Visual implements IVisual {
             0,
             width);
 
-        let xAxisProperties: XAxisProperties[] = Visual.createAxisX(
+        const xAxisProperties: XAxisProperties[] = Visual.createAxisX(
             this.data.isScalar,
             this.data.series,
             <LinearScale>this.data.xScale,
@@ -983,11 +980,11 @@ export class Visual implements IVisual {
     }
 
     private getYAxisScales(height: number): LinearScale[] {
-        let data: ChartData = this.data,
+        const data: ChartData = this.data,
             stepOfHeight: number = height / data.grouped.length;
 
         return <LinearScale[]>data.grouped.map((group: DataViewValueColumnGroup, index: number) => {
-            let values: number[] = group.values[0].values.map(x => <number>x || 0);
+            const values: number[] = group.values[0].values.map(x => <number>x || 0);
 
             let minValue: number = Number.MAX_VALUE,
                 maxValue: number = -Number.MAX_VALUE;
@@ -1002,7 +999,7 @@ export class Visual implements IVisual {
                 }
             });
             if (maxValue === minValue) {
-                let offset = maxValue === 0 ? 1 : Math.abs(maxValue / 2);
+                const offset = maxValue === 0 ? 1 : Math.abs(maxValue / 2);
                 maxValue += offset;
                 minValue -= offset;
             }
@@ -1029,11 +1026,10 @@ export class Visual implements IVisual {
             this.data.settings.playback.repeat;
     }
 
-    public render(suppressAnimations: boolean) {
-        let duration: number = Visual.DefaultAnimationDuration;
-        let data = this.data;
+    public render() {
+        const data = this.data;
 
-        let xScale: LinearScale = <LinearScale>data.xScale,
+        const xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales;
 
         this.lineX = d3Line<DataPoint>()
@@ -1053,16 +1049,16 @@ export class Visual implements IVisual {
         this.animationHandler.render();
         this.animationHandler.setRunnerCounterValue();
 
-        this.renderAxes(data, duration);
-        this.renderGaps(data, duration);
+        this.renderAxes(data);
+        this.renderGaps(data);
     }
 
-    private renderAxes(data: ChartData, duration: number): void {
-        this.renderXAxis(data, duration);
-        this.renderYAxis(data, duration);
+    private renderAxes(data: ChartData): void {
+        this.renderXAxis(data);
+        this.renderYAxis(data);
     }
 
-    private renderXAxis(data: ChartData, duration: number): void {
+    private renderXAxis(data: ChartData): void {
         let axisNodeSelection: Selection<any>,
             axisNodeUpdateSelection: Selection<any>,
             axisBoxUpdateSelection: Selection<any>,
@@ -1076,7 +1072,7 @@ export class Visual implements IVisual {
         axisNodeSelection.selectAll("*").remove();
         axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
-        let axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
+        const axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
             .enter()
             .insert("g", `g.${Visual.LineContainer.className}`)
             .merge(axisNodeUpdateSelection);
@@ -1091,7 +1087,7 @@ export class Visual implements IVisual {
             .selectAll(".axisBox")
             .data([[]]);
 
-        let axisBoxUpdateSelectionMerged = axisBoxUpdateSelection
+        const axisBoxUpdateSelectionMerged = axisBoxUpdateSelection
             .enter()
             .insert("rect", "text")
             .merge(axisBoxUpdateSelection);
@@ -1099,7 +1095,7 @@ export class Visual implements IVisual {
         axisBoxUpdateSelectionMerged
             .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
             .style("fill", this.data.settings.xAxis.backgroundColor);
-        let tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
+        const tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
         axisBoxUpdateSelectionMerged.attr("x", -(this.data.widthOfXAxisLabel / 2))
             .attr("y", tickRectY + "px")
             .attr("width", this.data.widthOfXAxisLabel)
@@ -1114,12 +1110,12 @@ export class Visual implements IVisual {
             .style("display", this.data.settings.xAxis.show ? "inherit" : "none");
 
         axisNodeUpdateSelectionMerged.call(selection => {
-            let rotate = selection.datum().xAxisProperties.rotate;
-            let rotateCoeff = rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0;
-            let dy = tickRectY + 3;
+            const rotate = selection.datum().xAxisProperties.rotate;
+            const rotateCoeff = rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0;
+            const dy = tickRectY + 3;
             selection.selectAll("text")
-                .attr("transform", function (element: SVGTextElement): string {
-                    let node = <SVGTextElement>this;
+                .attr("transform", function (): string {
+                    const node = <SVGTextElement>this;
                     return `translate(0, ${(dy + 9 + node.getBoundingClientRect().width * rotateCoeff)}) rotate(${rotate ? Visual.AxisTickRotateAngle : 0})`;
                 })
                 .style("fill", fontColor)
@@ -1129,7 +1125,7 @@ export class Visual implements IVisual {
 
         axisNodeUpdateSelectionMerged.selectAll(".domain")
             .each(function () {
-                let node = <Node>this;
+                const node = <Node>this;
                 node.parentNode.insertBefore(node, node.parentNode.firstChild);
             })
             .style("stroke", color);
@@ -1146,7 +1142,7 @@ export class Visual implements IVisual {
         axisNodeUpdateSelectionMerged.attr("transform", manipulation.translate(0, xAxisTop));
     }
 
-    private renderYAxis(data: ChartData, duration: number): void {
+    private renderYAxis(data: ChartData): void {
         let yAxis: Axis<any> = data.yAxis,
             isShow: boolean = false,
             color: string = data.settings.yAxis.color,
@@ -1224,12 +1220,12 @@ export class Visual implements IVisual {
     private drawLinesStatic(limit: number, isAnimated: boolean): void {
         const rootSelection: Selection<any> = this.rootSelection;
 
-        let selection: Selection<any> = rootSelection
+        const selection: Selection<any> = rootSelection
             .filter((d, index) => !isAnimated || index < limit)
             .select(Visual.LineContainer.selectorName)
             .selectAll(Visual.Line.selectorName).data(d => [d]);
 
-        let selectionMerged = selection
+        const selectionMerged = selection
             .enter()
             .append("path")
             .merge(selection);
@@ -1248,7 +1244,7 @@ export class Visual implements IVisual {
     }
 
     private drawLinesStaticBeforeAnimation(limit: number) {
-        let node: ClassAndSelector = Visual.Line,
+        const node: ClassAndSelector = Visual.Line,
             nodeParent: ClassAndSelector = Visual.LineContainer,
             rootSelection: Selection<any> = this.rootSelection;
 
@@ -1269,13 +1265,13 @@ export class Visual implements IVisual {
 
         animationSelectionMerged
             .attr("d", (d: Series) => {
-                let flooredStart = this.animationHandler.flooredPosition.index;
+                const flooredStart = this.animationHandler.flooredPosition.index;
 
                 if (flooredStart === 0) {
                     this.moveAnimationDot(d.data[0]);
                     return this.lineX([]);
                 } else {
-                    let dataReduced: DataPoint[] = d.data.slice(0, flooredStart + 1);
+                    const dataReduced: DataPoint[] = d.data.slice(0, flooredStart + 1);
                     this.moveAnimationDot(dataReduced[dataReduced.length - 1]);
                     return this.lineX(dataReduced);
                 }
@@ -1287,7 +1283,7 @@ export class Visual implements IVisual {
     }
 
     private moveAnimationDot(d: DataPoint) {
-        let xScale: LinearScale = <LinearScale>this.data.xScale,
+        const xScale: LinearScale = <LinearScale>this.data.xScale,
             yScales: LinearScale[] = <LinearScale[]>this.data.yScales;
 
         this.animationDot
@@ -1296,7 +1292,7 @@ export class Visual implements IVisual {
     }
 
     public playAnimation(delay: number = 0): void {
-        let flooredStart: number = this.animationHandler.flooredPosition.index;
+        const flooredStart: number = this.animationHandler.flooredPosition.index;
         this.onClearSelection();
 
         const currentPosition: AnimationPosition = this.animationHandler.flooredPosition;
@@ -1318,9 +1314,9 @@ export class Visual implements IVisual {
             .delay(delay)
             .duration(this.animationDuration)
             .ease(easeLinear)
-            .attrTween("d", (d: Series, index: number) => this.getInterpolation(d.data, flooredStart))
+            .attrTween("d", (d: Series) => this.getInterpolation(d.data, flooredStart))
             .on("end", () => {
-                let position: AnimationPosition = this.animationHandler.flooredPosition;
+                const position: AnimationPosition = this.animationHandler.flooredPosition;
                 this.handleSelection(position);
                 this.continueAnimation(position);
             });
@@ -1347,7 +1343,7 @@ export class Visual implements IVisual {
 
     public findNextPoint(position: AnimationPosition): AnimationPosition {
         for (let i: number = position.series; i < this.data.series.length; i++) {
-            let series: Series = this.data.series[i];
+            const series: Series = this.data.series[i];
 
             for (let j: number = (i === position.series) ? Math.floor(position.index + 1) : 0; j < series.data.length; j++) {
                 if (series.data[j] && series.data[j].popupInfo) {
@@ -1364,7 +1360,7 @@ export class Visual implements IVisual {
 
     public findPrevPoint(position: AnimationPosition): AnimationPosition {
         for (let i: number = position.series; i >= 0; i--) {
-            let series: Series = this.data.series[i];
+            const series: Series = this.data.series[i];
 
             for (let j: number = (i === position.series) ? Math.ceil(position.index - 1) : series.data.length; j >= 0; j--) {
                 if (series.data[j] && series.data[j].popupInfo) {
@@ -1388,13 +1384,13 @@ export class Visual implements IVisual {
     }
 
     public isAnimationIndexLast(position: AnimationPosition): boolean {
-        let index: number = position.index;
-        let series: Series = this.data.series[position.series];
+        const index: number = position.index;
+        const series: Series = this.data.series[position.series];
         return index >= (series.data.length - 1);
     }
 
     private drawLines(): void {
-        let positionSeries: number = this.animationHandler.position.series,
+        const positionSeries: number = this.animationHandler.position.series,
             isAnimated: boolean = this.animationHandler.isAnimated;
 
         this.drawLinesStatic(positionSeries, isAnimated);
@@ -1408,7 +1404,7 @@ export class Visual implements IVisual {
         if (!this.animationHandler.isPlaying) {
             return;
         }
-        let size: number = this.data.settings.dots.size;
+        const size: number = this.data.settings.dots.size;
 
         this.animationDot
             .style("display", "inline")
@@ -1425,39 +1421,39 @@ export class Visual implements IVisual {
             return;
         }
 
-        let xScale: LinearScale = <LinearScale>this.data.xScale,
+        const xScale: LinearScale = <LinearScale>this.data.xScale,
             yScales: LinearScale[] = <LinearScale[]>this.data.yScales;
-        let stop: number = start + 1;
+        const stop: number = start + 1;
 
         this.showAnimationDot();
 
-        let lineFunction: Line = d3Line<DataPoint>()
+        const lineFunction: Line = d3Line<DataPoint>()
             .x((d: DataPoint) => d.x)
             .y((d: DataPoint) => d.y)
             .curve(curveLinear);
 
-        let interpolatedLine = data.slice(0, start + 1).map((d: DataPoint): PointXY => {
+        const interpolatedLine = data.slice(0, start + 1).map((d: DataPoint): PointXY => {
             return {
                 x: xScale(d.x),
                 y: yScales[d.groupIndex](d.y)
             };
         });
 
-        let x0: number = xScale(data[start].x);
-        let x1: number = xScale(data[stop].x);
+        const x0: number = xScale(data[start].x);
+        const x1: number = xScale(data[stop].x);
 
-        let y0: number = yScales[data[start].groupIndex](data[start].y);
-        let y1: number = yScales[data[stop].groupIndex](data[stop].y);
+        const y0: number = yScales[data[start].groupIndex](data[start].y);
+        const y1: number = yScales[data[stop].groupIndex](data[stop].y);
 
-        let interpolateIndex: LinearScale = scaleLinear()
+        const interpolateIndex: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([start, stop]);
 
-        let interpolateX: LinearScale = scaleLinear()
+        const interpolateX: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([x0, x1]);
 
-        let interpolateY: LinearScale = scaleLinear()
+        const interpolateY: LinearScale = scaleLinear()
             .domain([0, 1])
             .range([y0, y1]);
 
@@ -1468,8 +1464,8 @@ export class Visual implements IVisual {
                 return lineFunction(<DataPoint[]>interpolatedLine);
             }
 
-            let x: number = interpolateX(t);
-            let y: number = interpolateY(t);
+            const x: number = interpolateX(t);
+            const y: number = interpolateY(t);
 
             this.animationDot
                 .attr("cx", x)
@@ -1526,9 +1522,9 @@ export class Visual implements IVisual {
             return;
         }
 
-        let dataPoint: DataPoint = this.getDatapointFromPosition(position);
-        let animationPlayingIndex: number = this.animationHandler.animationPlayingIndex;
-        let isLastDataPoint: boolean = this.animationHandler.isPlaying && this.isAnimationSeriesAndIndexLast(position);
+        const dataPoint: DataPoint = this.getDatapointFromPosition(position);
+        const animationPlayingIndex: number = this.animationHandler.animationPlayingIndex;
+        const isLastDataPoint: boolean = this.animationHandler.isPlaying && this.isAnimationSeriesAndIndexLast(position);
         if ((!dataPoint || !dataPoint.popupInfo) && (this.animationHandler.isPlaying)) {
             if (isLastDataPoint && !this.isRepeat) {
                 setTimeout(() => this.animationHandler.toEnd(), 0);
@@ -1577,7 +1573,7 @@ export class Visual implements IVisual {
             return;
         }
 
-        let xScale: LinearScale = <LinearScale>data.xScale,
+        const xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
             node: ClassAndSelector = Visual.Dot,
             nodeParent: ClassAndSelector = Visual.DotsContainer,
@@ -1589,7 +1585,7 @@ export class Visual implements IVisual {
             hasSelection: boolean = this.interactivityService.hasSelection(),
             hasHighlights: boolean = this.data.hasHighlights;
 
-        let selection: Selection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
+        const selection: Selection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
             .select(nodeParent.selectorName)
             .selectAll(node.selectorName)
             .data((d: Series, seriesIndex: number) => {
@@ -1601,7 +1597,7 @@ export class Visual implements IVisual {
                 });
             });
 
-        let selectionMerged = selection
+        const selectionMerged = selection
             .enter()
             .append("circle")
             .merge(selection);
@@ -1613,7 +1609,7 @@ export class Visual implements IVisual {
             .attr("r", (d: DataPoint) => d.eventSize || dotSize)
             .style("fill", dotColor)
             .style("opacity", (d: DataPoint) => {
-                let isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights) === 1;
+                const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights) === 1;
                 return isSelected ? this.dotOpacity : this.dotOpacity / 2;
             })
             .style("cursor", "pointer");
@@ -1623,7 +1619,7 @@ export class Visual implements IVisual {
             .remove();
 
         if (this.interactivityService) {
-            let behaviorOptions: BehaviorOptions = {
+            const behaviorOptions: BehaviorOptions = {
                 behavior: this.behavior,
                 dataPoints: this.data.dots,
                 selection: selectionMerged,
@@ -1638,7 +1634,7 @@ export class Visual implements IVisual {
         this.renderTooltip(selectionMerged);
     }
 
-    private renderGaps(data: ChartData, duration: number): void {
+    private renderGaps(data: ChartData): void {
         let gaps: IRect[],
             gapsSelection: Selection<any>,
             gapsSelectionMerged: Selection<any>,
@@ -1670,7 +1666,7 @@ export class Visual implements IVisual {
         gapsSelectionMerged.classed(Visual.Gap.className, true);
 
         gapsSelectionMerged
-            .attr("transform", (seriesElement: Series, index: number) => {
+            .attr("transform", (seriesElement: Series) => {
                 let x: number,
                     middleOfGap: number = seriesElement.widthOfGap / 2,
                     categoryValue: number | Date = seriesElement.data[seriesElement.data.length - 1].categoryValue;
@@ -1688,7 +1684,7 @@ export class Visual implements IVisual {
             .selectAll(Visual.GapNode.selectorName)
             .data(gaps);
 
-        let gapNodeSelectionMerged = gapNodeSelection
+        const gapNodeSelectionMerged = gapNodeSelection
             .enter()
             .append("rect")
             .merge(gapNodeSelection);
@@ -1731,9 +1727,9 @@ export class Visual implements IVisual {
         return this.animationHandler.isPlaying;
     }
 
-    /* tslint:disable:max-func-body-length */
+    // eslint-disable-next-line max-lines-per-function
     private drawTooltips(data: ChartData): void {
-        let xScale: LinearScale = <LinearScale>data.xScale,
+        const xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
             node: ClassAndSelector = Visual.Tooltip,
             nodeParent: ClassAndSelector = Visual.TooltipContainer,
@@ -1743,24 +1739,24 @@ export class Visual implements IVisual {
             showTimeDisplayProperty: string = this.data.settings.popup.showTime ? "inherit" : "none",
             showTitleDisplayProperty: string = this.data.settings.popup.showTitle ? "inherit" : "none";
 
-        let rootSelection: Selection<any> = this.rootSelection;
+        const rootSelection: Selection<any> = this.rootSelection;
 
-        let line: Line = d3Line<PointXY>()
+        const line: Line = d3Line<PointXY>()
             .x((d: PointXY) => d.x)
             .y((d: PointXY) => {
                 return d.y;
             });
 
-        let tooltipShiftY = (y: number, groupIndex: number): number => {
+        const tooltipShiftY = (y: number, groupIndex: number): number => {
             return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + Visual.topShift) : this.size.height + marginTop;
         };
 
-        let tooltipRoot: Selection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
+        const tooltipRoot: Selection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
             .data(d => {
                 return filter(d.data, (value: DataPoint) => this.isPopupShow(value));
             });
 
-        let tooltipRootMerged = tooltipRoot
+        const tooltipRootMerged = tooltipRoot
             .enter()
             .append("g")
             .merge(tooltipRoot);
@@ -1768,14 +1764,14 @@ export class Visual implements IVisual {
 
         tooltipRootMerged
             .attr("transform", (d: DataPoint) => {
-                let x: number = xScale(d.x) - width / 2;
-                let y: number = tooltipShiftY(d.y, d.groupIndex);
+                const x: number = xScale(d.x) - width / 2;
+                const y: number = tooltipShiftY(d.y, d.groupIndex);
                 d.popupInfo.offsetX = Math.min(this.viewport.width - this.margin.right - width, Math.max(-this.margin.left, x)) - x;
                 return manipulation.translate(x + d.popupInfo.offsetX, y);
             });
 
-        let tooltipRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipRect.selectorName).data(d => [d]);   
-        let tooltipRectMerged = tooltipRect
+        const tooltipRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipRect.selectorName).data(d => [d]);   
+        const tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
             .merge(tooltipRect);
@@ -1810,8 +1806,8 @@ export class Visual implements IVisual {
                 return line(points);
             });
 
-        let tooltipTriangle: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTriangle.selectorName).data(d => [d]);
-        let tooltipTriangleMerged = tooltipTriangle
+        const tooltipTriangle: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTriangle.selectorName).data(d => [d]);
+        const tooltipTriangleMerged = tooltipTriangle
             .enter()
             .append("path")
             .merge(tooltipTriangle);
@@ -1820,7 +1816,7 @@ export class Visual implements IVisual {
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke)
             .attr("d", (d: DataPoint) => {
-                let path = [
+                const path = [
                     {
                         "x": width / 2 - 5 - d.popupInfo.offsetX,
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * marginTop) : 0,
@@ -1838,15 +1834,15 @@ export class Visual implements IVisual {
             })
             .style("stroke-width", "1px");
 
-        let tooltipLine: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipLine.selectorName).data(d => [d]);
-        let tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
+        const tooltipLine: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipLine.selectorName).data(d => [d]);
+        const tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
         tooltipLineMerged.classed(Visual.TooltipLine.className, true);
         tooltipLineMerged
             .style("fill", this.data.settings.popup.color)
             .style("stroke", this.data.settings.popup.stroke || this.data.settings.popup.color)
             .style("stroke-width", "1px")
             .attr("d", (d: DataPoint) => {
-                let path = [
+                const path = [
                     {
                         "x": width / 2 - d.popupInfo.offsetX,
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ?
@@ -1860,15 +1856,15 @@ export class Visual implements IVisual {
                 return line(<DataPoint[]>path);
             });
 
-        let timeRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTimeRect.selectorName).data(d => [d]);
-        let timeRectMerged = timeRect.enter().append("path").merge(timeRect);
+        const timeRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTimeRect.selectorName).data(d => [d]);
+        const timeRectMerged = timeRect.enter().append("path").merge(timeRect);
         timeRectMerged.classed(Visual.TooltipTimeRect.className, true);
         timeRectMerged
             .style("fill", this.data.settings.popup.timeFill)
             .style("stroke", this.data.settings.popup.stroke)
             .style("display", showTimeDisplayProperty)
             .attr("d", (d: DataPoint) => {
-                let path = [
+                const path = [
                     {
                         "x": width - this.data.widthOfTooltipValueLabel - 2,
                         "y": this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height)) : 0,
@@ -1893,8 +1889,8 @@ export class Visual implements IVisual {
                 return line(<DataPoint[]>path);
             });
 
-        let time: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTime.selectorName).data(d => [d]);
-        let timeMerged = time.enter().append("text").merge(time);
+        const time: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTime.selectorName).data(d => [d]);
+        const timeMerged = time.enter().append("text").merge(time);
         timeMerged.classed(Visual.TooltipTime.className, true);
         const timeFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupValueTextProperties());
         Visual.APPLY_TEXT_FONT_STYLES(timeMerged, timeFontStyles);
@@ -1902,14 +1898,14 @@ export class Visual implements IVisual {
         timeMerged
             .style("display", showTimeDisplayProperty)
             .style("fill", this.data.settings.popup.timeColor)
-            .attr("x", (d: DataPoint) => width - this.data.widthOfTooltipValueLabel)
+            .attr("x", () => width - this.data.widthOfTooltipValueLabel)
             .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
                 ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight + 3))
                 : Visual.DefaultTooltipSettings.timeHeight - 3)
             .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(Visual.getPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
 
-        let title: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTitle.selectorName).data(d => [d]);
-        let titleMerged = title.enter().append("text").merge(title);
+        const title: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTitle.selectorName).data(d => [d]);
+        const titleMerged = title.enter().append("text").merge(title);
         titleMerged
             .classed(Visual.TooltipTitle.className, true);
 
@@ -1919,19 +1915,19 @@ export class Visual implements IVisual {
         titleMerged
             .style("display", showTitleDisplayProperty)
             .style("fill", this.data.settings.popup.fontColor)
-            .attr("x", (d: DataPoint) => Visual.PopupTextPadding)
+            .attr("x", () => Visual.PopupTextPadding)
             .attr("y", (d: DataPoint) =>
                 (this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height - 12)) : 12) + Visual.PopupTextPadding)
             .text((d: DataPoint) => {
                 if (!d.popupInfo) {
                     return "";
                 }
-                let maxWidth = width - Visual.PopupTextPadding * 2 -
+                const maxWidth = width - Visual.PopupTextPadding * 2 -
                     (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - Visual.PopupTextPadding) : 0) - 10;
                 return textMeasurementService.getTailoredTextOrDefault(Visual.getPopupTitleTextProperties(d.popupInfo.title), maxWidth);
             });
 
-        let getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
+        const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
             let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize;
 
             let descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
@@ -1949,8 +1945,8 @@ export class Visual implements IVisual {
             };
         };
 
-        let description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
-        let descriptionMerged = description.enter().append("text").merge(description);
+        const description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
+        const descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(Visual.TooltipDescription.className, true);
         const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
         Visual.APPLY_TEXT_FONT_STYLES(descriptionMerged, descriptionFontStyles);
@@ -1958,14 +1954,14 @@ export class Visual implements IVisual {
         descriptionMerged
             .style("fill", this.data.settings.popup.fontColor)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
-            .each(function (series: Series) {
-                let node = <SVGTextElement>this;
+            .each(function () {
+                const node = <SVGTextElement>this;
                 const allowedWidth = width - 2 - Visual.PopupTextPadding * 2;
                 const allowedHeight = height - Visual.DefaultTooltipSettings.timeHeight - Visual.PopupTextPadding * 2;
                 textMeasurementService.wordBreak(node, allowedWidth, allowedHeight);
             })
             .attr("transform", (d: DataPoint) => {
-                let descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
+                const descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
                 return manipulation.translate(0, descriptionDimenstions.y);
             });
         descriptionMerged.selectAll("tspan").attr("x", Visual.PopupTextPadding);
@@ -1978,7 +1974,6 @@ export class Visual implements IVisual {
             .exit()
             .remove();
     }
-    /* tslint:disable:max-func-body-length */
 
     private isHigherMiddle(value: number, groupIndex: number): boolean {
         if (this.data.settings.popup.alwaysOnTop) {
@@ -2022,7 +2017,7 @@ export class Visual implements IVisual {
     }
 
     private static parseSettings(dataView: DataView, colorHelper: ColorHelper): PulseChartSettings {
-        let settings: PulseChartSettings = PulseChartSettings.parse<PulseChartSettings>(dataView);
+        const settings: PulseChartSettings = PulseChartSettings.parse<PulseChartSettings>(dataView);
 
         settings.popup.fontSize = parseInt(<any>settings.popup.fontSize);
 

@@ -33,7 +33,7 @@ import IInteractivityService = interactivityBaseService.IInteractivityService;
 import ISelectionHandler = interactivityBaseService.ISelectionHandler;
 
 import { BehaviorOptions, DataPoint } from "./models/models";
-import { pulseChartUtils } from "./utils";
+import * as pulseChartUtils from "./utils";
 
 export class WebBehavior implements IInteractiveBehavior {
     private selection: Selection<BaseType, any, BaseType, any>;
@@ -43,8 +43,8 @@ export class WebBehavior implements IInteractiveBehavior {
     private onSelectCallback: any;
 
     public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
-        let clearCatcher: Selection<BaseType, any, BaseType, any> = options.clearCatcher;
-        let selection: Selection<BaseType, any, BaseType, any> = this.selection = options.selection;
+        const clearCatcher: Selection<BaseType, any, BaseType, any> = options.clearCatcher;
+        const selection: Selection<BaseType, any, BaseType, any> = this.selection = options.selection;
         this.onSelectCallback = options.onSelectCallback;
         this.selectionHandler = selectionHandler;
         this.interactivityService = options.interactivityService;
@@ -63,6 +63,7 @@ export class WebBehavior implements IInteractiveBehavior {
         this.selectionHandler.handleSelection(d, false);
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public renderSelection(hasSelection: boolean): void {
         if (this.onSelectCallback) {
             this.onSelectCallback();

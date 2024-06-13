@@ -63,7 +63,7 @@ describe("PulseChartTests", () => {
 
         it("update", (done) => {
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.mainElement.querySelector("g.y.axis").querySelector("g.tick")).toBeDefined();
+                expect(visualBuilder.mainElement.querySelector("g.y.axis")!.querySelector("g.tick")).toBeDefined();
                 expect(visualBuilder.animationDot).toBeDefined();
                 expect(visualBuilder.lineContainer.querySelector("path.line")).toBeDefined();
                 expect(visualBuilder.tooltipContainer).toBeDefined();
