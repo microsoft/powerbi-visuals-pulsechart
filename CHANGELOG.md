@@ -1,4 +1,4 @@
-## 3.4.0
+## 3.4.0.0
 * Migrate from tslint to eslint, fix eslint errors
 
 ## 3.0.3
