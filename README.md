@@ -1,4 +1,5 @@
-![Build](https://github.com/microsoft/powerbi-visuals-pulsechart/workflows/build/badge.svg)[![Coverage Status](https://coveralls.io/repos/github/Microsoft/powerbi-visuals-pulsechart/badge.svg?branch=main)](https://coveralls.io/github/Microsoft/powerbi-visuals-pulsechart?branch=main)
+[![Build status](https://github.com/microsoft/powerbi-visuals-pulsechart/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/microsoft/powerbi-visuals-pulsechart/actions/workflows/build.yml)
+[![Coverage Status](https://coveralls.io/repos/github/Microsoft/powerbi-visuals-pulsechart/badge.svg?branch=main)](https://coveralls.io/github/Microsoft/powerbi-visuals-pulsechart?branch=main)
 
 > Line chart annotated with key events. Perfect for story telling with data.
 

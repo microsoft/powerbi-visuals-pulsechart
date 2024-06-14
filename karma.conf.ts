@@ -33,7 +33,7 @@ const path = require("path");
 const testRecursivePath = "test/visualTest.ts";
 const srcOriginalRecursivePath = "src/**/*.ts";
 
-process.env.CHROME_BIN = require("puppeteer").executablePath();
+process.env.CHROME_BIN = require("playwright-chromium").chromium.executablePath();
 
 module.exports = (config) => {
   config.set({

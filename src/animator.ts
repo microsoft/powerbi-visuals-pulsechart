@@ -41,7 +41,7 @@ import { valueFormatter, textMeasurementService } from "powerbi-visuals-utils-fo
 import { AnimationPosition, DataPoint } from "./models/models";
 import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";
 import { Visual } from "./visual";
-import { pulseChartUtils } from "./utils";
+import * as pulseChartUtils from "./utils";
 
 export class Animator {
     private chart: Visual;
@@ -121,14 +121,12 @@ export class Animator {
         return this.animatorState === AnimatorStates.Stopped;
     }
 
-    /* tslint:disable:max-func-body-length */
+    // eslint-disable-next-line max-lines-per-function
     constructor(chart: Visual, svg: Selection<BaseType, any, BaseType, any>) {
         this.chart = chart;
         this.svg = svg;
-
         this.setDefaultValues();
-
-        let container: Selection<BaseType, any, BaseType, any> = this.container = this.svg
+        const container: Selection<BaseType, any, BaseType, any> = this.container = this.svg
             .append("g")
             .classed(Animator.ControlsContainer.className, true)
             .style("display", "none");
@@ -247,7 +245,6 @@ export class Animator {
         this.runnerCounterText = this.runnerCounter.append("text");
         this.setControlsColor(Animator.DefaultControlsColor);
     }
-    /* tslint:enable:max-func-body-length */
 
     private setDefaultValues(): void {
         this.position = Animator.AnimationMinPosition;
@@ -300,8 +297,8 @@ export class Animator {
     private renderControls(): void {
         this.show();
         let counter: number = 0;
-        let shiftX = (): number => Animator.buttonShiftX * counter++;
-        let color: string = this.color;
+        const shiftX = (): number => Animator.buttonShiftX * counter++;
+        const color: string = this.color;
 
         this.animationPlay
             .attr("transform", manipulation.translate(shiftX(), 0))
@@ -357,7 +354,7 @@ export class Animator {
     }
 
     private disableControls(): void {
-        let showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
+        const showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
         Animator.setControlVisiblity(this.animationReset, true);
         Animator.setControlVisiblity(this.animationToEnd, true);
 
@@ -416,7 +413,7 @@ export class Animator {
     }
 
     public setRunnerCounterValue(index?: number): void {
-        let dataPoint: DataPoint = this.chart.data
+        const dataPoint: DataPoint = this.chart.data
             && this.chart.data.series
             && this.chart.data.series[this.position.series]
             && this.chart.data.series[this.position.series].data
@@ -427,7 +424,7 @@ export class Animator {
             : "";
 
         if (dataPoint && dataPoint.runnerCounterFormatString) {
-            let runnerCounterformatter = valueFormatter.create({ format: dataPoint.runnerCounterFormatString });
+            const runnerCounterformatter = valueFormatter.create({ format: dataPoint.runnerCounterFormatString });
             runnerCounterValue = runnerCounterformatter.format(runnerCounterValue);
         }
 
@@ -436,7 +433,7 @@ export class Animator {
     }
 
     private drawCounterValue(): void {
-        let progressText: string = this.runnerCounterValue;
+        const progressText: string = this.runnerCounterValue;
         this.runnerCounterText.text(progressText);
         textMeasurementService.svgEllipsis(<any>this.runnerCounterText.node(), this.maxTextWidthOfRunnerCounterValue);
     }

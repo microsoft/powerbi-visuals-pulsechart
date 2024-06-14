@@ -36,7 +36,7 @@ module.exports = {
     resolve: {
         extensions: ['.tsx', '.ts', '.js', '.css'],
         fallback: {
-            util: require.resolve("util/"),
+            util: require.resolve("util"),
         }
     },
     output: {
