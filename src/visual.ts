@@ -56,8 +56,6 @@ import DataViewValueColumn = powerbiVisualsApi.DataViewValueColumn;
 import DataViewCategoryColumn = powerbiVisualsApi.DataViewCategoryColumn;
 import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
 import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
-import VisualObjectInstanceEnumeration = powerbiVisualsApi.VisualObjectInstanceEnumeration;
-import EnumerateVisualObjectInstancesOptions = powerbiVisualsApi.EnumerateVisualObjectInstancesOptions;
 import PrimitiveValue = powerbiVisualsApi.PrimitiveValue;
 import IVisualHost = powerbiVisualsApi.extensibility.visual.IVisualHost;
 import IVisual = powerbiVisualsApi.extensibility.visual.IVisual;
@@ -66,6 +64,7 @@ import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdate
 import ISelectionId = powerbiVisualsApi.visuals.ISelectionId;
 import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
 import VisualTooltipDataItem = powerbiVisualsApi.extensibility.VisualTooltipDataItem;
+import ILocalizationManager = powerbiVisualsApi.extensibility.ILocalizationManager;
 
 type Selection<T> = d3Selection<any, T, any, any>;
 
@@ -106,13 +105,14 @@ import {
     IPulseChartInteractiveBehavior,
     BehaviorOptions
 } from "./models/models";
-import { XAxisDateFormat, XAxisPosition } from "./enum/enums";
-import { PulseChartSettings } from "./settings";
+import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
 import * as pulseChartUtils from "./utils";
 import { WebBehavior } from "./webBehavior";
 import { Animator } from "./animator";
 import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
+import { PulseChartSettingsModel } from './pulseChartSettingsModel';
+import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 
 export class Visual implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
@@ -249,7 +249,8 @@ export class Visual implements IVisual {
         dataView: DataView,
         host: IVisualHost,
         colorHelper: ColorHelper,
-        interactivityService: IInteractivityService<DataPoint>
+        interactivityService: IInteractivityService<DataPoint>,
+        settings: PulseChartSettingsModel,
     ): ChartData {
         if (!dataView
             || !dataView.categorical
@@ -274,8 +275,6 @@ export class Visual implements IVisual {
         }
 
         const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
-
-        const settings: PulseChartSettings = Visual.parseSettings(dataView, colorHelper);
 
         const categoryValues: any[] = timeStampColumn.values;
 
@@ -307,15 +306,15 @@ export class Visual implements IVisual {
         }
 
         const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
-        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize));
+        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize.value));
         const runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
-        settings.popup.width = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width);
+        settings.popup.width.value = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width.value);
 
-        let minSize: number = settings.dots.minSize;
-        let maxSize: number = settings.dots.maxSize;
+        let minSize: number = settings.dots.minSize.value;
+        let maxSize: number = settings.dots.maxSize.value;
         if (settings.dots) {
-            minSize = settings.dots.minSize;
-            maxSize = settings.dots.maxSize;
+            minSize = settings.dots.minSize.value;
+            maxSize = settings.dots.maxSize.value;
         }
 
         const eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
@@ -365,18 +364,18 @@ export class Visual implements IVisual {
 
             const minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / Visual.MaxGapCount, <number>settings.xAxis.dateFormat);
             const gapWidth: number = gapWidths[categoryIndex];
-            const isGap: boolean = settings.gaps.show
+            const isGap: boolean = settings.gaps.show.value
                 && gapWidth > 0
-                && gapWidth > (minGapWidth + (100 - settings.gaps.transparency) * (maxGapWidth - minGapWidth) / 100);
+                && gapWidth > (minGapWidth + (100 - settings.gaps.transparency.value) * (maxGapWidth - minGapWidth) / 100);
 
             if (isGap && dataPoints.length > 0) {
                 series.push({
                     displayName: <string>grouped[firstGroupIndex].name,
                     lineIndex: series.length,
-                    color: settings.series.fill,
+                    color: settings.series.fill.value.value,
                     data: dataPoints,
                     labelSettings: dataPointLabelSettings,
-                    width: settings.series.width,
+                    width: settings.series.width.value,
                     widthOfGap: gapWidth
                 });
 
@@ -428,7 +427,7 @@ export class Visual implements IVisual {
                 labelSettings: dataPointLabelSettings,
                 x: <any>categoryValue,
                 y: y_value,
-                pointColor: settings.series.fill,
+                pointColor: settings.series.fill.value.value,
                 groupIndex: Visual.getGroupIndex(categoryIndex, grouped),
                 eventSize: eventSizeValue,
                 runnerCounterValue: runnerCounterValue,
@@ -448,10 +447,10 @@ export class Visual implements IVisual {
             series.push({
                 displayName: <string>grouped[firstGroupIndex].name,
                 lineIndex: series.length,
-                color: settings.series.fill,
+                color: settings.series.fill.value.value,
                 data: dataPoints,
                 labelSettings: dataPointLabelSettings,
-                width: settings.series.width,
+                width: settings.series.width.value,
                 widthOfGap: 0
             });
         }
@@ -494,7 +493,7 @@ export class Visual implements IVisual {
             widthOfTooltipValueLabel: widthOfTooltipValueLabel,
             heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
             runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize))
+                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize.value))
         };
     }
 
@@ -729,10 +728,12 @@ export class Visual implements IVisual {
     public host: IVisualHost;
 
     private interactivityService: IInteractivityService<DataPoint>;
+    private localizationManager: ILocalizationManager;
+    private formattingSettingsService: FormattingSettingsService;
     private colorHelper: ColorHelper;
     private tooltipService: ITooltipServiceWrapper;
 
-    private settings: PulseChartSettings;
+    private visualSettings: PulseChartSettingsModel;
     private skipDoubleSelectionForCurrentPosition: boolean;
 
     public get runnerCounterPlaybackButtonsHeight(): number {
@@ -743,13 +744,15 @@ export class Visual implements IVisual {
         return this.data
             && this.data.settings
             && this.data.settings.popup
-            && this.data.settings.popup.show
-            && this.data.settings.popup.height || 0;
+            && this.data.settings.popup.show.value
+            && this.data.settings.popup.height.value || 0;
     }
 
     constructor(options: VisualConstructorOptions) {
         this.margin = Visual.DefaultMargin;
         this.host = options.host;
+        this.localizationManager = this.host.createLocalizationManager();
+        this.formattingSettingsService = new FormattingSettingsService(this.localizationManager);
         this.interactivityService = createInteractivitySelectionService(this.host);
         this.behavior = new WebBehavior();
 
@@ -789,14 +792,21 @@ export class Visual implements IVisual {
 
         const dataView: DataView = options.dataViews[0];
 
+        this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
+        this.visualSettings.setLocalizedOptions(this.localizationManager);
+
+        this.updateSettings();
+        this.setHighContrastModeColors(this.colorHelper);
+
+
         const pulseChartData: ChartData = Visual.CONVERTER(
             dataView,
             this.host,
             this.colorHelper,
             this.interactivityService,
+            this.visualSettings,
         );
 
-        this.settings = pulseChartData.settings;
 
         this.updateData(pulseChartData);
 
@@ -808,7 +818,7 @@ export class Visual implements IVisual {
         const width = this.getChartWidth();
         this.calculateXAxisProperties(width);
 
-        const height = this.getChartHeight(this.data.settings.xAxis.show
+        const height = this.getChartHeight(this.data.settings.xAxis.show.value
             && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
 
         this.calculateYAxisProperties(height);
@@ -906,7 +916,7 @@ export class Visual implements IVisual {
 
     private getChartWidth(): number {
         let marginRight: number = this.margin.right;
-        if (this.data.settings.yAxis && this.data.settings.yAxis.show) {
+        if (this.data.settings.yAxis && this.data.settings.yAxis.show.value) {
             marginRight += Visual.MaxWidthOfYAxis;
         }
 
@@ -919,7 +929,7 @@ export class Visual implements IVisual {
             ? this.data.widthOfXAxisLabel * Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180))
             : 3);
 
-        if (!this.data.settings.popup.alwaysOnTop && this.popupHeight) {
+        if (!this.data.settings.popup.alwaysOnTop.value && this.popupHeight) {
             marginBottom = Math.max(this.margin.bottom + this.popupHeight, marginBottom);
         }
 
@@ -956,7 +966,7 @@ export class Visual implements IVisual {
             <LinearScale>this.data.xScale,
             assign({}, this.data.settings.xAxis.formatterOptions),
             this.data.settings.xAxis.dateFormat,
-            this.data.settings.xAxis.position,
+            <XAxisPosition>this.data.settings.xAxis.position.value.value,
             this.data.widthOfXAxisLabel,
             this.host.locale);
 
@@ -1009,21 +1019,21 @@ export class Visual implements IVisual {
     }
 
     public get autoplayPauseDuration(): number {
-        return 1000 * this.data.settings.playback.autoplayPauseDuration;
+        return 1000 * this.data.settings.playback.autoplayPauseDuration.value;
     }
 
     public get isAutoPlay(): boolean {
         return this.data &&
             this.data.settings &&
             this.data.settings.playback &&
-            this.data.settings.playback.autoplay;
+            this.data.settings.playback.autoplay.value;
     }
 
     public get isRepeat(): boolean {
         return this.data &&
             this.data.settings &&
             this.data.settings.playback &&
-            this.data.settings.playback.repeat;
+            this.data.settings.playback.repeat.value;
     }
 
     public render() {
@@ -1044,7 +1054,7 @@ export class Visual implements IVisual {
             this.data.settings &&
             this.data.settings.playback &&
             this.data.settings.playback.color) {
-            this.animationHandler.setControlsColor(this.data.settings.playback.color);
+            this.animationHandler.setControlsColor(this.data.settings.playback.color.value.value);
         }
         this.animationHandler.render();
         this.animationHandler.setRunnerCounterValue();
@@ -1062,8 +1072,8 @@ export class Visual implements IVisual {
         let axisNodeSelection: Selection<any>,
             axisNodeUpdateSelection: Selection<any>,
             axisBoxUpdateSelection: Selection<any>,
-            color: string = data.settings.xAxis.color,
-            fontColor: string = data.settings.xAxis.fontColor;
+            color: string = data.settings.xAxis.color.value.value,
+            fontColor: string = data.settings.xAxis.fontColor.value.value;
 
         axisNodeSelection = this.chart
             .select(Visual.LineNode.selectorName)
@@ -1093,9 +1103,9 @@ export class Visual implements IVisual {
             .merge(axisBoxUpdateSelection);
 
         axisBoxUpdateSelectionMerged
-            .style("display", this.data.settings.xAxis.position === XAxisPosition.Center ? "inherit" : "none")
-            .style("fill", this.data.settings.xAxis.backgroundColor);
-        const tickRectY = this.data.settings.xAxis.position === XAxisPosition.Center ? -11 : 0;
+            .style("display", this.data.settings.xAxis.position.value.value === XAxisPosition.Center ? "inherit" : "none")
+            .style("fill", this.data.settings.xAxis.backgroundColor.value.value);
+        const tickRectY = this.data.settings.xAxis.position.value.value === XAxisPosition.Center ? -11 : 0;
         axisBoxUpdateSelectionMerged.attr("x", -(this.data.widthOfXAxisLabel / 2))
             .attr("y", tickRectY + "px")
             .attr("width", this.data.widthOfXAxisLabel)
@@ -1106,8 +1116,8 @@ export class Visual implements IVisual {
             .remove();
 
         axisNodeUpdateSelectionMerged
-            .style("stroke", this.data.settings.xAxis.position === XAxisPosition.Center ? color : "none")
-            .style("display", this.data.settings.xAxis.show ? "inherit" : "none");
+            .style("stroke", this.data.settings.xAxis.position.value.value === XAxisPosition.Center ? color : "none")
+            .style("display", this.data.settings.xAxis.show.value ? "inherit" : "none");
 
         axisNodeUpdateSelectionMerged.call(selection => {
             const rotate = selection.datum().xAxisProperties.rotate;
@@ -1131,7 +1141,7 @@ export class Visual implements IVisual {
             .style("stroke", color);
 
         let xAxisTop: number = this.size.height;
-        switch (this.data.settings.xAxis.position) {
+        switch (this.data.settings.xAxis.position.value.value) {
             case XAxisPosition.Center:
                 xAxisTop = xAxisTop / 2;
                 break;
@@ -1145,13 +1155,13 @@ export class Visual implements IVisual {
     private renderYAxis(data: ChartData): void {
         let yAxis: Axis<any> = data.yAxis,
             isShow: boolean = false,
-            color: string = data.settings.yAxis.color,
-            fontColor: string = data.settings.yAxis.fontColor;
+            color: string = data.settings.yAxis.color.value.value,
+            fontColor: string = data.settings.yAxis.fontColor.value.value;
 
         if (this.data &&
             this.data.settings &&
             this.data.settings.yAxis &&
-            this.data.settings.yAxis.show) {
+            this.data.settings.yAxis.show.value) {
             isShow = true;
         }
 
@@ -1159,8 +1169,8 @@ export class Visual implements IVisual {
             this.data.settings &&
             this.data.settings.yAxis &&
             this.data.settings.yAxis) {
-            color = this.data.settings.yAxis.color;
-            fontColor = this.data.settings.yAxis.fontColor;
+            color = this.data.settings.yAxis.color.value.value;
+            fontColor = this.data.settings.yAxis.fontColor.value.value;
         }
 
         this.yAxis
@@ -1404,11 +1414,11 @@ export class Visual implements IVisual {
         if (!this.animationHandler.isPlaying) {
             return;
         }
-        const size: number = this.data.settings.dots.size;
+        const size: number = this.data.settings.dots.size.value;
 
         this.animationDot
             .style("display", "inline")
-            .style("fill", this.data.settings.dots.color)
+            .style("fill", this.data.settings.dots.color.value.value)
             .attr("r", size);
     }
 
@@ -1509,7 +1519,7 @@ export class Visual implements IVisual {
     private checkTooltipForSelection(position: AnimationPosition) {
         if (!position) {
             return false;
-        } else if (!this.settings || !this.settings.gaps || !this.settings.gaps.show) {
+        } else if (!this.visualSettings || !this.visualSettings.gaps || !this.visualSettings.gaps.show.value) {
             return false;
         }
 
@@ -1557,15 +1567,15 @@ export class Visual implements IVisual {
     }
 
     private get animationDuration(): number {
-        return 1000 / this.data.settings.playback.playSpeed;
+        return 1000 / this.data.settings.playback.playSpeed.value;
     }
 
     private get pauseDuration(): number {
-        return 1000 * this.data.settings.playback.pauseDuration;
+        return 1000 * this.data.settings.playback.pauseDuration.value;
     }
 
     private get dotOpacity(): number {
-        return 1 - (this.data.settings.dots.transparency / 100);
+        return 1 - (this.data.settings.dots.transparency.value / 100);
     }
 
     private drawDots(data: ChartData): void {
@@ -1578,8 +1588,8 @@ export class Visual implements IVisual {
             node: ClassAndSelector = Visual.Dot,
             nodeParent: ClassAndSelector = Visual.DotsContainer,
             rootSelection: Selection<any> = this.rootSelection,
-            dotColor: string = this.data.settings.dots.color,
-            dotSize: number = this.data.settings.dots.size,
+            dotColor: string = this.data.settings.dots.color.value.value,
+            dotSize: number = this.data.settings.dots.size.value,
             isAnimated: boolean = this.animationHandler.isAnimated,
             position: AnimationPosition = this.animationHandler.position,
             hasSelection: boolean = this.interactivityService.hasSelection(),
@@ -1704,7 +1714,7 @@ export class Visual implements IVisual {
             )
             .classed(Visual.GapNode.className, true);
 
-        gapNodeSelectionMerged.style("fill", data.settings.xAxis.color);
+        gapNodeSelectionMerged.style("fill", data.settings.xAxis.color.value.value);
 
 
         gapsSelection
@@ -1733,11 +1743,11 @@ export class Visual implements IVisual {
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
             node: ClassAndSelector = Visual.Tooltip,
             nodeParent: ClassAndSelector = Visual.TooltipContainer,
-            width: number = this.data.settings.popup.width,
-            height: number = this.data.settings.popup.height,
+            width: number = this.data.settings.popup.width.value,
+            height: number = this.data.settings.popup.height.value,
             marginTop: number = Visual.DefaultTooltipSettings.marginTop,
-            showTimeDisplayProperty: string = this.data.settings.popup.showTime ? "inherit" : "none",
-            showTitleDisplayProperty: string = this.data.settings.popup.showTitle ? "inherit" : "none";
+            showTimeDisplayProperty: string = this.data.settings.popup.showTime.value ? "inherit" : "none",
+            showTitleDisplayProperty: string = this.data.settings.popup.showTitle.value ? "inherit" : "none";
 
         const rootSelection: Selection<any> = this.rootSelection;
 
@@ -1778,8 +1788,8 @@ export class Visual implements IVisual {
         tooltipRectMerged
             .classed(Visual.TooltipRect.className, true)
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
-            .style("fill", this.data.settings.popup.color)
-            .style("stroke", this.data.settings.popup.stroke)
+            .style("fill", this.data.settings.popup.color.value.value)
+            .style("stroke", this.data.settings.popup.strokeColor.value.value)
             .attr("d", (d: DataPoint) => {
                 const firstPoint: PointXY = {
                     "x": -2,
@@ -1813,8 +1823,8 @@ export class Visual implements IVisual {
             .merge(tooltipTriangle);
         tooltipTriangleMerged.classed(Visual.TooltipTriangle.className, true);
         tooltipTriangleMerged
-            .style("fill", this.data.settings.popup.color)
-            .style("stroke", this.data.settings.popup.stroke)
+            .style("fill", this.data.settings.popup.color.value.value)
+            .style("stroke", this.data.settings.popup.strokeColor.value.value)
             .attr("d", (d: DataPoint) => {
                 const path = [
                     {
@@ -1838,8 +1848,8 @@ export class Visual implements IVisual {
         const tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
         tooltipLineMerged.classed(Visual.TooltipLine.className, true);
         tooltipLineMerged
-            .style("fill", this.data.settings.popup.color)
-            .style("stroke", this.data.settings.popup.stroke || this.data.settings.popup.color)
+            .style("fill", this.data.settings.popup.color.value.value)
+            .style("stroke", this.data.settings.popup.strokeColor.value.value || this.data.settings.popup.color.value.value)
             .style("stroke-width", "1px")
             .attr("d", (d: DataPoint) => {
                 const path = [
@@ -1860,8 +1870,8 @@ export class Visual implements IVisual {
         const timeRectMerged = timeRect.enter().append("path").merge(timeRect);
         timeRectMerged.classed(Visual.TooltipTimeRect.className, true);
         timeRectMerged
-            .style("fill", this.data.settings.popup.timeFill)
-            .style("stroke", this.data.settings.popup.stroke)
+            .style("fill", this.data.settings.popup.timeFill.value.value)
+            .style("stroke", this.data.settings.popup.strokeColor.value.value)
             .style("display", showTimeDisplayProperty)
             .attr("d", (d: DataPoint) => {
                 const path = [
@@ -1897,7 +1907,7 @@ export class Visual implements IVisual {
 
         timeMerged
             .style("display", showTimeDisplayProperty)
-            .style("fill", this.data.settings.popup.timeColor)
+            .style("fill", this.data.settings.popup.timeColor.value.value)
             .attr("x", () => width - this.data.widthOfTooltipValueLabel)
             .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
                 ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight + 3))
@@ -1914,7 +1924,7 @@ export class Visual implements IVisual {
 
         titleMerged
             .style("display", showTitleDisplayProperty)
-            .style("fill", this.data.settings.popup.fontColor)
+            .style("fill", this.data.settings.popup.fontColor.value.value)
             .attr("x", () => Visual.PopupTextPadding)
             .attr("y", (d: DataPoint) =>
                 (this.isHigherMiddle(d.y, d.groupIndex) ? (-1 * (marginTop + height - 12)) : 12) + Visual.PopupTextPadding)
@@ -1928,7 +1938,7 @@ export class Visual implements IVisual {
             });
 
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
-            let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize;
+            let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize.value;
 
             let descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
             if (d.popupInfo) {
@@ -1948,11 +1958,11 @@ export class Visual implements IVisual {
         const description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
         const descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(Visual.TooltipDescription.className, true);
-        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize));
+        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize.value));
         Visual.APPLY_TEXT_FONT_STYLES(descriptionMerged, descriptionFontStyles);
 
         descriptionMerged
-            .style("fill", this.data.settings.popup.fontColor)
+            .style("fill", this.data.settings.popup.fontColor.value.value)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
             .each(function () {
                 const node = <SVGTextElement>this;
@@ -1976,7 +1986,7 @@ export class Visual implements IVisual {
     }
 
     private isHigherMiddle(value: number, groupIndex: number): boolean {
-        if (this.data.settings.popup.alwaysOnTop) {
+        if (this.data.settings.popup.alwaysOnTop.value) {
             return true;
         }
 
@@ -2016,44 +2026,48 @@ export class Visual implements IVisual {
         this.chart.selectAll(Visual.Dot.selectorName).remove();
     }
 
-    private static parseSettings(dataView: DataView, colorHelper: ColorHelper): PulseChartSettings {
-        const settings: PulseChartSettings = PulseChartSettings.parse<PulseChartSettings>(dataView);
+    private updateSettings(): void {
+        // if (typeof this.visualSettings.popup.fontSize.value === "string") {
+        //     this.visualSettings.popup.fontSize.value = parseInt(this.visualSettings.popup.fontSize.value);
+        // }
 
-        settings.popup.fontSize = parseInt(<any>settings.popup.fontSize);
+        if (this.visualSettings.runnerCounter.position?.value?.value == null) {
+            this.visualSettings.runnerCounter.position.value = this.visualSettings.runnerCounter.position.items.find(
+                option => option.value.toString() === RunnerCounterPosition[RunnerCounterPosition.TopLeft]
+            );
+        }
+    }
 
+    private setHighContrastModeColors(colorHelper: ColorHelper): void {
         if (colorHelper.isHighContrast) {
             const foregroundColor: string = colorHelper.getThemeColor("foreground");
             const backgroundColor: string = colorHelper.getThemeColor("background");
 
-            settings.series.fill = foregroundColor;
+            this.visualSettings.series.fill.value.value = foregroundColor;
 
-            settings.popup.color = backgroundColor;
-            settings.popup.fontColor = foregroundColor;
-            settings.popup.timeColor = foregroundColor;
-            settings.popup.timeFill = backgroundColor;
-            settings.popup.stroke = foregroundColor;
+            this.visualSettings.popup.color.value.value = backgroundColor;
+            this.visualSettings.popup.fontColor.value.value = foregroundColor;
+            this.visualSettings.popup.timeColor.value.value = foregroundColor;
+            this.visualSettings.popup.timeFill.value.value = backgroundColor;
+            this.visualSettings.popup.strokeColor.value.value = foregroundColor;
 
-            settings.dots.color = foregroundColor;
+            this.visualSettings.dots.color.value.value = foregroundColor;
 
-            settings.xAxis.fontColor = foregroundColor;
-            settings.xAxis.color = foregroundColor;
-            settings.xAxis.backgroundColor = backgroundColor;
+            this.visualSettings.xAxis.fontColor.value.value = foregroundColor;
+            this.visualSettings.xAxis.color.value.value = foregroundColor;
+            this.visualSettings.xAxis.backgroundColor.value.value = backgroundColor;
 
-            settings.yAxis.color = foregroundColor;
-            settings.yAxis.fontColor = foregroundColor;
+            this.visualSettings.yAxis.color.value.value = foregroundColor;
+            this.visualSettings.yAxis.fontColor.value.value = foregroundColor;
 
-            settings.playback.color = foregroundColor;
+            this.visualSettings.playback.color.value.value = foregroundColor;
 
-            settings.runnerCounter.fontColor = foregroundColor;
+            this.visualSettings.runnerCounter.fontColor.value.value = foregroundColor;
         }
-
-        return settings;
     }
 
-    public enumerateObjectInstances(options: EnumerateVisualObjectInstancesOptions): VisualObjectInstanceEnumeration {
-        return PulseChartSettings.enumerateObjectInstances(
-            this.data.settings || PulseChartSettings.getDefault(),
-            options);
+    public getFormattingModel(): powerbiVisualsApi.visuals.FormattingModel {
+        return this.formattingSettingsService.buildFormattingModel(this.visualSettings);
     }
 
     public destroy(): void {

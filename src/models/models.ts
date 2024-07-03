@@ -24,7 +24,7 @@ import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
 import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 
 import { Orientation, PointLabelPosition } from "../enum/enums";
-import { PulseChartSettings } from "../settings";
+import { PulseChartSettingsModel } from "../pulseChartSettingsModel";
 
 // TYPES
 export type GenericScale = TimeScale | LinearScale;
@@ -120,7 +120,7 @@ export interface Series {
 }
 
 export interface ChartData {
-    settings: PulseChartSettings;
+    settings: PulseChartSettingsModel;
     columns: DataRoles<DataViewCategoricalColumn>;
     categoryMetadata: DataViewMetadataColumn;
     hasHighlights: boolean;

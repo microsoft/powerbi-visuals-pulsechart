@@ -95,7 +95,7 @@ export class Animator {
     private static runnerCounterShiftY: number = 7;
 
     private get runnerCounterPosition(): RunnerCounterPosition {
-        return this.chart.data.settings.runnerCounter.position;
+        return <RunnerCounterPosition>this.chart.data.settings.runnerCounter.position.value.value;
     }
 
     private get maxTextWidthOfRunnerCounterValue(): number {
@@ -336,8 +336,8 @@ export class Animator {
 
         if (this.chart.data && this.chart.data.settings) {
             this.runnerCounterText.style(<any>Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES(null, this.chart.data.settings.runnerCounter.fontSize)));
-            this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor);
+                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES(null, this.chart.data.settings.runnerCounter.fontSize.value)));
+            this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor.value.value);
         }
 
         this.drawCounterValue();
@@ -354,7 +354,7 @@ export class Animator {
     }
 
     private disableControls(): void {
-        const showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
+        const showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show.value;
         Animator.setControlVisiblity(this.animationReset, true);
         Animator.setControlVisiblity(this.animationToEnd, true);
 

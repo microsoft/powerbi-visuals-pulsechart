@@ -270,6 +270,17 @@
                             }
                         }
                     }
+                },
+                "strokeColor": {
+                    "displayName": "Stroke color",
+                    "displayNameKey": "Visual_PulseChart_StrokeColor",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
                 }
             }
         },

@@ -1,10 +1,12 @@
 import powerbi from "powerbi-visuals-api";
 import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
-import { RunnerCounterPosition, XAxisPosition } from './enum/enums';
+import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
+import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
 import IEnumMember = powerbi.IEnumMember;
+import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 
 const xAxisPositionOptions: IEnumMember[] = [
     { value: XAxisPosition.Center, displayName: "Visual_Center" },
@@ -12,9 +14,58 @@ const xAxisPositionOptions: IEnumMember[] = [
 ];
 
 const runnerCounterPositionOptions: IEnumMember[] = [
-    { value: RunnerCounterPosition.TopLeft, displayName: "Visual_TopLeft" },
-    { value: RunnerCounterPosition.TopRight, displayName: "Visual_TopRight" },
+    { value: RunnerCounterPosition[RunnerCounterPosition.TopLeft], displayName: "Visual_TopLeft" },
+    { value: RunnerCounterPosition[RunnerCounterPosition.TopRight], displayName: "Visual_TopRight" },
 ];
+
+
+class SeriesSettingsCard extends Card {
+    fill = new formattingSettings.ColorPicker({
+        name: "fill",
+        displayName: "Fill",
+        displayNameKey: "Visual_Fill",
+        value: { value: "#3779B7" },
+    });
+
+    width = new formattingSettings.NumUpDown({
+        name: "width",
+        displayName: "Width",
+        displayNameKey: "Visual_Width",
+        value: 2,
+    });
+
+    name: string = "series";
+    displayName: string = "Series";
+    displayNameKey: string = "Visual_Series";
+    description: string = "Series";
+    descriptionKey: string = "Visual_Series";
+    slices = [this.fill, this.width];
+}
+
+
+class GapsSettingsCard extends Card {
+    show = new formattingSettings.ToggleSwitch({
+        name: "show",
+        displayName: "Show",
+        displayNameKey: "Visual_Show",
+        value: false,
+    });
+
+    transparency = new formattingSettings.Slider({
+        name: "transparency",
+        displayName: "Visible gaps",
+        displayNameKey: "Visual_PulseChart_VisibleGaps",
+        value: 1,
+    })
+
+    name: string = "gaps";
+    displayName: string = "Gaps";
+    displayNameKey: string = "Visual_PulseChart_Gaps";
+    description: string = "Gaps";
+    descriptionKey: string = "Visual_PulseChart_Gaps";
+    topLevelSlice = this.show;
+    slices = [this.transparency];
+}
 
 class PopupSettingsCard extends Card {
     show = new formattingSettings.ToggleSwitch({
@@ -52,18 +103,11 @@ class PopupSettingsCard extends Card {
         value: { value: "#808181" },
     });
 
-    font = new formattingSettings.FontControl({
-        name: "font",
-        displayName: "Font",
-        fontSize: new formattingSettings.NumUpDown({
-            name: "Text size",
-            displayName: "Visual_TextSize",
-            value: 10,
-        }),
-        fontFamily: new formattingSettings.FontPicker({
-            name: "fontFamily",
-            value: "Arial, sans-serif"
-        }),
+    fontSize = new formattingSettings.NumUpDown({
+        name: "fontSize",
+        displayName: "Text size",
+        displayNameKey: "Visual_TextSize",
+        value: 10,
     });
 
     fontColor = new formattingSettings.ColorPicker({
@@ -101,7 +145,7 @@ class PopupSettingsCard extends Card {
         value: { value: "#010101" },
     })
 
-    // TODO: add to capabilities.json
+    // TODO: Check if strokeColor is working as it was added recently
     strokeColor = new formattingSettings.ColorPicker({
         name: "strokeColor",
         displayName: "Stroke color",
@@ -110,9 +154,10 @@ class PopupSettingsCard extends Card {
     })
 
     name: string = "popup";
-    displayName: string = "Visual_Popup";
-    displayNameKey: string = "";
+    displayName: string = "Popup";
+    displayNameKey: string = "Visual_Popup";
     topLevelSlice = this.show;
+    slices = [this.alwaysOnTop, this.width, this.height, this.color, this.fontSize, this.fontColor, this.showTime, this.showTitle, this.timeColor, this.timeFill];
 }
 
 class DotsSettingsCard extends Card {
@@ -157,52 +202,7 @@ class DotsSettingsCard extends Card {
     slices = [this.color, this.minSize, this.maxSize, this.size, this.transparency];
 }
 
-class GapsSettingsCard extends Card {
-    show = new formattingSettings.ToggleSwitch({
-        name: "show",
-        displayName: "Show",
-        displayNameKey: "Visual_Show",
-        value: false,
-    });
 
-    transparency = new formattingSettings.Slider({
-        name: "transparency",
-        displayName: "Visible gaps",
-        displayNameKey: "Visual_PulseChart_VisibleGaps",
-        value: 1,
-    })
-
-    name: string = "gaps";
-    displayName: string = "Gaps";
-    displayNameKey: string = "Visual_PulseChart_Gaps";
-    description: string = "Gaps";
-    descriptionKey: string = "Visual_PulseChart_Gaps";
-    topLevelSlice = this.show;
-    slices = [this.transparency];
-}
-
-class SeriesSettingsCard extends Card {
-    fill = new formattingSettings.ColorPicker({
-        name: "fill",
-        displayName: "Fill",
-        displayNameKey: "Visual_Fill",
-        value: { value: "#3779B7" },
-    });
-
-    width = new formattingSettings.NumUpDown({
-        name: "width",
-        displayName: "Width",
-        displayNameKey: "Visual_Width",
-        value: 2,
-    });
-
-    name: string = "series";
-    displayName: string = "Series";
-    displayNameKey: string = "Visual_Series";
-    description: string = "Series";
-    descriptionKey: string = "Visual_Series";
-    slices = [this.fill, this.width];
-}
 
 class XAxisSettingsCard extends Card {
     show = new formattingSettings.ToggleSwitch({
@@ -241,6 +241,9 @@ class XAxisSettingsCard extends Card {
         value: { value: "#E1F2F7" },
     });
 
+    public dateFormat: XAxisDateFormat = XAxisDateFormat.TimeOnly;
+    public formatterOptions?: ValueFormatterOptions;
+
     topLevelSlice = this.show;
     name: string = "xAxis";
     displayName: string = "X Axis";
@@ -269,6 +272,8 @@ class YAxisSettingsCard extends Card {
         displayNameKey: "Visual_AxisColor",
         value: { value: "#777777" },
     });
+
+    public formatterOptions?: ValueFormatterOptions;
 
     topLevelSlice = this.show;
     name: string = "yAxis";
@@ -374,24 +379,35 @@ class RunnerCounterSettingsCard extends Card {
 
 
 
-export class PulseChartSettingsModel {
+export class PulseChartSettingsModel extends Model {
+    series = new SeriesSettingsCard();
+    gaps = new GapsSettingsCard();
     popup = new PopupSettingsCard();
     dots = new DotsSettingsCard();
-    gaps = new GapsSettingsCard();
-    series = new SeriesSettingsCard();
     xAxis = new XAxisSettingsCard();
     yAxis = new YAxisSettingsCard();
     playback = new PlaybackSettingsCard();
     runnerCounter = new RunnerCounterSettingsCard();
 
     cards = [
+        this.series,
+        this.gaps,
         this.popup,
         this.dots,
-        this.gaps,
-        this.series,
         this.xAxis,
         this.yAxis,
         this.playback,
         this.runnerCounter,
     ];
+
+    public setLocalizedOptions(localizationManager: ILocalizationManager) {
+        this.setLocalizedDisplayName(xAxisPositionOptions, localizationManager);
+        this.setLocalizedDisplayName(runnerCounterPositionOptions, localizationManager);
+    }
+
+    private setLocalizedDisplayName(options: IEnumMember[], localizationManager: ILocalizationManager) {
+        options.forEach((option: IEnumMember) => {
+            option.displayName = localizationManager.getDisplayName(option.displayName.toString());
+        });
+    }
 }
