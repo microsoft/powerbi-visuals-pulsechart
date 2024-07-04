@@ -24,51 +24,144 @@
  *  THE SOFTWARE.
  */
 
+import powerbi from "powerbi-visuals-api";
 import { BaseType, Selection } from "d3-selection";
+import ISelectionId = powerbi.visuals.ISelectionId;
+import ISelectionManager = powerbi.extensibility.ISelectionManager;
+import { DataPoint } from './models/models';
 
-import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
-import IInteractivityService = interactivityBaseService.IInteractivityService;
-import ISelectionHandler = interactivityBaseService.ISelectionHandler;
+export interface BaseDataPoint {
+    selected: boolean;
+}
 
-import { BehaviorOptions, DataPoint } from "./models/models";
+export interface SelectableDataPoint extends BaseDataPoint {
+    identity: ISelectionId;
+    specificIdentity?: ISelectionId;
+}
 
-export class WebBehavior implements IInteractiveBehavior {
-    private selection: Selection<BaseType, any, BaseType, any>;
-    private selectionHandler: ISelectionHandler;
-    private interactivityService: IInteractivityService<DataPoint>;
-    private hasHighlights: boolean;
-    private onSelectCallback: any;
+export interface BehaviorOptions {
+    dataPoints: DataPoint[];
+    selection: Selection<BaseType, any, BaseType, any>;
+    clearCatcher: Selection<BaseType, any, BaseType, any>;
+    hasHighlights: boolean;
+    onSelectCallback(): void;
+}
 
-    public bindEvents(options: BehaviorOptions, selectionHandler: ISelectionHandler): void {
-        const clearCatcher: Selection<BaseType, any, BaseType, any> = options.clearCatcher;
-        const selection: Selection<BaseType, any, BaseType, any> = this.selection = options.selection;
-        this.onSelectCallback = options.onSelectCallback;
-        this.selectionHandler = selectionHandler;
-        this.interactivityService = options.interactivityService;
-        this.hasHighlights = options.hasHighlights;
+export class Behavior {
+    private selectionManager: ISelectionManager;
+    private options: BehaviorOptions;
 
-        selection.on("click touchstart", function(event: MouseEvent, d: SelectableDataPoint) {
+    constructor(selectionManager: ISelectionManager) {
+        this.selectionManager = selectionManager;
+
+        // When 'Clear selections' item in context menu is clicked, visual should update selection
+        this.selectionManager.registerOnSelectCallback((selectionIds) => {
+            for (const dataPoint of this.options.dataPoints) {
+                dataPoint.selected = this.isDataPointSelected(dataPoint, <ISelectionId[]>selectionIds);
+            }
+
+            if (this.options.onSelectCallback) {
+                this.options.onSelectCallback();
+            }
+
+            // this.renderSelection();
+        });
+    }
+
+    public bindEvents(options: BehaviorOptions): void {
+        this.options = options;
+        this.bindClick();
+        this.bindContextMenu();
+    }
+
+    private bindClick(): void {
+        this.options.selection.on("click touchstart", (event: MouseEvent, d: SelectableDataPoint) => {
             event.preventDefault();
             event.stopPropagation();
-            selectionHandler.handleSelection(d, event.ctrlKey || event.metaKey || event.shiftKey);
-        })
+            this.select(d, event.ctrlKey || event.metaKey || event.shiftKey);
+            this.renderSelection();
+        });
 
-        clearCatcher.on("click touchstart", (event: MouseEvent) => {
+        this.options.clearCatcher.on("click touchstart", (event: MouseEvent) => {
             event.preventDefault();
-            selectionHandler.handleClearSelection();
-        })
+            this.clearSelection();
+        });
     }
 
-    public setSelection(d: SelectableDataPoint): void {
-        this.selectionHandler.handleSelection(d, false);
+    private bindContextMenu(): void {
+        this.options.selection.on("contextmenu", (event: MouseEvent, dataPoint: SelectableDataPoint) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            this.selectionManager.showContextMenu(dataPoint && dataPoint.identity ? dataPoint.identity : {}, {
+                x: event.clientX,
+                y: event.clientY,
+            });
+        });
+
+        this.options.clearCatcher.on("contextmenu", (event: MouseEvent) => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            this.selectionManager.showContextMenu({}, {
+                x: event.clientX,
+                y: event.clientY,
+            });
+        });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    public renderSelection(hasSelection: boolean): void {
-        if (this.onSelectCallback) {
-            this.onSelectCallback();
+
+    public setSelection(dataPoint: SelectableDataPoint, multiSelect?: boolean): void {
+        this.select(dataPoint, multiSelect)
+        this.renderSelection();
+    }
+
+    public clearSelection(): void {
+        this.selectionManager.clear();
+        this.renderSelection();
+    }
+
+    // TODO: check if this method is needed. It looks like it just clears selection
+    public applySelectionStateToData(dataPoints: SelectableDataPoint[], hasHighlights?: boolean): boolean {
+        if (hasHighlights && this.hasSelection) {
+            this.selectionManager.clear();
         }
+
+        const selectedIds: ISelectionId[] = <ISelectionId[]>this.selectionManager.getSelectionIds();
+        for (const dataPoint of dataPoints) {
+            dataPoint.selected = this.isDataPointSelected(dataPoint, selectedIds);
+        }
+
+        return this.hasSelection;
+    }
+
+    public get hasSelection(): boolean {
+        const selectionIds = this.selectionManager.getSelectionIds();
+        return selectionIds.length > 0;
+    }
+
+
+    private select(dataPoint: SelectableDataPoint, multiSelect: boolean): void {
+        const selectionIdsToSelect: ISelectionId[] = [dataPoint.identity];
+        this.selectionManager.select(selectionIdsToSelect, multiSelect);
+    }
+
+    private renderSelection(): void {
+        this.syncSelectionState();
+
+        if (this.options.onSelectCallback) {
+            this.options.onSelectCallback();
+        }
+    }
+
+    private syncSelectionState(): void {
+        const selectedIds: ISelectionId[] = <ISelectionId[]>this.selectionManager.getSelectionIds();
+        for (const dataPoint of this.options.dataPoints) {
+            dataPoint.selected = this.isDataPointSelected(dataPoint, selectedIds);
+        }
+    }
+
+    private isDataPointSelected(dataPoint: SelectableDataPoint, selectedIds: ISelectionId[]): boolean {
+        return selectedIds.some((value: ISelectionId) => value.includes(<ISelectionId>dataPoint.identity));
     }
 }

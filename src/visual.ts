@@ -80,10 +80,6 @@ import { valueFormatter, textMeasurementService, interfaces } from "powerbi-visu
 import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 import TextProperties = interfaces.TextProperties;
 
-import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
-import createInteractivitySelectionService = interactivitySelectionService.createInteractivitySelectionService;
-import IInteractivityService = interactivityBaseService.IInteractivityService;
-
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
 
@@ -102,13 +98,11 @@ import {
     TimeScale,
     PointXY,
     ElementDimensions,
-    IPulseChartInteractiveBehavior,
-    BehaviorOptions
 } from "./models/models";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
 import * as pulseChartUtils from "./utils";
-import { WebBehavior } from "./webBehavior";
+import { Behavior, BehaviorOptions } from "./webBehavior";
 import { Animator } from "./animator";
 import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
 import { PulseChartSettingsModel } from './pulseChartSettingsModel';
@@ -245,11 +239,9 @@ export class Visual implements IVisual {
     }
 
     // eslint-disable-next-line max-lines-per-function
-    public static CONVERTER(
+    public CONVERTER(
         dataView: DataView,
         host: IVisualHost,
-        colorHelper: ColorHelper,
-        interactivityService: IInteractivityService<DataPoint>,
         settings: PulseChartSettingsModel,
     ): ChartData {
         if (!dataView
@@ -439,9 +431,7 @@ export class Visual implements IVisual {
             dataPoints.push(dataPoint);
         }
 
-        if (interactivityService) {
-            interactivityService.applySelectionStateToData(dataPoints);
-        }
+        this.behavior.applySelectionStateToData(dataPoints);
 
         if (dataPoints.length > 0) {
             series.push({
@@ -473,9 +463,8 @@ export class Visual implements IVisual {
         const axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
         const dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
 
-        if (interactivityService) {
-            interactivityService.applySelectionStateToData(dots);
-        }
+        this.behavior.applySelectionStateToData(dots);
+
         return {
             columns: columns,
             dots: dots,
@@ -712,7 +701,7 @@ export class Visual implements IVisual {
     public viewport: IViewport;
     public size: IViewport;
     public handleSelectionTimeout: number;
-    public behavior: IPulseChartInteractiveBehavior;
+    private behavior: Behavior;
     private svg: Selection<any>;
     private chart: Selection<any>;
     private dots: Selection<any>;
@@ -727,7 +716,6 @@ export class Visual implements IVisual {
 
     public host: IVisualHost;
 
-    private interactivityService: IInteractivityService<DataPoint>;
     private localizationManager: ILocalizationManager;
     private formattingSettingsService: FormattingSettingsService;
     private colorHelper: ColorHelper;
@@ -753,8 +741,6 @@ export class Visual implements IVisual {
         this.host = options.host;
         this.localizationManager = this.host.createLocalizationManager();
         this.formattingSettingsService = new FormattingSettingsService(this.localizationManager);
-        this.interactivityService = createInteractivitySelectionService(this.host);
-        this.behavior = new WebBehavior();
 
         this.tooltipService = createTooltipServiceWrapper(
             this.host.tooltipService,
@@ -766,6 +752,7 @@ export class Visual implements IVisual {
             .classed("pulseChart", true);
 
         this.selectionManager = options.host.createSelectionManager();
+        this.behavior = new Behavior(this.selectionManager);
 
         this.gaps = svg.append("g").classed(Visual.Gaps.className, true);
         this.yAxis = svg.append("g").classed(Visual.Y.className, true).classed(Visual.Axis.className, true);
@@ -779,8 +766,6 @@ export class Visual implements IVisual {
         this.animationHandler = new Animator(this, svg);
 
         this.colorHelper = new ColorHelper(this.host.colorPalette);
-        
-        this.renderContextMenu();
     }
 
     public update(options: VisualUpdateOptions): void {
@@ -799,11 +784,9 @@ export class Visual implements IVisual {
         this.setHighContrastModeColors(this.colorHelper);
 
 
-        const pulseChartData: ChartData = Visual.CONVERTER(
+        const pulseChartData: ChartData = this.CONVERTER(
             dataView,
             this.host,
-            this.colorHelper,
-            this.interactivityService,
             this.visualSettings,
         );
 
@@ -867,18 +850,6 @@ export class Visual implements IVisual {
             displayName: value.popupInfo.title,
             value: value.popupInfo.value,
         }];
-    }
-
-    private renderContextMenu() {
-        this.svg.on('contextmenu', (event) => {
-            const dataPoint: any = d3Select(event.target).datum();
-
-            this.selectionManager.showContextMenu((dataPoint && dataPoint.identity) ? dataPoint.identity : {}, {
-                x: event.clientX,
-                y: event.clientY
-            });
-            event.preventDefault();
-        });
     }
 
     private getDataArrayToCompare(data: ChartData): any[] {
@@ -1488,9 +1459,7 @@ export class Visual implements IVisual {
     }
 
     public onClearSelection(): void {
-        if (this.interactivityService) {
-            this.interactivityService.clearSelection();
-        }
+        this.behavior.clearSelection();
         this.chart.selectAll(Visual.Tooltip.selectorName).remove();
     }
 
@@ -1592,7 +1561,7 @@ export class Visual implements IVisual {
             dotSize: number = this.data.settings.dots.size.value,
             isAnimated: boolean = this.animationHandler.isAnimated,
             position: AnimationPosition = this.animationHandler.position,
-            hasSelection: boolean = this.interactivityService.hasSelection(),
+            hasSelection: boolean = this.behavior.hasSelection,
             hasHighlights: boolean = this.data.hasHighlights;
 
         const selection: Selection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
@@ -1628,18 +1597,14 @@ export class Visual implements IVisual {
             .exit()
             .remove();
 
-        if (this.interactivityService) {
-            const behaviorOptions: BehaviorOptions = {
-                behavior: this.behavior,
-                dataPoints: this.data.dots,
-                selection: selectionMerged,
-                clearCatcher: this.svg,
-                interactivityService: this.interactivityService,
-                hasHighlights: this.data.hasHighlights,
-                onSelectCallback: () => this.renderChart(),
-            };
-            this.interactivityService.bind(behaviorOptions);
-        }
+        const behaviorOptions: BehaviorOptions = {
+            dataPoints: this.data.dots,
+            selection: selectionMerged,
+            clearCatcher: this.svg,
+            hasHighlights: this.data.hasHighlights,
+            onSelectCallback: () => this.renderChart(),
+        };
+        this.behavior.bindEvents(behaviorOptions);
 
         this.renderTooltip(selectionMerged);
     }

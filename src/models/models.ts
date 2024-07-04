@@ -1,5 +1,4 @@
 import powerbiVisualsApi from "powerbi-visuals-api";
-import { BaseType, Selection } from "d3-selection";
 import { Axis } from "d3-axis";
 import { ScaleLinear, ScaleTime } from "d3-scale";
 import { Line as d3Line } from "d3-shape";
@@ -10,12 +9,6 @@ import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
 
 import { TooltipEnabledDataPoint } from "powerbi-visuals-utils-tooltiputils";
 
-import { interactivitySelectionService, interactivityBaseService } from "powerbi-visuals-utils-interactivityutils";
-import SelectableDataPoint = interactivitySelectionService.SelectableDataPoint;
-import IInteractiveBehavior = interactivityBaseService.IInteractiveBehavior;
-import IInteractivityService = interactivityBaseService.IInteractivityService;
-import IBehaviorOptions = interactivityBaseService.IBehaviorOptions;
-
 import { legendInterfaces, dataLabelInterfaces } from "powerbi-visuals-utils-chartutils";
 import LabelEnabledDataPoint = dataLabelInterfaces.LabelEnabledDataPoint;
 import LegendData = legendInterfaces.LegendData;
@@ -25,6 +18,7 @@ import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 
 import { Orientation, PointLabelPosition } from "../enum/enums";
 import { PulseChartSettingsModel } from "../pulseChartSettingsModel";
+import { SelectableDataPoint } from "../webBehavior";
 
 // TYPES
 export type GenericScale = TimeScale | LinearScale;
@@ -172,18 +166,6 @@ export interface ElementDimensions {
     y: number;
     width: number;
     height: number;
-}
-
-export interface BehaviorOptions extends IBehaviorOptions<DataPoint> {
-    selection: Selection<BaseType, any, BaseType, any>;
-    clearCatcher: Selection<BaseType, any, BaseType, any>;
-    interactivityService: IInteractivityService<DataPoint>;
-    hasHighlights: boolean;
-    onSelectCallback(): void;
-}
-
-export interface IPulseChartInteractiveBehavior extends IInteractiveBehavior {
-    setSelection(d: DataPoint): void;
 }
 
 export interface TooltipSettings {
