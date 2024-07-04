@@ -6,6 +6,7 @@
 * Update build.yml and code-ql pipelines
 * Migrate to new formatting model
 * Fix not selecting visual when clicking on empty spot
+* Fix npm vulnerabilities
 
 ## 3.0.3
 * Packages update
