@@ -428,7 +428,7 @@ export class Animator {
             runnerCounterValue = runnerCounterformatter.format(runnerCounterValue);
         }
 
-        this.runnerCounterValue = `${this.chart.data.settings.runnerCounter.label} ${runnerCounterValue}`;
+        this.runnerCounterValue = `${this.chart.data.settings.runnerCounter.label.value} ${runnerCounterValue}`;
         this.drawCounterValue();
     }
 

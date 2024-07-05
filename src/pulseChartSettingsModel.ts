@@ -367,7 +367,7 @@ class RunnerCounterSettingsCard extends Card {
         name: "fontColor",
         displayName: "Font Color",
         displayNameKey: "Visual_FontColor",
-        value: { value: "#ffffff" },
+        value: { value: "#777777" },
     });
 
     topLevelSlice = this.show;
