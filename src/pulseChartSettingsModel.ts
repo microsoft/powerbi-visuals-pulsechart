@@ -157,7 +157,7 @@ class PopupSettingsCard extends Card {
     displayName: string = "Popup";
     displayNameKey: string = "Visual_Popup";
     topLevelSlice = this.show;
-    slices = [this.alwaysOnTop, this.width, this.height, this.color, this.fontSize, this.fontColor, this.showTime, this.showTitle, this.timeColor, this.timeFill];
+    slices = [this.alwaysOnTop, this.width, this.height, this.color, this.fontSize, this.fontColor, this.showTime, this.showTitle, this.timeColor, this.timeFill, this.strokeColor];
 }
 
 class DotsSettingsCard extends Card {
