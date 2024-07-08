@@ -102,7 +102,7 @@ import {
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
 import * as pulseChartUtils from "./utils";
-import { Behavior, BehaviorOptions } from "./webBehavior";
+import { Behavior, BehaviorOptions } from "./behavior";
 import { Animator } from "./animator";
 import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
 import { PulseChartSettingsModel } from './pulseChartSettingsModel';
@@ -1587,7 +1587,11 @@ export class Visual implements IVisual {
             .enter()
             .append("circle")
             .merge(selection);
-        selectionMerged.classed(node.className, true);
+
+        selectionMerged
+            .classed(node.className, true)
+            .attr("focusable", true)
+            .attr("tabindex", 0);
 
         selectionMerged
             .attr("cx", (d: DataPoint) => xScale(d.categoryValue))

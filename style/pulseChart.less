@@ -92,4 +92,14 @@
     .animationToEnd {
         cursor: pointer;
     }
+
+    .dot {
+        &:focus {
+            outline: none;
+        }
+
+        &:focus-visible {
+            outline: -webkit-focus-ring-color auto thin;
+        }
+    }
 }

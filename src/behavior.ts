@@ -24,11 +24,11 @@
  *  THE SOFTWARE.
  */
 
-import powerbi from "powerbi-visuals-api";
 import { BaseType, Selection } from "d3-selection";
+import { DataPoint } from './models/models';
+import powerbi from "powerbi-visuals-api";
 import ISelectionId = powerbi.visuals.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
-import { DataPoint } from './models/models';
 
 export interface BaseDataPoint {
     selected: boolean;
@@ -63,8 +63,6 @@ export class Behavior {
             if (this.options.onSelectCallback) {
                 this.options.onSelectCallback();
             }
-
-            // this.renderSelection();
         });
     }
 
@@ -72,6 +70,7 @@ export class Behavior {
         this.options = options;
         this.bindClick();
         this.bindContextMenu();
+        this.bindKeyboardEvents();
     }
 
     private bindClick(): void {
@@ -110,6 +109,17 @@ export class Behavior {
         });
     }
 
+    private bindKeyboardEvents(): void {
+        this.options.selection.on("keydown", (event: KeyboardEvent, dataPoint: SelectableDataPoint) => {
+            if (event.code !== "Enter" && event.code !== "Space") {
+                return;
+            }
+
+            this.select(dataPoint, event.ctrlKey || event.metaKey || event.shiftKey);
+            this.syncSelectionState();
+            this.renderSelection();
+        });
+    }
 
     public setSelection(dataPoint: SelectableDataPoint, multiSelect?: boolean): void {
         this.select(dataPoint, multiSelect)

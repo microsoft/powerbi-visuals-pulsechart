@@ -18,7 +18,7 @@ import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 
 import { Orientation, PointLabelPosition } from "../enum/enums";
 import { PulseChartSettingsModel } from "../pulseChartSettingsModel";
-import { SelectableDataPoint } from "../webBehavior";
+import { SelectableDataPoint } from "../behavior";
 
 // TYPES
 export type GenericScale = TimeScale | LinearScale;
