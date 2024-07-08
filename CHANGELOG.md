@@ -7,6 +7,7 @@
 * Migrate to new formatting model
 * Fix not selecting visual when clicking on empty spot
 * Fix npm vulnerabilities
+* Enable [Sync slicer feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/enable-sync-slicers)
 
 ## 3.0.3
 * Packages update

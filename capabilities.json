@@ -542,5 +542,6 @@
         }
     },
     "supportsHighlight": true,
-    "supportsKeyboardFocus": true
+    "supportsKeyboardFocus": true,
+    "supportsSynchronizingFilterState": true
 }
