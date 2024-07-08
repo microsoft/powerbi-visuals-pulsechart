@@ -543,5 +543,6 @@
     },
     "supportsHighlight": true,
     "supportsKeyboardFocus": true,
-    "supportsSynchronizingFilterState": true
+    "supportsSynchronizingFilterState": true,
+    "supportsMultiVisualSelection": true
 }
