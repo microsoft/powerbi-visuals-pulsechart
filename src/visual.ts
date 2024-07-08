@@ -1706,7 +1706,7 @@ export class Visual implements IVisual {
         if (!this.popupHeight || !d || !d.popupInfo || (this.animationIsPlaying() && !d.selected)) {
             return false;
         }
-        return d.selected;
+        return d.selected || d.highlight;
     }
 
     public animationIsPlaying(): boolean {
