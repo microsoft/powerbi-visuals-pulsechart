@@ -94,12 +94,13 @@
     }
 
     .dot {
-        &:focus {
+        &:focus, &:focus-visible {
             outline: none;
         }
 
         &:focus-visible {
-            outline: -webkit-focus-ring-color auto thin;
+            stroke: rgb(0, 95, 204);
+            stroke-width: 2px;
         }
     }
 }
