@@ -30,17 +30,17 @@ import DataViewMetadata = powerbiVisualsApi.DataViewMetadata;
 import DataViewObject = powerbiVisualsApi.DataViewObject;
 
 export function getCategoryAxisProperties(dataViewMetadata: DataViewMetadata, axisTitleOnByDefault?: boolean): DataViewObject {
-    let toReturn: DataViewObject = {};
+    let axisProperties: DataViewObject = {};
 
     if (!dataViewMetadata) {
-        return toReturn;
+        return axisProperties;
     }
 
     if (dataViewMetadata.objects) {
         const categoryAxisObject: DataViewObject = dataViewMetadata.objects["categoryAxis"];
 
         if (categoryAxisObject) {
-            toReturn = {
+            axisProperties = {
                 show: categoryAxisObject["show"],
                 axisType: categoryAxisObject["axisType"],
                 axisScale: categoryAxisObject["axisScale"],
@@ -56,7 +56,7 @@ export function getCategoryAxisProperties(dataViewMetadata: DataViewMetadata, ax
         }
     }
 
-    return toReturn;
+    return axisProperties;
 }
 
 export function getValueAxisProperties(dataViewMetadata: DataViewMetadata, axisTitleOnByDefault?: boolean): DataViewObject {

@@ -66,6 +66,10 @@ export class Behavior {
         });
     }
 
+    public get isInitialized(): boolean {
+        return this.options != undefined;
+    }
+
     public bindEvents(options: BehaviorOptions): void {
         this.options = options;
         this.bindClick();
@@ -116,7 +120,6 @@ export class Behavior {
             }
 
             this.select(dataPoint, event.ctrlKey || event.metaKey || event.shiftKey);
-            this.syncSelectionState();
             this.renderSelection();
         });
     }

@@ -1466,7 +1466,9 @@ export class Visual implements IVisual {
     }
 
     public onClearSelection(): void {
-        this.behavior.clearSelection();
+        if (this.behavior.isInitialized) {
+            this.behavior.clearSelection();
+        }
         this.chart.selectAll(Visual.Tooltip.selectorName).remove();
     }
 

@@ -26,6 +26,7 @@
 import { BaseType, Selection } from "d3-selection";
 
 import { ChartDataLabelsSettings } from "./models/models";
+import { PointLabelPosition } from "./enum/enums";
 
 export const DimmedOpacity: number = 0.5;
 export const DefaultOpacity: number = 1.0;
@@ -39,11 +40,11 @@ export function getFillOpacity(selected: boolean, highlight: boolean, hasSelecti
 
 export function addOnTouchClick(selection: Selection<BaseType, any, BaseType, any>, callback: (event: any, data: any, index: number) => any): Selection<BaseType, any, BaseType, any> {
     const preventDefaultCallback = (event: any, d: any) => {
-        (event).preventDefault();
-            (event).stopPropagation();
-            const e = selection.nodes();
-            const i = e.indexOf(this);
-            callback(event, d, i);
+        event.preventDefault();
+        event.stopPropagation();
+        const e = selection.nodes();
+        const i = e.indexOf(this);
+        callback(event, d, i);
     };
     return selection
         .on("click", preventDefaultCallback)
@@ -54,7 +55,7 @@ export function addOnTouchClick(selection: Selection<BaseType, any, BaseType, an
 export function getDefaultPulseChartLabelSettings(): ChartDataLabelsSettings {
     return {
         show: false,
-        position: 1, // PointLabelPosition.Above
+        position: PointLabelPosition.Below,
         displayUnits: 0,
         precision: undefined,
         labelColor: "#777777",

@@ -1,12 +1,12 @@
 import powerbi from "powerbi-visuals-api";
 import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
+import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
 import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
 import IEnumMember = powerbi.IEnumMember;
-import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 
 const xAxisPositionOptions: IEnumMember[] = [
     { value: XAxisPosition.Center, displayName: "Visual_Center" },
@@ -17,7 +17,6 @@ const runnerCounterPositionOptions: IEnumMember[] = [
     { value: RunnerCounterPosition[RunnerCounterPosition.TopLeft], displayName: "Visual_TopLeft" },
     { value: RunnerCounterPosition[RunnerCounterPosition.TopRight], displayName: "Visual_TopRight" },
 ];
-
 
 class SeriesSettingsCard extends Card {
     fill = new formattingSettings.ColorPicker({
@@ -41,7 +40,6 @@ class SeriesSettingsCard extends Card {
     descriptionKey: string = "Visual_Series";
     slices = [this.fill, this.width];
 }
-
 
 class GapsSettingsCard extends Card {
     show = new formattingSettings.ToggleSwitch({
@@ -201,8 +199,6 @@ class DotsSettingsCard extends Card {
     displayNameKey: string = "Visual_Dots";
     slices = [this.color, this.minSize, this.maxSize, this.size, this.transparency];
 }
-
-
 
 class XAxisSettingsCard extends Card {
     show = new formattingSettings.ToggleSwitch({
@@ -376,7 +372,6 @@ class RunnerCounterSettingsCard extends Card {
     displayNameKey: string = "Visual_PulseChart_RunnerCounter";
     slices = [this.label, this.position, this.fontSize, this.fontColor];
 }
-
 
 
 export class PulseChartSettingsModel extends Model {
