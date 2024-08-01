@@ -40,10 +40,16 @@ module.exports = (config) => {
     mode: "development",
     browserNoActivityTimeout: 100000,
     browsers: ["ChromeHeadless"],
+    customLaunchers: {
+      ChromeDebugging: {
+        base: "ChromeHeadless",
+        flags: ["--remote-debugging-port=9333"]
+      }
+    },
+    singleRun: true,
     colors: true,
     frameworks: ["jasmine"],
     reporters: ["progress"],
-    singleRun: true,
     plugins: [
       "karma-coverage",
       "karma-typescript",

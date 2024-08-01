@@ -98,6 +98,7 @@ import {
     TimeScale,
     PointXY,
     ElementDimensions,
+    ChartDataLabelsSettings,
 } from "./models/models";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
@@ -238,11 +239,11 @@ export class Visual implements IVisual {
         return filterFunc(dataView.categorical.categories) || filterFunc(dataView.categorical.values);
     }
 
-    // eslint-disable-next-line max-lines-per-function
-    public CONVERTER(
+    public static CONVERTER(
         dataView: DataView,
         host: IVisualHost,
         settings: PulseChartSettingsModel,
+        behavior: Behavior,
     ): ChartData {
         if (!dataView
             || !dataView.categorical
@@ -266,66 +267,62 @@ export class Visual implements IVisual {
             return null;
         }
 
-        const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
-
         const categoryValues: any[] = timeStampColumn.values;
 
         if (!categoryValues || isEmpty(dataView.categorical.values) || !valuesColumn || isEmpty(valuesColumn.values)) {
             return null;
         }
-        const minValuesValue = Math.min.apply(null, valuesColumn.values), maxValuesValue = Math.max.apply(null, valuesColumn.values);
-        const minCategoryValue = Math.min.apply(null, categoryValues), maxCategoryValue = Math.max.apply(null, categoryValues);
-        settings.xAxis.dateFormat =
-            (maxCategoryValue - minCategoryValue < (24 * 60 * 60 * 1000)
-                && new Date(maxCategoryValue).getDate() === new Date(minCategoryValue).getDate())
-                ? XAxisDateFormat.TimeOnly
-                : XAxisDateFormat.DateOnly;
 
-        settings.xAxis.formatterOptions = {
-            value: isScalar ? minCategoryValue : new Date(minCategoryValue),
-            value2: isScalar ? maxCategoryValue : new Date(maxCategoryValue)
-        };
-        settings.yAxis.formatterOptions = {
-            value: minValuesValue,
-            value2: maxValuesValue,
-            format: valueFormatter.getFormatString(valuesColumn.source, null)
-        };
-
-        if (isScalar) {
-            settings.xAxis.formatterOptions.format = valueFormatter.getFormatString(timeStampColumn.source, null);
-        } else {
-            settings.xAxis.formatterOptions.format = Visual.getDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
-        }
+        const minCategoryValue = Math.min.apply(null, categoryValues);
+        const maxCategoryValue = Math.max.apply(null, categoryValues);
+        const isScalar: boolean = Visual.setAxisFormatter(valuesColumn, timeStampColumn, settings, maxCategoryValue, minCategoryValue);
 
         const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
         const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize.value));
         const runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
         settings.popup.width.value = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width.value);
 
-        let minSize: number = settings.dots.minSize.value;
-        let maxSize: number = settings.dots.maxSize.value;
-        if (settings.dots) {
-            minSize = settings.dots.minSize.value;
-            maxSize = settings.dots.maxSize.value;
-        }
-
-        const eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
-            true,
-            columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
-            minSize,
-            maxSize);
-
-        let xAxisCardProperties: DataViewObject = Helpers.getCategoryAxisProperties(dataView.metadata);
-
         const hasDynamicSeries: boolean = !!(timeStampColumn.values && timeStampColumn.source);
+        const dataPointLabelSettings = pulseChartUtils.getDefaultPulseChartLabelSettings();
+        const grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
         const hasHighlights: boolean = !!valuesColumn.highlights;
 
-        const dataPointLabelSettings = pulseChartUtils.getDefaultPulseChartLabelSettings();
+        const series: Series[] = Visual.generateSeries(categoryValues, grouped, settings, columns, timeStampColumn, host, maxCategoryValue, minCategoryValue, dataPointLabelSettings, isScalar, runnerCounterFormatString, hasHighlights, valuesColumn, behavior);
+
+        const xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
+        const valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
+        const valuesMetadataArray: powerbiVisualsApi.DataViewMetadataColumn[] = Visual.extractValuesMetadata(dataView);
+
+        const axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
+        const dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
+
+        behavior.applySelectionStateToData(dots);
+
+        return {
+            columns: columns,
+            dots: dots,
+            series: series,
+            isScalar: isScalar,
+            dataLabelsSettings: dataPointLabelSettings,
+            axesLabels: { x: axesLabels.xAxisLabel, y: axesLabels.yAxisLabel },
+            hasDynamicSeries: hasDynamicSeries,
+            categoryMetadata: timeStampColumn.source,
+            categories: categoryValues,
+            settings: settings,
+            grouped: grouped,
+            hasHighlights: !!valuesColumn.highlights,
+            widthOfXAxisLabel: Visual.DefaultXAxisLabelWidth,
+            widthOfTooltipValueLabel: widthOfTooltipValueLabel,
+            heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
+            runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
+                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize.value))
+        };
+    }
+
+    private static generateSeries(categoryValues: any[], grouped: powerbiVisualsApi.DataViewValueColumnGroup[], settings: PulseChartSettingsModel, columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, host: IVisualHost, maxCategoryValue: any, minCategoryValue: any, dataPointLabelSettings: ChartDataLabelsSettings, isScalar: boolean, runnerCounterFormatString: string, hasHighlights: boolean, valuesColumn: powerbiVisualsApi.DataViewValueColumn, behavior: Behavior) {
         const gapWidths = Visual.getGapWidths(categoryValues);
         const maxGapWidth = Math.max.apply(null, gapWidths);
-
         const firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
-        const grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
         const y_group0Values = grouped[firstGroupIndex]
             && grouped[firstGroupIndex].values[firstValueMeasureIndex]
             && grouped[firstGroupIndex].values[firstValueMeasureIndex].values;
@@ -333,10 +330,38 @@ export class Visual implements IVisual {
             && grouped[secondGroupIndex].values[firstValueMeasureIndex]
             && grouped[secondGroupIndex].values[firstValueMeasureIndex].values;
 
-        const series: Series[] = [];
-        let dataPoints: DataPoint[] = [];
 
-        for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++ , seriesCategoryIndex++) {
+        let minSize: number = settings.dots.minSize.value;
+        let maxSize: number = settings.dots.maxSize.value;
+
+        const eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
+            true,
+            columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
+            minSize,
+            maxSize);
+
+        const series: Series[] = [];
+        const dataPoints: DataPoint[] = Visual.generateDataPoints(timeStampColumn, categoryValues, host, columns, maxCategoryValue, minCategoryValue, settings, gapWidths, maxGapWidth, series, grouped, firstGroupIndex, dataPointLabelSettings, isScalar, y_group0Values, y_group1Values, eventSizeScale, runnerCounterFormatString, hasHighlights, valuesColumn);
+
+        behavior.applySelectionStateToData(dataPoints);
+
+        if (dataPoints.length > 0) {
+            series.push({
+                displayName: <string>grouped[firstGroupIndex].name,
+                lineIndex: series.length,
+                color: settings.series.fill.value.value,
+                data: dataPoints,
+                labelSettings: dataPointLabelSettings,
+                width: settings.series.width.value,
+                widthOfGap: 0
+            });
+        }
+        return series;
+    }
+
+    private static generateDataPoints(timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, categoryValues: any[], host: IVisualHost, columns: DataRoles<powerbiVisualsApi.DataViewCategoryColumn | powerbiVisualsApi.DataViewValueColumn>, maxCategoryValue: any, minCategoryValue: any, settings: PulseChartSettingsModel, gapWidths: number[], maxGapWidth: any, series: Series[], grouped: powerbiVisualsApi.DataViewValueColumnGroup[], firstGroupIndex: number, dataPointLabelSettings: ChartDataLabelsSettings, isScalar: boolean, y_group0Values: powerbiVisualsApi.PrimitiveValue[], y_group1Values: powerbiVisualsApi.PrimitiveValue[], eventSizeScale: LinearScale, runnerCounterFormatString: string, hasHighlights: boolean, valuesColumn: powerbiVisualsApi.DataViewValueColumn) {
+        let dataPoints: DataPoint[] = [];
+        for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++, seriesCategoryIndex++) {
             let categoryValue: string | Date = categoryValues[categoryIndex];
             if (isString(categoryValue)) {
                 const date: Date = new Date(categoryValue);
@@ -430,24 +455,39 @@ export class Visual implements IVisual {
 
             dataPoints.push(dataPoint);
         }
+        return dataPoints;
+    }
 
-        this.behavior.applySelectionStateToData(dataPoints);
+    private static setAxisFormatter(valuesColumn: powerbiVisualsApi.DataViewValueColumn, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, settings: PulseChartSettingsModel, maxCategoryValue: any, minCategoryValue: any) {
+        const minValuesValue = Math.min.apply(null, valuesColumn.values);
+        const maxValuesValue = Math.max.apply(null, valuesColumn.values);
+        const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
 
-        if (dataPoints.length > 0) {
-            series.push({
-                displayName: <string>grouped[firstGroupIndex].name,
-                lineIndex: series.length,
-                color: settings.series.fill.value.value,
-                data: dataPoints,
-                labelSettings: dataPointLabelSettings,
-                width: settings.series.width.value,
-                widthOfGap: 0
-            });
+        settings.xAxis.dateFormat =
+            (maxCategoryValue - minCategoryValue < (24 * 60 * 60 * 1000)
+                && new Date(maxCategoryValue).getDate() === new Date(minCategoryValue).getDate())
+                ? XAxisDateFormat.TimeOnly
+                : XAxisDateFormat.DateOnly;
+
+        settings.xAxis.formatterOptions = {
+            value: isScalar ? minCategoryValue : new Date(minCategoryValue),
+            value2: isScalar ? maxCategoryValue : new Date(maxCategoryValue)
+        };
+        settings.yAxis.formatterOptions = {
+            value: minValuesValue,
+            value2: maxValuesValue,
+            format: valueFormatter.getFormatString(valuesColumn.source, null)
+        };
+
+        if (isScalar) {
+            settings.xAxis.formatterOptions.format = valueFormatter.getFormatString(timeStampColumn.source, null);
+        } else {
+            settings.xAxis.formatterOptions.format = Visual.getDateTimeFormatString(settings.xAxis.dateFormat, timeStampColumn.source.format);
         }
+        return isScalar;
+    }
 
-        xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
-        const valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
-
+    private static extractValuesMetadata(dataView: powerbiVisualsApi.DataView) {
         const values = dataView.categorical.categories;
 
         // Convert to DataViewMetadataColumn
@@ -459,31 +499,7 @@ export class Visual implements IVisual {
                 }
             }
         }
-
-        const axesLabels = Visual.createAxesLabels(xAxisCardProperties, valueAxisProperties, timeStampColumn.source, valuesMetadataArray);
-        const dots: DataPoint[] = Visual.getDataPointsFromSeries(series);
-
-        this.behavior.applySelectionStateToData(dots);
-
-        return {
-            columns: columns,
-            dots: dots,
-            series: series,
-            isScalar: isScalar,
-            dataLabelsSettings: dataPointLabelSettings,
-            axesLabels: { x: axesLabels.xAxisLabel, y: axesLabels.yAxisLabel },
-            hasDynamicSeries: hasDynamicSeries,
-            categoryMetadata: timeStampColumn.source,
-            categories: categoryValues,
-            settings: settings,
-            grouped: grouped,
-            hasHighlights: !!valuesColumn.highlights,
-            widthOfXAxisLabel: Visual.DefaultXAxisLabelWidth,
-            widthOfTooltipValueLabel: widthOfTooltipValueLabel,
-            heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
-            runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize.value))
-        };
+        return valuesMetadataArray;
     }
 
     private static createAxesLabels(categoryAxisProperties: DataViewObject,
@@ -785,13 +801,12 @@ export class Visual implements IVisual {
             this.updateSettings();
             this.setHighContrastModeColors(this.colorHelper);
 
-
-            const pulseChartData: ChartData = this.CONVERTER(
+            const pulseChartData: ChartData = Visual.CONVERTER(
                 dataView,
                 this.host,
                 this.visualSettings,
+                this.behavior,
             );
-
 
             this.updateData(pulseChartData);
 

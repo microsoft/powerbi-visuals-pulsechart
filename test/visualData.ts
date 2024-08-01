@@ -45,9 +45,6 @@ export class VisualData extends TestDataViewBuilder {
     public valuesEvents: any[] = this.generateEvents(this.valuesValue.length, 5);
     public getDataView(columnNames?: string[], isDateAsString?: boolean): powerbiVisualsApi.DataView {
         let dateValues: string[] | Date[] = this.valuesTimestamp;
-        if (!columnNames) {
-            columnNames = [];
-        }
 
         if (isDateAsString) {
             dateValues = dateValues.map((v: Date) => v.toISOString());
@@ -100,10 +97,6 @@ export class VisualData extends TestDataViewBuilder {
     }
 
     public getDataViewWithNumbersInsteadDate(columnNames?: string[], isDateAsString?: boolean): powerbiVisualsApi.DataView {
-        if (!columnNames) {
-            columnNames = [];
-        }
-
         return this.createCategoricalDataViewBuilder([
             {
                 source: {
@@ -143,10 +136,6 @@ export class VisualData extends TestDataViewBuilder {
     }
 
     public getDataViewWithSingleDate(columnNames?: string[]): powerbiVisualsApi.DataView {
-        if (!columnNames) {
-            columnNames = [];
-        }
-
         return this.createCategoricalDataViewBuilder([
             {
                 source: {

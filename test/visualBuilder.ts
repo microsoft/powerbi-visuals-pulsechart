@@ -107,8 +107,8 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
         return this.lineNode.querySelector(".tooltipContainer")!;
     }
 
-    public get tooltipContainerTooltip(): SVGElement {
-        return this.tooltipContainer.querySelector("g.Tooltip")!;
+    public get tooltipContainerTooltip(): SVGElement | null{
+        return this.tooltipContainer.querySelector("g.Tooltip");
     }
 
     public get animationPlay(): SVGElement {
