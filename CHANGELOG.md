@@ -9,6 +9,7 @@
 * Fix npm vulnerabilities
 * Enable [Sync slicer feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/enable-sync-slicers)
 * Enable [the support multiple visual selection feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/supportsmultivisualselection-feature)
+* Add report page tooltip support
 
 ## 3.0.3
 * Packages update
