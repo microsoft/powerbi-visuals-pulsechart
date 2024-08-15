@@ -1,15 +1,20 @@
 ## 3.4.0.0
-* Migrate from tslint to eslint, fix eslint errors
-* Update API to 5.10.0, tools to 5.5.0 and other packages
-* Update README.md to include build status
-* Remove .travis.yml, azure-pipelines.yml
-* Update build.yml and code-ql pipelines
-* Migrate to new formatting model
-* Fix not selecting visual when clicking on empty spot
-* Fix npm vulnerabilities
+### Visual changes
 * Enable [Sync slicer feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/enable-sync-slicers)
 * Enable [the support multiple visual selection feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/supportsmultivisualselection-feature)
 * Add report page tooltip support
+* Fix bug with ignoring of selecting visual when clicking on empty spot
+
+### Code improvements
+* Update API to 5.10.0, tools to 5.5.0 and other packages
+* Migrate to new formatting model
+* Fix npm vulnerabilities
+
+### Other
+* Migrate from tslint to eslint, fix eslint errors
+* Update README.md to include build status
+* Remove .travis.yml, azure-pipelines.yml
+* Update build.yml and code-ql pipelines
 
 ## 3.0.3
 * Packages update
