@@ -100,7 +100,7 @@ import {
     ElementDimensions,
     ChartDataLabelsSettings,
 } from "./models/models";
-import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
+import { XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
 import * as pulseChartUtils from "./utils";
 import { Behavior, BehaviorOptions } from "./behavior";
@@ -797,8 +797,6 @@ export class Visual implements IVisual {
 
             this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
             this.visualSettings.setLocalizedOptions(this.localizationManager);
-
-            this.updateSettings();
             this.setHighContrastModeColors(this.colorHelper);
 
             const pulseChartData: ChartData = Visual.CONVERTER(
@@ -2017,18 +2015,6 @@ export class Visual implements IVisual {
         this.hideAnimationDot();
         this.chart.selectAll(Visual.Line.selectorName).remove();
         this.chart.selectAll(Visual.Dot.selectorName).remove();
-    }
-
-    private updateSettings(): void {
-        // if (typeof this.visualSettings.popup.fontSize.value === "string") {
-        //     this.visualSettings.popup.fontSize.value = parseInt(this.visualSettings.popup.fontSize.value);
-        // }
-
-        if (this.visualSettings.runnerCounter.position?.value?.value == null) {
-            this.visualSettings.runnerCounter.position.value = this.visualSettings.runnerCounter.position.items.find(
-                option => option.value.toString() === RunnerCounterPosition[RunnerCounterPosition.TopLeft]
-            );
-        }
     }
 
     private setHighContrastModeColors(colorHelper: ColorHelper): void {

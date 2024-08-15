@@ -14,8 +14,8 @@ const xAxisPositionOptions: IEnumMember[] = [
 ];
 
 const runnerCounterPositionOptions: IEnumMember[] = [
-    { value: RunnerCounterPosition[RunnerCounterPosition.TopLeft], displayName: "Visual_TopLeft" },
-    { value: RunnerCounterPosition[RunnerCounterPosition.TopRight], displayName: "Visual_TopRight" },
+    { value: RunnerCounterPosition.TopLeft, displayName: "Visual_TopLeft" },
+    { value: RunnerCounterPosition.TopRight, displayName: "Visual_TopRight" },
 ];
 
 class SeriesSettingsCard extends Card {
