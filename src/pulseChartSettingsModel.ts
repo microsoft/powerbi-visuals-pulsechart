@@ -3,6 +3,7 @@ import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
 import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
+import ValidatorType = powerbi.visuals.ValidatorType;
 import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
@@ -85,6 +86,10 @@ class PopupSettingsCard extends Card {
         displayName: "Width",
         displayNameKey: "Visual_Width",
         value: 100,
+        options: {
+            minValue: { value: 10, type: ValidatorType.Min },
+            maxValue: { value: 1000, type: ValidatorType.Max },
+        }
     });
 
     height = new formattingSettings.NumUpDown({
@@ -92,6 +97,10 @@ class PopupSettingsCard extends Card {
         displayName: "Height",
         displayNameKey: "Visual_Height",
         value: 80,
+        options: {
+            minValue: { value: 10, type: ValidatorType.Min },
+            maxValue: { value: 1000, type: ValidatorType.Max },
+        }
     });
 
     color = new formattingSettings.ColorPicker({
