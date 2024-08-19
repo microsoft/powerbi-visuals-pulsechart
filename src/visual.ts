@@ -1955,6 +1955,7 @@ export class Visual implements IVisual {
         descriptionMerged
             .style("fill", this.data.settings.popup.fontColor.value.value)
             .text((d: DataPoint) => d.popupInfo && d.popupInfo.description)
+            .attr("y", 0)
             .each(function () {
                 const node = <SVGTextElement>this;
                 const allowedWidth = width - 2 - Visual.PopupTextPadding * 2;
