@@ -273,8 +273,8 @@ export class Visual implements IVisual {
             return null;
         }
 
-        const minCategoryValue = Math.min.apply(null, categoryValues);
-        const maxCategoryValue = Math.max.apply(null, categoryValues);
+        const minCategoryValue = Math.min(...categoryValues);
+        const maxCategoryValue = Math.max(...categoryValues);
         const isScalar: boolean = Visual.setAxisFormatter(valuesColumn, timeStampColumn, settings, maxCategoryValue, minCategoryValue);
 
         const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
@@ -321,7 +321,7 @@ export class Visual implements IVisual {
 
     private static generateSeries(categoryValues: any[], grouped: powerbiVisualsApi.DataViewValueColumnGroup[], settings: PulseChartSettingsModel, columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, host: IVisualHost, maxCategoryValue: any, minCategoryValue: any, dataPointLabelSettings: ChartDataLabelsSettings, isScalar: boolean, runnerCounterFormatString: string, hasHighlights: boolean, valuesColumn: powerbiVisualsApi.DataViewValueColumn, behavior: Behavior) {
         const gapWidths = Visual.getGapWidths(categoryValues);
-        const maxGapWidth = Math.max.apply(null, gapWidths);
+        const maxGapWidth = Math.max(...gapWidths);
         const firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
         const y_group0Values = grouped[firstGroupIndex]
             && grouped[firstGroupIndex].values[firstValueMeasureIndex]
@@ -459,8 +459,8 @@ export class Visual implements IVisual {
     }
 
     private static setAxisFormatter(valuesColumn: powerbiVisualsApi.DataViewValueColumn, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, settings: PulseChartSettingsModel, maxCategoryValue: any, minCategoryValue: any) {
-        const minValuesValue = Math.min.apply(null, valuesColumn.values);
-        const maxValuesValue = Math.max.apply(null, valuesColumn.values);
+        const minValuesValue = Math.min(...(<number[]>valuesColumn.values));
+        const maxValuesValue = Math.max(...(<number[]>valuesColumn.values));
         const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
 
         settings.xAxis.dateFormat =
@@ -787,7 +787,7 @@ export class Visual implements IVisual {
     public update(options: VisualUpdateOptions): void {
         this.host.eventService.renderingStarted(options);
         try {
-            if (!options || !options.dataViews || !options.dataViews[0]) {
+            if (!options?.dataViews?.[0]) {
                 return;
             }
 
@@ -1510,7 +1510,7 @@ export class Visual implements IVisual {
     private checkTooltipForSelection(position: AnimationPosition) {
         if (!position) {
             return false;
-        } else if (!this.visualSettings || !this.visualSettings.gaps || !this.visualSettings.gaps.show.value) {
+        } else if (!this.visualSettings?.gaps?.show.value) {
             return false;
         }
 
@@ -1614,7 +1614,7 @@ export class Visual implements IVisual {
             .attr("r", (d: DataPoint) => d.eventSize || dotSize)
             .style("fill", dotColor)
             .style("opacity", (d: DataPoint) => {
-                const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, !d.highlight && hasSelection, !d.selected && hasHighlights) === 1;
+                const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, hasSelection, hasHighlights) === 1;
                 return isSelected ? this.dotOpacity : this.dotOpacity / 2;
             })
             .style("cursor", "pointer");

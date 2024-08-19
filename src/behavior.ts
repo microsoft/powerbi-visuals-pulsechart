@@ -134,7 +134,10 @@ export class Behavior {
         this.renderSelection();
     }
 
-    // TODO: check if this method is needed. It looks like it just clears selection
+    /**
+     * Sometimes registering onSelectCallback is not enough to update selection state.
+     * Because it gets empty selectionIds array for some reason.
+     */
     public applySelectionStateToData(dataPoints: SelectableDataPoint[], hasHighlights?: boolean): boolean {
         if (hasHighlights && this.hasSelection) {
             this.selectionManager.clear();

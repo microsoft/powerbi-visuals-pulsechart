@@ -32,7 +32,7 @@ export const DimmedOpacity: number = 0.5;
 export const DefaultOpacity: number = 1.0;
 
 export function getFillOpacity(selected: boolean, highlight: boolean, hasSelection: boolean, hasPartialHighlights: boolean): number {
-    if ((hasPartialHighlights && !highlight) || (hasSelection && !selected)) {
+    if (!selected && !highlight && (hasSelection || hasPartialHighlights)) {
         return DimmedOpacity;
     }
     return DefaultOpacity;
