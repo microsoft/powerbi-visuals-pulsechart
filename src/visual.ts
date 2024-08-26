@@ -278,7 +278,8 @@ export class Visual implements IVisual {
         const isScalar: boolean = Visual.setAxisFormatter(valuesColumn, timeStampColumn, settings, maxCategoryValue, minCategoryValue);
 
         const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
-        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties("lj", settings.popup.fontSize.value));
+        const stringWithHighestAndLowestCharacters = "lj";
+        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties(stringWithHighestAndLowestCharacters, settings.popup.fontSize.value));
         const runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
         settings.popup.width.value = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width.value);
 
