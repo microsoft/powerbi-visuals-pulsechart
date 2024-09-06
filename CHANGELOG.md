@@ -9,6 +9,7 @@
 * Update API to 5.10.0, tools to 5.5.0 and other packages
 * Migrate to new formatting model
 * Fix npm vulnerabilities
+* Remove "coveralls" package
 
 ### Other
 * Migrate from tslint to eslint, fix eslint errors
