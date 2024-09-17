@@ -109,6 +109,24 @@ import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-vis
 import { PulseChartSettingsModel } from './pulseChartSettingsModel';
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 
+
+interface SeriesGenerationOptions {
+    categoryValues: any[];
+    grouped: powerbiVisualsApi.DataViewValueColumnGroup[];
+    settings: PulseChartSettingsModel;
+    columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>;
+    timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn;
+    host: IVisualHost;
+    maxCategoryValue: any;
+    minCategoryValue: any;
+    dataPointLabelSettings: ChartDataLabelsSettings;
+    isScalar: boolean;
+    runnerCounterFormatString: string;
+    hasHighlights: boolean;
+    valuesColumn: powerbiVisualsApi.DataViewValueColumn;
+    behavior: Behavior;
+}
+
 export class Visual implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
         Timestamp: "Timestamp",
@@ -288,7 +306,8 @@ export class Visual implements IVisual {
         const grouped: DataViewValueColumnGroup[] = dataView.categorical.values && dataView.categorical.values.grouped();
         const hasHighlights: boolean = !!valuesColumn.highlights;
 
-        const series: Series[] = Visual.generateSeries(categoryValues, grouped, settings, columns, timeStampColumn, host, maxCategoryValue, minCategoryValue, dataPointLabelSettings, isScalar, runnerCounterFormatString, hasHighlights, valuesColumn, behavior);
+        const options: SeriesGenerationOptions = { categoryValues, grouped, settings, columns, timeStampColumn, host, maxCategoryValue, minCategoryValue, dataPointLabelSettings, isScalar, runnerCounterFormatString, hasHighlights, valuesColumn, behavior };
+        const series: Series[] = Visual.generateSeries(options);
 
         const xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
         const valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
@@ -320,7 +339,24 @@ export class Visual implements IVisual {
         };
     }
 
-    private static generateSeries(categoryValues: any[], grouped: powerbiVisualsApi.DataViewValueColumnGroup[], settings: PulseChartSettingsModel, columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, host: IVisualHost, maxCategoryValue: any, minCategoryValue: any, dataPointLabelSettings: ChartDataLabelsSettings, isScalar: boolean, runnerCounterFormatString: string, hasHighlights: boolean, valuesColumn: powerbiVisualsApi.DataViewValueColumn, behavior: Behavior) {
+    private static generateSeries(options: SeriesGenerationOptions) {
+        const {
+        categoryValues,
+        grouped,
+        settings,
+        columns,
+        timeStampColumn,
+        host,
+        maxCategoryValue,
+        minCategoryValue,
+        dataPointLabelSettings,
+        isScalar,
+        runnerCounterFormatString,
+        hasHighlights,
+        valuesColumn,
+        behavior
+    } = options;
+
         const gapWidths = Visual.getGapWidths(categoryValues);
         const maxGapWidth = Math.max(...gapWidths);
         const firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
@@ -1615,7 +1651,7 @@ export class Visual implements IVisual {
             .attr("r", (d: DataPoint) => d.eventSize || dotSize)
             .style("fill", dotColor)
             .style("opacity", (d: DataPoint) => {
-                const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, hasSelection, hasHighlights) === 1;
+                const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, hasSelection, hasHighlights) === pulseChartUtils.DefaultOpacity;
                 return isSelected ? this.dotOpacity : this.dotOpacity / 2;
             })
             .style("cursor", "pointer");
@@ -1738,8 +1774,8 @@ export class Visual implements IVisual {
             width: number = this.data.settings.popup.width.value,
             height: number = this.data.settings.popup.height.value,
             marginTop: number = Visual.DefaultTooltipSettings.marginTop,
-            showTimeDisplayProperty: string = this.data.settings.popup.showTime.value ? "inherit" : "none",
-            showTitleDisplayProperty: string = this.data.settings.popup.showTitle.value ? "inherit" : "none";
+            timeDisplayProperty: string = this.data.settings.popup.showTime.value ? "inherit" : "none",
+            titleDisplayProperty: string = this.data.settings.popup.showTitle.value ? "inherit" : "none";
 
         const rootSelection: Selection<any> = this.rootSelection;
 
@@ -1864,7 +1900,7 @@ export class Visual implements IVisual {
         timeRectMerged
             .style("fill", this.data.settings.popup.timeFill.value.value)
             .style("stroke", this.data.settings.popup.strokeColor.value.value)
-            .style("display", showTimeDisplayProperty)
+            .style("display", timeDisplayProperty)
             .attr("d", (d: DataPoint) => {
                 const path = [
                     {
@@ -1898,7 +1934,7 @@ export class Visual implements IVisual {
         Visual.APPLY_TEXT_FONT_STYLES(timeMerged, timeFontStyles);
 
         timeMerged
-            .style("display", showTimeDisplayProperty)
+            .style("display", timeDisplayProperty)
             .style("fill", this.data.settings.popup.timeColor.value.value)
             .attr("x", () => width - this.data.widthOfTooltipValueLabel)
             .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
@@ -1915,7 +1951,7 @@ export class Visual implements IVisual {
         Visual.APPLY_TEXT_FONT_STYLES(titleMerged, titleFontStyles);
 
         titleMerged
-            .style("display", showTitleDisplayProperty)
+            .style("display", titleDisplayProperty)
             .style("fill", this.data.settings.popup.fontColor.value.value)
             .attr("x", () => Visual.PopupTextPadding)
             .attr("y", (d: DataPoint) =>
@@ -1934,7 +1970,7 @@ export class Visual implements IVisual {
 
             let descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
             if (d.popupInfo) {
-                shiftY = ((showTitleDisplayProperty && d.popupInfo.title) || (showTimeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
+                shiftY = ((titleDisplayProperty && d.popupInfo.title) || (timeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
             }
 
             return {
