@@ -95,7 +95,7 @@ export class Animator {
     private static runnerCounterShiftY: number = 7;
 
     private get runnerCounterPosition(): RunnerCounterPosition {
-        return <RunnerCounterPosition>this.chart.data.settings.runnerCounter.position.value.value;
+        return <RunnerCounterPosition>this.chart.data.settings.runnerCounter.position?.value?.value || RunnerCounterPosition.TopLeft;
     }
 
     private get maxTextWidthOfRunnerCounterValue(): number {
