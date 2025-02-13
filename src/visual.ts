@@ -31,7 +31,7 @@ import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
 import { axisRight, axisBottom, Axis } from "d3-axis";
 import { Selection as d3Selection, select as d3Select } from "d3-selection";
 import { timeMinute, timeDay } from "d3-time";
-import { scaleLinear, scaleTime } from "d3-scale";
+import { scaleLinear } from "d3-scale";
 import { line as d3Line, curveLinear } from "d3-shape";
 import { easeLinear } from "d3-ease";
 import { timerFlush } from "d3-timer";
@@ -39,7 +39,6 @@ import 'd3-transition';
 
 import mapValues from "lodash-es/mapValues";
 import isEmpty from "lodash-es/isEmpty";
-import isString from "lodash-es/isString";
 import flatten from "lodash-es/flatten";
 import last from "lodash-es/last";
 import isEqual from "lodash-es/isEqual";
@@ -56,12 +55,10 @@ import DataViewValueColumn = powerbiVisualsApi.DataViewValueColumn;
 import DataViewCategoryColumn = powerbiVisualsApi.DataViewCategoryColumn;
 import DataViewMetadataColumn = powerbiVisualsApi.DataViewMetadataColumn;
 import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
-import PrimitiveValue = powerbiVisualsApi.PrimitiveValue;
 import IVisualHost = powerbiVisualsApi.extensibility.visual.IVisualHost;
 import IVisual = powerbiVisualsApi.extensibility.visual.IVisual;
 import VisualConstructorOptions = powerbiVisualsApi.extensibility.visual.VisualConstructorOptions;
 import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdateOptions;
-import ISelectionId = powerbiVisualsApi.visuals.ISelectionId;
 import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
 import VisualTooltipDataItem = powerbiVisualsApi.extensibility.VisualTooltipDataItem;
 import ILocalizationManager = powerbiVisualsApi.extensibility.ILocalizationManager;
@@ -81,12 +78,12 @@ import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 import TextProperties = interfaces.TextProperties;
 
 import { ColorHelper } from "powerbi-visuals-utils-colorutils";
-import { axis as AxisHelper } from "powerbi-visuals-utils-chartutils";
+
+import { createScale, generateSeries, SeriesGenerationOptions } from "./seriesGenerator";
 
 import {
     TooltipSettings,
     ChartData,
-    TooltipData,
     LinearScale,
     Line,
     DataPoint,
@@ -98,7 +95,6 @@ import {
     TimeScale,
     PointXY,
     ElementDimensions,
-    ChartDataLabelsSettings,
 } from "./models/models";
 import { XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
@@ -108,24 +104,6 @@ import { Animator } from "./animator";
 import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-visuals-utils-tooltiputils";
 import { PulseChartSettingsModel } from './pulseChartSettingsModel';
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
-
-
-interface SeriesGenerationOptions {
-    categoryValues: any[];
-    grouped: powerbiVisualsApi.DataViewValueColumnGroup[];
-    settings: PulseChartSettingsModel;
-    columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>;
-    timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn;
-    host: IVisualHost;
-    maxCategoryValue: any;
-    minCategoryValue: any;
-    dataPointLabelSettings: ChartDataLabelsSettings;
-    isScalar: boolean;
-    runnerCounterFormatString: string;
-    hasHighlights: boolean;
-    valuesColumn: powerbiVisualsApi.DataViewValueColumn;
-    behavior: Behavior;
-}
 
 export class Visual implements IVisual {
     public static RoleDisplayNames = <DataRoles<string>>{
@@ -155,7 +133,6 @@ export class Visual implements IVisual {
     private static MinimumTicksToRotate: number = 3;
     private static AxisTickRotateAngle: number = -35;
     private static topShift: number = 20;
-    private static MaxGapCount: number = 100;
     private static DefaultAnimationDuration: number = 250;
     private static ScalarTooltipLabelWidth: number = 60;
     private static DefaultXAxisLabelWidth: number = 70;
@@ -168,40 +145,18 @@ export class Visual implements IVisual {
         timeHeight: 15,
     };
 
-    private static getPopupValueTextProperties(text?: string, fontSizeValue = 12): TextProperties {
+    public static getTextProperties(options: { text?: string; fontSizeValue?: number; bold?: boolean; } = {}): TextProperties {
+        const { text = '', fontSizeValue = 12, bold = false } = options;
+
         return {
             text: text || "",
             fontFamily: "sans-serif",
+            fontWeight: bold ? "bold" : "normal",
             fontSize: fontSizeValue + "px",
         };
     }
 
-    private static getPopupTitleTextProperties(text?: string, fontSizeValue = 12): TextProperties {
-        return {
-            text: text || "",
-            fontFamily: "sans-serif",
-            fontWeight: "bold",
-            fontSize: fontSizeValue + "px",
-        };
-    }
-
-    private static getPopupDescriptionTextProperties(text?: string, fontSizeValue = 12): TextProperties {
-        return {
-            text: text || "",
-            fontFamily: "sans-serif",
-            fontSize: fontSizeValue + "px",
-        };
-    }
-
-    public static GET_RUNNER_COUNTER_TEXT_PROPERTIES(text?: string, fontSizeValue = 12): TextProperties {
-        return {
-            text: text || "",
-            fontFamily: "sans-serif",
-            fontSize: fontSizeValue + "px",
-        };
-    }
-
-    public static CONVERT_TEXT_PROPERTIES_TO_STYLE(textProperties: TextProperties): any {
+    public static CONVERT_TEXT_PROPERTIES_TO_STYLE(textProperties: TextProperties): { "font-family": string; "font-weight": string; "font-size": string; } {
         return {
             "font-family": textProperties.fontFamily,
             "font-weight": textProperties.fontWeight,
@@ -209,7 +164,7 @@ export class Visual implements IVisual {
         };
     }
 
-    public static APPLY_TEXT_FONT_STYLES(selection: Selection<any>, fontStyles: any) {
+    public static APPLY_TEXT_FONT_STYLES(selection: d3Selection<SVGTextElement, any, any, any>, fontStyles: { "font-family": string; "font-weight": string; "font-size": string; }) {
         for (const [key, value] of (<any>Object).entries(fontStyles)) {
             selection.style(key, value);
         }
@@ -295,9 +250,9 @@ export class Visual implements IVisual {
         const maxCategoryValue = Math.max(...categoryValues);
         const isScalar: boolean = Visual.setAxisFormatter(valuesColumn, timeStampColumn, settings, maxCategoryValue, minCategoryValue);
 
-        const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getPopupValueTextProperties()) + Visual.DefaultTooltipLabelPadding;
+        const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getTextProperties()) + Visual.DefaultTooltipLabelPadding;
         const stringWithHighestAndLowestCharacters = "lj";
-        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getPopupDescriptionTextProperties(stringWithHighestAndLowestCharacters, settings.popup.fontSize.value));
+        const heightOfTooltipDescriptionTextLine = textMeasurementService.measureSvgTextHeight(Visual.getTextProperties({ text: stringWithHighestAndLowestCharacters, fontSizeValue: settings.popup.fontSize.value }));
         const runnerCounterFormatString = columns.RunnerCounter && valueFormatter.getFormatString(columns.RunnerCounter.source, null);
         settings.popup.width.value = Math.max(widthOfTooltipValueLabel + 2 * Visual.DefaultTooltipLabelMargin, settings.popup.width.value);
 
@@ -307,7 +262,7 @@ export class Visual implements IVisual {
         const hasHighlights: boolean = !!valuesColumn.highlights;
 
         const options: SeriesGenerationOptions = { categoryValues, grouped, settings, columns, timeStampColumn, host, maxCategoryValue, minCategoryValue, dataPointLabelSettings, isScalar, runnerCounterFormatString, hasHighlights, valuesColumn, behavior };
-        const series: Series[] = Visual.generateSeries(options);
+        const series: Series[] = generateSeries(options);
 
         const xAxisCardProperties = Helpers.getCategoryAxisProperties(dataView.metadata);
         const valueAxisProperties = Helpers.getValueAxisProperties(dataView.metadata);
@@ -335,165 +290,11 @@ export class Visual implements IVisual {
             widthOfTooltipValueLabel: widthOfTooltipValueLabel,
             heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
             runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES("lj", settings.runnerCounter.fontSize.value))
+                Visual.getTextProperties({ text: "lj", fontSizeValue: settings.runnerCounter.fontSize.value }))
         };
     }
 
-    private static generateSeries(options: SeriesGenerationOptions) {
-        const {
-        categoryValues,
-        grouped,
-        settings,
-        columns,
-        timeStampColumn,
-        host,
-        maxCategoryValue,
-        minCategoryValue,
-        dataPointLabelSettings,
-        isScalar,
-        runnerCounterFormatString,
-        hasHighlights,
-        valuesColumn,
-        behavior
-    } = options;
-
-        const gapWidths = Visual.getGapWidths(categoryValues);
-        const maxGapWidth = Math.max(...gapWidths);
-        const firstValueMeasureIndex: number = 0, firstGroupIndex: number = 0, secondGroupIndex = 1;
-        const y_group0Values = grouped[firstGroupIndex]
-            && grouped[firstGroupIndex].values[firstValueMeasureIndex]
-            && grouped[firstGroupIndex].values[firstValueMeasureIndex].values;
-        const y_group1Values = grouped[secondGroupIndex]
-            && grouped[secondGroupIndex].values[firstValueMeasureIndex]
-            && grouped[secondGroupIndex].values[firstValueMeasureIndex].values;
-
-
-        let minSize: number = settings.dots.minSize.value;
-        let maxSize: number = settings.dots.maxSize.value;
-
-        const eventSizeScale: LinearScale = <LinearScale>Visual.createScale(
-            true,
-            columns.EventSize ? [d3Min(<number[]>columns.EventSize.values), d3Max(<number[]>columns.EventSize.values)] : [0, 0],
-            minSize,
-            maxSize);
-
-        const series: Series[] = [];
-        const dataPoints: DataPoint[] = Visual.generateDataPoints(timeStampColumn, categoryValues, host, columns, maxCategoryValue, minCategoryValue, settings, gapWidths, maxGapWidth, series, grouped, firstGroupIndex, dataPointLabelSettings, isScalar, y_group0Values, y_group1Values, eventSizeScale, runnerCounterFormatString, hasHighlights, valuesColumn);
-
-        behavior.applySelectionStateToData(dataPoints);
-
-        if (dataPoints.length > 0) {
-            series.push({
-                displayName: <string>grouped[firstGroupIndex].name,
-                lineIndex: series.length,
-                color: settings.series.fill.value.value,
-                data: dataPoints,
-                labelSettings: dataPointLabelSettings,
-                width: settings.series.width.value,
-                widthOfGap: 0
-            });
-        }
-        return series;
-    }
-
-    private static generateDataPoints(timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, categoryValues: any[], host: IVisualHost, columns: DataRoles<powerbiVisualsApi.DataViewCategoryColumn | powerbiVisualsApi.DataViewValueColumn>, maxCategoryValue: any, minCategoryValue: any, settings: PulseChartSettingsModel, gapWidths: number[], maxGapWidth: any, series: Series[], grouped: powerbiVisualsApi.DataViewValueColumnGroup[], firstGroupIndex: number, dataPointLabelSettings: ChartDataLabelsSettings, isScalar: boolean, y_group0Values: powerbiVisualsApi.PrimitiveValue[], y_group1Values: powerbiVisualsApi.PrimitiveValue[], eventSizeScale: LinearScale, runnerCounterFormatString: string, hasHighlights: boolean, valuesColumn: powerbiVisualsApi.DataViewValueColumn) {
-        let dataPoints: DataPoint[] = [];
-        for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++, seriesCategoryIndex++) {
-            let categoryValue: string | Date = categoryValues[categoryIndex];
-            if (isString(categoryValue)) {
-                const date: Date = new Date(categoryValue);
-
-                if (!isNaN(date.getTime())) {
-                    categoryValue = date;
-                    categoryValues[categoryIndex] = date;
-                }
-            }
-
-            const valueFormatterLocalized = valueFormatter.create({ cultureSelector: host.locale });
-            const value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-            const runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
-            const identity: ISelectionId = host.createSelectionIdBuilder()
-                .withCategory(timeStampColumn, categoryIndex)
-                .createSelectionId();
-
-            const minGapWidth: number = Math.max((maxCategoryValue - minCategoryValue) / Visual.MaxGapCount, <number>settings.xAxis.dateFormat);
-            const gapWidth: number = gapWidths[categoryIndex];
-            const isGap: boolean = settings.gaps.show.value
-                && gapWidth > 0
-                && gapWidth > (minGapWidth + (100 - settings.gaps.transparency.value) * (maxGapWidth - minGapWidth) / 100);
-
-            if (isGap && dataPoints.length > 0) {
-                series.push({
-                    displayName: <string>grouped[firstGroupIndex].name,
-                    lineIndex: series.length,
-                    color: settings.series.fill.value.value,
-                    data: dataPoints,
-                    labelSettings: dataPointLabelSettings,
-                    width: settings.series.width.value,
-                    widthOfGap: gapWidth
-                });
-
-                seriesCategoryIndex = 0;
-                dataPoints = [];
-            }
-
-            // When Scalar, skip null categories and null values so we draw connected lines and never draw isolated dots.
-            if (isScalar && (categoryValue === null || value === null)) {
-                continue;
-            }
-
-            let popupInfo: TooltipData = null;
-            const eventSize: PrimitiveValue = (columns.EventSize && columns.EventSize.values && columns.EventSize.values[categoryIndex]) || 0;
-
-            if ((columns.EventTitle && columns.EventTitle.values && columns.EventTitle.values[categoryIndex]) ||
-                (columns.EventDescription && columns.EventDescription.values && columns.EventDescription.values[categoryIndex])) {
-                let formattedValue = categoryValue;
-
-                if (!isScalar && categoryValue) {
-                    formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale }).format(categoryValue);
-                }
-
-                popupInfo = {
-                    value: formattedValue,
-                    title: columns.EventTitle && columns.EventTitle.values && valueFormatterLocalized.format(columns.EventTitle.values[categoryIndex]),
-                    description: columns.EventDescription && columns.EventDescription.values && valueFormatterLocalized.format(columns.EventDescription.values[categoryIndex]),
-                };
-            }
-            let y_value = <number>(y_group0Values && y_group0Values[categoryIndex]) || <number>(y_group1Values && y_group1Values[categoryIndex]) || 0;
-            if (isNaN(y_value)) {
-                y_value = 0;
-            }
-            let eventSizeValue: number = columns.EventSize ? eventSizeScale(<number>eventSize) : 0;
-            if (isNaN(eventSizeValue)) {
-                eventSizeValue = 0;
-            }
-            const dataPoint: DataPoint = {
-                categoryValue: categoryValue,
-                value: value,
-                categoryIndex: categoryIndex,
-                seriesIndex: series.length,
-                tooltipInfo: null,
-                popupInfo: popupInfo,
-                selected: false,
-                identity: identity,
-                key: JSON.stringify({ ser: identity.getKey(), catIdx: categoryIndex }),
-                labelFill: dataPointLabelSettings.labelColor,
-                labelSettings: dataPointLabelSettings,
-                x: <any>categoryValue,
-                y: y_value,
-                pointColor: settings.series.fill.value.value,
-                groupIndex: Visual.getGroupIndex(categoryIndex, grouped),
-                eventSize: eventSizeValue,
-                runnerCounterValue: runnerCounterValue,
-                runnerCounterFormatString: runnerCounterFormatString,
-                specificIdentity: undefined,
-                highlight: hasHighlights && !!(valuesColumn.highlights[categoryIndex])
-            };
-
-            dataPoints.push(dataPoint);
-        }
-        return dataPoints;
-    }
+    // eslint-disable-next-line max-lines-per-function
 
     private static setAxisFormatter(valuesColumn: powerbiVisualsApi.DataViewValueColumn, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, settings: PulseChartSettingsModel, maxCategoryValue: any, minCategoryValue: any) {
         const minValuesValue = Math.min(...(<number[]>valuesColumn.values));
@@ -647,7 +448,7 @@ export class Visual implements IVisual {
                 maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue,
                 minX: number = originalScale(dataPoints[0].categoryValue),
                 maxX: number = originalScale(dataPoints[dataPoints.length - 1].categoryValue);
-            return Visual.createScale(isScalar, [minValue, maxValue], minX, maxX);
+            return createScale(isScalar, [minValue, maxValue], minX, maxX);
         });
     }
 
@@ -712,41 +513,6 @@ export class Visual implements IVisual {
         }
 
         return values;
-    }
-
-    private static getGroupIndex(index: number, grouped: DataViewValueColumnGroup[]): number {
-        for (let i: number = 0; i < grouped.length; i++) {
-            if (grouped[i].values && grouped[i].values[0] &&
-                grouped[i].values[0].values[index] !== undefined &&
-                grouped[i].values[0].values[index] !== null) {
-                return i;
-            }
-        }
-
-        return 0;
-    }
-
-    private static getGapWidths(values: Date[] | number[]): number[] {
-        const result: number[] = [];
-        for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
-            if (!prevVal || !values[i]) {
-                result.push(0);
-            } else {
-                result.push(<number>values[i] - prevVal);
-            }
-
-            prevVal = <number>values[i];
-        }
-
-        return result;
-    }
-
-    private static createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
-        if (isScalar) {
-            return scaleLinear().domain(<any>domain).range([minX, maxX]);
-        }
-
-        return scaleTime().domain(<any>domain).range([minX, maxX]);
     }
 
     public data: ChartData;
@@ -982,7 +748,7 @@ export class Visual implements IVisual {
     }
 
     public calculateXAxisProperties(width: number) {
-        this.data.xScale = Visual.createScale(
+        this.data.xScale = createScale(
             this.data.isScalar,
             [this.data.categories[0], this.data.categories[this.data.categories.length - 1]],
             0,
@@ -1008,7 +774,7 @@ export class Visual implements IVisual {
 
         let domain: number[] = [];
         this.data.yScales.forEach((scale: LinearScale) => domain = domain.concat(scale.domain()));
-        this.data.commonYScale = <LinearScale>Visual.createScale(
+        this.data.commonYScale = <LinearScale>createScale(
             true,
             [d3Max(domain), d3Min(domain)],
             0,
@@ -1042,7 +808,7 @@ export class Visual implements IVisual {
                 minValue -= offset;
             }
 
-            return Visual.createScale(true, [maxValue, minValue], stepOfHeight * index, stepOfHeight * (index + 1));
+            return createScale(true, [maxValue, minValue], stepOfHeight * index, stepOfHeight * (index + 1));
         });
     }
 
@@ -1930,7 +1696,7 @@ export class Visual implements IVisual {
         const time: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTime.selectorName).data(d => [d]);
         const timeMerged = time.enter().append("text").merge(time);
         timeMerged.classed(Visual.TooltipTime.className, true);
-        const timeFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupValueTextProperties());
+        const timeFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties());
         Visual.APPLY_TEXT_FONT_STYLES(timeMerged, timeFontStyles);
 
         timeMerged
@@ -1940,14 +1706,14 @@ export class Visual implements IVisual {
             .attr("y", (d: DataPoint) => this.isHigherMiddle(d.y, d.groupIndex)
                 ? (-1 * (marginTop + height - Visual.DefaultTooltipSettings.timeHeight + 3))
                 : Visual.DefaultTooltipSettings.timeHeight - 3)
-            .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(Visual.getPopupValueTextProperties(d.popupInfo.value.toString()), this.data.widthOfTooltipValueLabel));
+            .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(Visual.getTextProperties({ text: d.popupInfo.value.toString() }), this.data.widthOfTooltipValueLabel));
 
         const title: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTitle.selectorName).data(d => [d]);
         const titleMerged = title.enter().append("text").merge(title);
         titleMerged
             .classed(Visual.TooltipTitle.className, true);
 
-        const titleFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupTitleTextProperties());
+        const titleFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({bold: true}));
         Visual.APPLY_TEXT_FONT_STYLES(titleMerged, titleFontStyles);
 
         titleMerged
@@ -1962,7 +1728,7 @@ export class Visual implements IVisual {
                 }
                 const maxWidth = width - Visual.PopupTextPadding * 2 -
                     (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - Visual.PopupTextPadding) : 0) - 10;
-                return textMeasurementService.getTailoredTextOrDefault(Visual.getPopupTitleTextProperties(d.popupInfo.title), maxWidth);
+                return textMeasurementService.getTailoredTextOrDefault(Visual.getTextProperties({ text: d.popupInfo.title, bold: true}), maxWidth);
             });
 
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
@@ -1986,7 +1752,7 @@ export class Visual implements IVisual {
         const description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
         const descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(Visual.TooltipDescription.className, true);
-        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getPopupDescriptionTextProperties(null, this.data.settings.popup.fontSize.value));
+        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({text: null, fontSizeValue: this.data.settings.popup.fontSize.value}));
         Visual.APPLY_TEXT_FONT_STYLES(descriptionMerged, descriptionFontStyles);
 
         descriptionMerged

@@ -335,8 +335,7 @@ export class Animator {
             .style("text-anchor", this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end");
 
         if (this.chart.data && this.chart.data.settings) {
-            this.runnerCounterText.style(<any>Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES(null, this.chart.data.settings.runnerCounter.fontSize.value)));
+            this.runnerCounterText.style(<any>Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({ text: null, fontSizeValue: this.chart.data.settings.runnerCounter.fontSize.value})));
             this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor.value.value);
         }
 
