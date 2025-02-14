@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 /*
  *  Power BI Visualizations
  *
@@ -44,14 +43,14 @@ import DataViewValueColumnGroup = powerbiVisualsApi.DataViewValueColumnGroup;
 const MaxGapCount: number = 100;
 
 export interface SeriesGenerationOptions {
-    categoryValues: any[];
+    categoryValues: number[] | Date[];
     grouped: powerbiVisualsApi.DataViewValueColumnGroup[];
     settings: PulseChartSettingsModel;
     columns: DataRoles<powerbiVisualsApi.DataViewValueColumn | powerbiVisualsApi.DataViewCategoryColumn>;
     timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn;
     host: IVisualHost;
-    maxCategoryValue: any;
-    minCategoryValue: any;
+    maxCategoryValue: number;
+    minCategoryValue: number;
     dataPointLabelSettings: ChartDataLabelsSettings;
     isScalar: boolean;
     runnerCounterFormatString: string;
@@ -60,24 +59,23 @@ export interface SeriesGenerationOptions {
     behavior: Behavior;
 }
 
-// eslint-disable-next-line max-lines-per-function
 export function generateSeries(options: SeriesGenerationOptions): Series[] {
     const {
-    categoryValues,
-    grouped,
-    settings,
-    columns,
-    timeStampColumn,
-    host,
-    maxCategoryValue,
-    minCategoryValue,
-    dataPointLabelSettings,
-    isScalar,
-    runnerCounterFormatString,
-    hasHighlights,
-    valuesColumn,
-    behavior
-} = options;
+        categoryValues,
+        grouped,
+        settings,
+        columns,
+        timeStampColumn,
+        host,
+        maxCategoryValue,
+        minCategoryValue,
+        dataPointLabelSettings,
+        isScalar,
+        runnerCounterFormatString,
+        hasHighlights,
+        valuesColumn,
+        behavior
+    } = options;
 
     const gapWidths = getGapWidths(categoryValues);
     const maxGapWidth = Math.max(...gapWidths);
@@ -102,7 +100,7 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
     const series: Series[] = [];
     let dataPoints: DataPoint[] = [];
     for (let categoryIndex = 0, seriesCategoryIndex = 0, len = timeStampColumn.values.length; categoryIndex < len; categoryIndex++, seriesCategoryIndex++) {
-        let categoryValue: string | Date = categoryValues[categoryIndex];
+        let categoryValue = categoryValues[categoryIndex];
         if (isString(categoryValue)) {
             const date: Date = new Date(categoryValue);
 
@@ -114,7 +112,7 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
 
         const valueFormatterLocalized = valueFormatter.create({ cultureSelector: host.locale });
         const value = AxisHelper.normalizeNonFiniteNumber(timeStampColumn.values[categoryIndex]);
-        const runnerCounterValue = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
+        const runnerCounterValue: string = columns.RunnerCounter && columns.RunnerCounter.values && valueFormatterLocalized.format(columns.RunnerCounter.values[categoryIndex]);
         const identity: ISelectionId = host.createSelectionIdBuilder()
             .withCategory(timeStampColumn, categoryIndex)
             .createSelectionId();
@@ -150,10 +148,11 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
 
         if ((columns.EventTitle && columns.EventTitle.values && columns.EventTitle.values[categoryIndex]) ||
             (columns.EventDescription && columns.EventDescription.values && columns.EventDescription.values[categoryIndex])) {
-            let formattedValue = categoryValue;
-
+            let formattedValue: string;
             if (!isScalar && categoryValue) {
                 formattedValue = valueFormatter.create({ format: timeStampColumn.source.format, cultureSelector: host.locale }).format(categoryValue);
+            } else {
+                formattedValue = categoryValue.toString();
             }
 
             popupInfo = {
@@ -182,7 +181,7 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
             key: JSON.stringify({ ser: identity.getKey(), catIdx: categoryIndex }),
             labelFill: dataPointLabelSettings.labelColor,
             labelSettings: dataPointLabelSettings,
-            x: <any>categoryValue,
+            x: Number(categoryValue),
             y: y_value,
             pointColor: settings.series.fill.value.value,
             groupIndex: getGroupIndex(categoryIndex, grouped),
@@ -214,7 +213,7 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
 }
 
 
-function getGapWidths(values: Date[] | number[]): number[] {
+function getGapWidths(values: number[] | Date[]): number[] {
     const result: number[] = [];
     for (let i: number = 0, prevVal: number = 0, length: number = values.length; i < length; i++) {
         if (!prevVal || !values[i]) {
@@ -243,8 +242,8 @@ function getGroupIndex(index: number, grouped: DataViewValueColumnGroup[]): numb
 
 export function createScale(isScalar: boolean, domain: (number | Date)[], minX: number, maxX: number): LinearScale | TimeScale {
     if (isScalar) {
-        return scaleLinear().domain(<any>domain).range([minX, maxX]);
+        return scaleLinear().domain(domain).range([minX, maxX]);
     }
 
-    return scaleTime().domain(<any>domain).range([minX, maxX]);
+    return scaleTime().domain(domain).range([minX, maxX]);
 }

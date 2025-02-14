@@ -1,6 +1,6 @@
 import powerbiVisualsApi from "powerbi-visuals-api";
 import { Axis } from "d3-axis";
-import { ScaleLinear, ScaleTime } from "d3-scale";
+import { NumberValue, ScaleLinear, ScaleTime } from "d3-scale";
 import { Line as d3Line } from "d3-shape";
 
 import DataViewCategoricalColumn = powerbiVisualsApi.DataViewCategoricalColumn;
@@ -24,9 +24,9 @@ import { SelectableDataPoint } from "../behavior";
 export type GenericScale = TimeScale | LinearScale;
 
 // INTERFACES
-export interface Line extends d3Line<PointXY> { }
-export interface LinearScale extends ScaleLinear<any, any> { }
-export interface TimeScale extends ScaleTime<any, any> { }
+export type Line = d3Line<PointXY>
+export type LinearScale = ScaleLinear<number, number, never>
+export type TimeScale = ScaleTime<number, number, never>
 export interface VisualDataLabelsSettings {
     show: boolean;
     showLabelPerSeries?: boolean;
@@ -34,12 +34,11 @@ export interface VisualDataLabelsSettings {
     isSeriesExpanded?: boolean;
     displayUnits?: number;
     showCategory?: boolean;
-    position?: any;
+    position?: PointLabelPosition;
     precision?: number;
     labelColor: string;
     categoryLabelColor?: string;
     fontSize?: number;
-    labelStyle?: any;
 }
 
 export interface PointDataLabelsSettings extends VisualDataLabelsSettings {
@@ -70,7 +69,7 @@ export interface PointXY {
 export interface PrimitiveDataPoint
     extends TooltipEnabledDataPoint, SelectableDataPoint, LabelEnabledDataPoint {
 
-    categoryValue: any;
+    categoryValue: number | Date;
     value: number;
     categoryIndex: number;
     seriesIndex: number;
@@ -84,8 +83,8 @@ export interface DataPoint extends PrimitiveDataPoint, PointXY {
     groupIndex: number;
     popupInfo?: TooltipData;
     eventSize: number;
-    runnerCounterValue: any;
-    runnerCounterFormatString: any;
+    runnerCounterValue: string;
+    runnerCounterFormatString: string;
 }
 
 export interface AxisSettings {
@@ -128,7 +127,7 @@ export interface ChartData {
     defaultSeriesColor?: string;
     categoryData?: PrimitiveDataPoint[];
 
-    categories: any[];
+    categories: number[] | Date[];
     legendData?: LegendData;
 
     grouped: DataViewValueColumnGroup[];
@@ -136,7 +135,7 @@ export interface ChartData {
     xScale?: TimeScale | LinearScale;
     commonYScale?: LinearScale;
     yScales?: LinearScale[];
-    yAxis?: Axis<any>;
+    yAxis?: Axis<NumberValue>;
 
     widthOfXAxisLabel: number;
     widthOfTooltipValueLabel: number;
@@ -147,7 +146,7 @@ export interface ChartData {
 export interface XAxisProperties {
     values: (Date | number)[];
     scale: TimeScale;
-    axis: Axis<any>;
+    axis: Axis<Date | NumberValue>;
     rotate: boolean;
 }
 

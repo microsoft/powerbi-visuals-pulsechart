@@ -24,8 +24,8 @@
  *  THE SOFTWARE.
  */
 
-import { BaseType, Selection } from "d3-selection";
-import { DataPoint } from './models/models';
+import { BaseType, Selection as d3Selection } from "d3-selection";
+import { DataPoint, Series } from './models/models';
 import powerbi from "powerbi-visuals-api";
 import ISelectionId = powerbi.visuals.ISelectionId;
 import ISelectionManager = powerbi.extensibility.ISelectionManager;
@@ -41,8 +41,8 @@ export interface SelectableDataPoint extends BaseDataPoint {
 
 export interface BehaviorOptions {
     dataPoints: DataPoint[];
-    selection: Selection<BaseType, any, BaseType, any>;
-    clearCatcher: Selection<BaseType, any, BaseType, any>;
+    selection: d3Selection<SVGCircleElement, DataPoint, BaseType, Series>;
+    clearCatcher: d3Selection<SVGSVGElement, unknown, null, undefined>;
     hasHighlights: boolean;
     onSelectCallback(): void;
 }

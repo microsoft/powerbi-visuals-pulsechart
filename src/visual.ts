@@ -1,4 +1,3 @@
-/* eslint-disable prefer-const */
 /*
  *  Power BI Visualizations
  *
@@ -29,9 +28,9 @@ import powerbiVisualsApi from "powerbi-visuals-api";
 
 import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
 import { axisRight, axisBottom, Axis } from "d3-axis";
-import { Selection as d3Selection, select as d3Select } from "d3-selection";
+import { Selection as d3Selection, select as d3Select, BaseType } from "d3-selection";
 import { timeMinute, timeDay } from "d3-time";
-import { scaleLinear } from "d3-scale";
+import { NumberValue, scaleLinear } from "d3-scale";
 import { line as d3Line, curveLinear } from "d3-shape";
 import { easeLinear } from "d3-ease";
 import { timerFlush } from "d3-timer";
@@ -63,15 +62,14 @@ import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
 import VisualTooltipDataItem = powerbiVisualsApi.extensibility.VisualTooltipDataItem;
 import ILocalizationManager = powerbiVisualsApi.extensibility.ILocalizationManager;
 
-type Selection<T> = d3Selection<any, T, any, any>;
-
 import * as SVGUtil from "powerbi-visuals-utils-svgutils";
 import IRect = SVGUtil.IRect;
 import manipulation = SVGUtil.manipulation;
-import { axisInterfaces } from "powerbi-visuals-utils-chartutils";
-import IMargin = axisInterfaces.IMargin;
 import ClassAndSelector = SVGUtil.CssConstants.ClassAndSelector;
 import createClassAndSelector = SVGUtil.CssConstants.createClassAndSelector;
+
+import { axisInterfaces } from "powerbi-visuals-utils-chartutils";
+import IMargin = axisInterfaces.IMargin;
 
 import { valueFormatter, textMeasurementService, interfaces } from "powerbi-visuals-utils-formattingutils";
 import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
@@ -95,6 +93,7 @@ import {
     TimeScale,
     PointXY,
     ElementDimensions,
+    TooltipData,
 } from "./models/models";
 import { XAxisDateFormat, XAxisPosition } from './enum/enums';
 import * as Helpers from "./helpers";
@@ -105,8 +104,14 @@ import { createTooltipServiceWrapper, ITooltipServiceWrapper } from "powerbi-vis
 import { PulseChartSettingsModel } from './pulseChartSettingsModel';
 import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel";
 
+type TextStyles = {
+    "font-family": string;
+    "font-size": string; 
+    "font-weight"?: string;
+}
+
 export class Visual implements IVisual {
-    public static RoleDisplayNames = <DataRoles<string>>{
+    public static RoleDisplayNames: DataRoles<string> = {
         Timestamp: "Timestamp",
         Category: "Category",
         Value: "Value",
@@ -156,7 +161,7 @@ export class Visual implements IVisual {
         };
     }
 
-    public static CONVERT_TEXT_PROPERTIES_TO_STYLE(textProperties: TextProperties): { "font-family": string; "font-weight": string; "font-size": string; } {
+    public static CONVERT_TEXT_PROPERTIES_TO_STYLE(textProperties: TextProperties): TextStyles {
         return {
             "font-family": textProperties.fontFamily,
             "font-weight": textProperties.fontWeight,
@@ -164,8 +169,8 @@ export class Visual implements IVisual {
         };
     }
 
-    public static APPLY_TEXT_FONT_STYLES(selection: d3Selection<SVGTextElement, any, any, any>, fontStyles: { "font-family": string; "font-weight": string; "font-size": string; }) {
-        for (const [key, value] of (<any>Object).entries(fontStyles)) {
+    public static APPLY_TEXT_FONT_STYLES(selection: d3Selection<SVGTextElement, DataPoint, SVGGElement, DataPoint>, fontStyles: TextStyles) {
+        for (const [key, value] of (Object).entries(fontStyles)) {
             selection.style(key, value);
         }
     }
@@ -228,7 +233,7 @@ export class Visual implements IVisual {
             return null;
         }
 
-        const columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = <any>mapValues(
+        const columns: DataRoles<DataViewCategoryColumn | DataViewValueColumn> = mapValues(
             Visual.RoleDisplayNames,
             (x, i) => Visual.getCategoricalColumnOfRole(dataView, i)
         );
@@ -236,18 +241,18 @@ export class Visual implements IVisual {
         const valuesColumn: DataViewValueColumn = <DataViewValueColumn>columns.Value;
         const timeStampColumn = <DataViewCategoryColumn>columns.Timestamp;
 
-        if (!timeStampColumn) {
+        if (!timeStampColumn?.source?.type?.dateTime && !timeStampColumn?.source?.type?.numeric) {
             return null;
         }
 
-        const categoryValues: any[] = timeStampColumn.values;
+        const categoryValues: number[] | Date[] = timeStampColumn.values as number[] | Date[];
 
         if (!categoryValues || isEmpty(dataView.categorical.values) || !valuesColumn || isEmpty(valuesColumn.values)) {
             return null;
         }
 
-        const minCategoryValue = Math.min(...categoryValues);
-        const maxCategoryValue = Math.max(...categoryValues);
+        const minCategoryValue = Math.min(...categoryValues.map((x: number | Date) => Number(x)));
+        const maxCategoryValue = Math.max(...categoryValues.map((x: number | Date) => Number(x)));
         const isScalar: boolean = Visual.setAxisFormatter(valuesColumn, timeStampColumn, settings, maxCategoryValue, minCategoryValue);
 
         const widthOfTooltipValueLabel = isScalar ? Visual.ScalarTooltipLabelWidth : Visual.getFullWidthOfDateFormat(timeStampColumn.source.format, Visual.getTextProperties()) + Visual.DefaultTooltipLabelPadding;
@@ -294,9 +299,7 @@ export class Visual implements IVisual {
         };
     }
 
-    // eslint-disable-next-line max-lines-per-function
-
-    private static setAxisFormatter(valuesColumn: powerbiVisualsApi.DataViewValueColumn, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, settings: PulseChartSettingsModel, maxCategoryValue: any, minCategoryValue: any) {
+    private static setAxisFormatter(valuesColumn: powerbiVisualsApi.DataViewValueColumn, timeStampColumn: powerbiVisualsApi.DataViewCategoryColumn, settings: PulseChartSettingsModel, maxCategoryValue: number, minCategoryValue: number) {
         const minValuesValue = Math.min(...(<number[]>valuesColumn.values));
         const maxValuesValue = Math.max(...(<number[]>valuesColumn.values));
         const isScalar: boolean = !(timeStampColumn.source && timeStampColumn.source.type && timeStampColumn.source.type.dateTime);
@@ -377,7 +380,7 @@ export class Visual implements IVisual {
     private static createAxisY(
         commonYScale: LinearScale,
         height: number,
-        formatterOptions: ValueFormatterOptions): Axis<any> {
+        formatterOptions: ValueFormatterOptions): Axis<NumberValue> {
 
         const formatter = valueFormatter.create(formatterOptions);
         const ticks: number = Math.max(2, Math.round(height / 40));
@@ -403,12 +406,12 @@ export class Visual implements IVisual {
         xAxisProperties.length = scales.length;
 
         for (let i: number = 0, rotate = false; i < xAxisProperties.length; i++) {
-            const values = Visual.getXAxisValuesToDisplay(<any>scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
+            const values = Visual.getXAxisValuesToDisplay(scales[i], rotate, isScalar, dateFormat, widthOfXAxisLabel);
 
             if (!rotate
                 && position === XAxisPosition.Bottom
                 && values.length < Visual.MinimumTicksToRotate) {
-                const rotatedValues = Visual.getXAxisValuesToDisplay(<any>scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
+                const rotatedValues = Visual.getXAxisValuesToDisplay(scales[i], true, isScalar, dateFormat, widthOfXAxisLabel);
                 if (rotatedValues.length > values.length) {
                     rotate = true;
                     i = -1;
@@ -441,13 +444,13 @@ export class Visual implements IVisual {
     private static getXAxisScales(
         series: Series[],
         isScalar: boolean,
-        originalScale: any): GenericScale[] {
+        originalScale: GenericScale): GenericScale[] {
         return series.map((seriesElement: Series) => {
-            const dataPoints: DataPoint[] = seriesElement.data,
-                minValue: number | Date = dataPoints[0].categoryValue,
-                maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue,
-                minX: number = originalScale(dataPoints[0].categoryValue),
-                maxX: number = originalScale(dataPoints[dataPoints.length - 1].categoryValue);
+            const dataPoints: DataPoint[] = seriesElement.data;
+            const minValue: number | Date = dataPoints[0].categoryValue;
+            const maxValue: number | Date = dataPoints[dataPoints.length - 1].categoryValue;
+            const minX: number = originalScale(Number(dataPoints[0].categoryValue));
+            const maxX: number = originalScale(Number(dataPoints[dataPoints.length - 1].categoryValue));
             return createScale(isScalar, [minValue, maxValue], minX, maxX);
         });
     }
@@ -458,7 +461,7 @@ export class Visual implements IVisual {
         isScalar: boolean,
         dateFormat: XAxisDateFormat,
         widthOfXAxisLabel: number): (Date | number)[] {
-        const genScale = <any>scale;
+        const genScale = scale;
 
         const tickWidth = rotate
             ? Visual.XAxisTickHeight * (rotate ? Math.abs(Math.sin(Visual.AxisTickRotateAngle * Math.PI / 180)) : 0)
@@ -480,10 +483,10 @@ export class Visual implements IVisual {
 
         let values = [];
         if (isScalar) {
-            values = d3Range(<any>minValue, <any>maxValue, (<any>maxValue - <any>minValue) / (maxTicks * 100));
+            values = d3Range(Number(minValue), Number(maxValue), (Number(maxValue) - Number(minValue)) / (maxTicks * 100));
         } else {
             values = (dateFormat === XAxisDateFormat.TimeOnly ? timeMinute : timeDay)
-                .range(<any>minValue, <any>maxValue);
+                .range(minValue as Date, maxValue as Date);
         }
 
         if (!values.length || last(values) < maxValue) {
@@ -519,18 +522,18 @@ export class Visual implements IVisual {
     public margin: IMargin;
     public viewport: IViewport;
     public size: IViewport;
-    public handleSelectionTimeout: number;
+    public handleSelectionTimeout: NodeJS.Timeout;
     private behavior: Behavior;
-    private svg: Selection<any>;
-    private chart: Selection<any>;
-    private dots: Selection<any>;
-    private yAxis: Selection<any>;
-    private gaps: Selection<any>;
-    private animationDot: Selection<any>;
+    private svg: d3Selection<SVGSVGElement, unknown, null, undefined>;
+    private chart: d3Selection<SVGGElement, unknown, null, undefined>;
+    private dots: d3Selection<SVGGElement, unknown, null, undefined>;
+    private yAxis: d3Selection<SVGGElement, unknown, null, undefined>;
+    private gaps: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationDot: d3Selection<SVGCircleElement, unknown, null, undefined>;
     private lineX: Line;
     private animationHandler: Animator;
-    private rootSelection: Selection<any>;
-    private animationSelection: Selection<any>;
+    private rootSelection: d3Selection<SVGGElement, Series, SVGGElement, unknown>;
+    private animationSelection: d3Selection<SVGPathElement, Series, BaseType, Series>;
     private selectionManager: ISelectionManager;
 
     public host: IVisualHost;
@@ -566,7 +569,7 @@ export class Visual implements IVisual {
             options.element
         );
 
-        const svg: Selection<any> = this.svg = d3Select(options.element)
+        const svg: d3Selection<SVGSVGElement, unknown, null, undefined> = this.svg = d3Select(options.element)
             .append("svg")
             .classed("pulseChart", true);
 
@@ -656,7 +659,7 @@ export class Visual implements IVisual {
         this.data = data;
     }
 
-    private renderTooltip(selection: Selection<any>): void {
+    private renderTooltip(selection: d3Selection<SVGCircleElement, DataPoint, BaseType, Series>): void {
         if (!this.tooltipService) {
             return;
         }
@@ -668,14 +671,14 @@ export class Visual implements IVisual {
         );
     }
 
-    private getTooltipData(value: any): VisualTooltipDataItem[] {
+    private getTooltipData(value: DataPoint): VisualTooltipDataItem[] {
         return [{
             displayName: value.popupInfo.title,
-            value: value.popupInfo.value,
+            value: value.popupInfo.value.toString(),
         }];
     }
 
-    private getDataArrayToCompare(data: ChartData): any[] {
+    private getDataArrayToCompare(data: ChartData): (string | number | Date | null)[] {
         if (!data || !data.series) {
             return null;
         }
@@ -701,7 +704,7 @@ export class Visual implements IVisual {
             return false;
         }
 
-        if (data.categories.some(x => !(x instanceof Date || isNumber(x)))) {
+        if (data.categories.some((x: number | Date) => !(x instanceof Date || isNumber(x)))) {
             return false;
         }
 
@@ -838,7 +841,7 @@ export class Visual implements IVisual {
 
         this.lineX = d3Line<DataPoint>()
             .x((d: DataPoint) => {
-                return xScale(d.categoryValue);
+                return xScale(Number(d.categoryValue));
             })
             .y((d: DataPoint) => {
                 return yScales[d.groupIndex](d.y);
@@ -863,18 +866,15 @@ export class Visual implements IVisual {
     }
 
     private renderXAxis(data: ChartData): void {
-        let axisNodeSelection: Selection<any>,
-            axisNodeUpdateSelection: Selection<any>,
-            axisBoxUpdateSelection: Selection<any>,
-            color: string = data.settings.xAxis.color.value.value,
-            fontColor: string = data.settings.xAxis.fontColor.value.value;
+        const color: string = data.settings.xAxis.color.value.value;
+        const fontColor: string = data.settings.xAxis.fontColor.value.value;
 
-        axisNodeSelection = this.chart
+        const axisNodeSelection = this.chart
             .select(Visual.LineNode.selectorName)
-            .selectAll(Visual.XAxisNode.selectorName);
+            .selectAll<SVGGElement, Series>(Visual.XAxisNode.selectorName);
 
         axisNodeSelection.selectAll("*").remove();
-        axisNodeUpdateSelection = axisNodeSelection.data(data.series);
+        const axisNodeUpdateSelection = axisNodeSelection.data(data.series);
 
         const axisNodeUpdateSelectionMerged = axisNodeUpdateSelection
             .enter()
@@ -886,10 +886,10 @@ export class Visual implements IVisual {
             .each(function (series: Series) {
                 d3Select(this).call(series.xAxisProperties.axis);
             });
-        axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
+
+        const axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
             .selectAll(".tick")
-            .selectAll(".axisBox")
-            .data([[]]);
+            .selectAll<SVGRectElement, never>(".axisBox");
 
         const axisBoxUpdateSelectionMerged = axisBoxUpdateSelection
             .enter()
@@ -947,10 +947,10 @@ export class Visual implements IVisual {
     }
 
     private renderYAxis(data: ChartData): void {
-        let yAxis: Axis<any> = data.yAxis,
-            isShow: boolean = false,
-            color: string = data.settings.yAxis.color.value.value,
-            fontColor: string = data.settings.yAxis.fontColor.value.value;
+        const yAxis: Axis<NumberValue> = data.yAxis;
+        let isShow: boolean = false;
+        let color: string = data.settings.yAxis.color.value.value;
+        let fontColor: string = data.settings.yAxis.fontColor.value.value;
 
         if (this.data &&
             this.data.settings &&
@@ -985,7 +985,7 @@ export class Visual implements IVisual {
             series: Series[] = this.data.series;
 
         this.rootSelection = this.chart
-            .selectAll(Visual.LineNode.selectorName)
+            .selectAll<SVGGElement, Series>(Visual.LineNode.selectorName)
             .data(series);
 
         this.rootSelection
@@ -997,7 +997,7 @@ export class Visual implements IVisual {
             .append("g")
             .merge(this.rootSelection);
 
-        const lineNode: Selection<any> = this.rootSelection;
+        const lineNode: d3Selection<SVGGElement, Series, SVGGElement, unknown> = this.rootSelection;
 
         lineNode.classed(Visual.LineNode.className, true);
 
@@ -1022,12 +1022,12 @@ export class Visual implements IVisual {
     }
 
     private drawLinesStatic(limit: number, isAnimated: boolean): void {
-        const rootSelection: Selection<any> = this.rootSelection;
+        const rootSelection: d3Selection<SVGGElement, Series, SVGGElement, unknown> = this.rootSelection;
 
-        const selection: Selection<any> = rootSelection
+        const selection: d3Selection<SVGPathElement, Series, BaseType, Series> = rootSelection
             .filter((d, index) => !isAnimated || index < limit)
             .select(Visual.LineContainer.selectorName)
-            .selectAll(Visual.Line.selectorName).data(d => [d]);
+            .selectAll<SVGPathElement, Series>(Visual.Line.selectorName).data(d => [d]);
 
         const selectionMerged = selection
             .enter()
@@ -1050,16 +1050,21 @@ export class Visual implements IVisual {
     private drawLinesStaticBeforeAnimation(limit: number) {
         const node: ClassAndSelector = Visual.Line,
             nodeParent: ClassAndSelector = Visual.LineContainer,
-            rootSelection: Selection<any> = this.rootSelection;
+            rootSelection: d3Selection<SVGGElement, Series, SVGGElement, unknown> = this.rootSelection;
 
-        this.animationSelection = rootSelection.filter((d, index) => {
-            return index === limit;
-        }).select(nodeParent.selectorName).selectAll(node.selectorName).data((d: Series) => [d]);
+        this.animationSelection = rootSelection
+            .filter((d, index) => {
+                return index === limit;
+            })
+            .select(nodeParent.selectorName)
+            .selectAll<SVGPathElement, Series>(node.selectorName)
+            .data((d: Series) => [d]);
 
         const animationSelectionMerged = this.animationSelection
             .enter()
             .append("path")
             .merge(this.animationSelection);
+
         animationSelectionMerged.classed(node.className, true);
 
         animationSelectionMerged
@@ -1220,7 +1225,7 @@ export class Visual implements IVisual {
         this.animationDot.style("display", "none");
     }
 
-    private getInterpolation(data: DataPoint[], start: number): any {
+    private getInterpolation(data: DataPoint[], start: number): (t: number) => string {
         if (!this.data) {
             return;
         }
@@ -1345,7 +1350,7 @@ export class Visual implements IVisual {
         }
 
         clearTimeout(this.handleSelectionTimeout);
-        this.handleSelectionTimeout = <any>setTimeout(() => {
+        this.handleSelectionTimeout = setTimeout(() => {
             if (this.animationHandler.animationPlayingIndex !== animationPlayingIndex) {
                 return;
             }
@@ -1381,7 +1386,7 @@ export class Visual implements IVisual {
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
             node: ClassAndSelector = Visual.Dot,
             nodeParent: ClassAndSelector = Visual.DotsContainer,
-            rootSelection: Selection<any> = this.rootSelection,
+            rootSelection: d3Selection<SVGGElement, Series, SVGGElement, unknown> = this.rootSelection,
             dotColor: string = this.data.settings.dots.color.value.value,
             dotSize: number = this.data.settings.dots.size.value,
             isAnimated: boolean = this.animationHandler.isAnimated,
@@ -1389,9 +1394,9 @@ export class Visual implements IVisual {
             hasSelection: boolean = this.behavior.hasSelection,
             hasHighlights: boolean = this.data.hasHighlights;
 
-        const selection: Selection<any> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
+        const selection: d3Selection<SVGCircleElement, DataPoint, BaseType, Series> = rootSelection.filter((d, index) => !isAnimated || index <= position.series)
             .select(nodeParent.selectorName)
-            .selectAll(node.selectorName)
+            .selectAll<SVGCircleElement, TooltipData>(node.selectorName)
             .data((d: Series, seriesIndex: number) => {
                 return filter(d.data, (value: DataPoint, valueIndex: number): boolean => {
                     if (isAnimated && (seriesIndex === position.series) && (valueIndex > position.index)) {
@@ -1412,7 +1417,7 @@ export class Visual implements IVisual {
             .attr("tabindex", 0);
 
         selectionMerged
-            .attr("cx", (d: DataPoint) => xScale(d.categoryValue))
+            .attr("cx", (d: DataPoint) => xScale(Number(d.categoryValue)))
             .attr("cy", (d: DataPoint) => yScales[d.groupIndex](d.y))
             .attr("r", (d: DataPoint) => d.eventSize || dotSize)
             .style("fill", dotColor)
@@ -1439,15 +1444,11 @@ export class Visual implements IVisual {
     }
 
     private renderGaps(data: ChartData): void {
-        let gaps: IRect[],
-            gapsSelection: Selection<any>,
-            gapsSelectionMerged: Selection<any>,
-            gapNodeSelection: Selection<any>,
-            series: Series[] = data.series,
-            isScalar: boolean = data.isScalar,
-            xScale: LinearScale = <LinearScale>data.xScale;
+        const series: Series[] = data.series;
+        const isScalar: boolean = data.isScalar;
+        const xScale: LinearScale = <LinearScale>data.xScale;
 
-        gaps = [{
+        const gaps: IRect[] = [{
             left: -4.5,
             top: -5,
             height: 10,
@@ -1459,10 +1460,11 @@ export class Visual implements IVisual {
             width: 3
         }];
 
-        gapsSelection = this.gaps.selectAll(Visual.Gap.selectorName)
+        const gapsSelection = this.gaps
+            .selectAll<SVGGElement, Series>(Visual.Gap.selectorName)
             .data(series.slice(0, series.length - 1));
 
-        gapsSelectionMerged = gapsSelection
+        const gapsSelectionMerged = gapsSelection
             .enter()
             .append("g")
             .merge(gapsSelection);
@@ -1471,21 +1473,21 @@ export class Visual implements IVisual {
 
         gapsSelectionMerged
             .attr("transform", (seriesElement: Series) => {
-                let x: number,
-                    middleOfGap: number = seriesElement.widthOfGap / 2,
-                    categoryValue: number | Date = seriesElement.data[seriesElement.data.length - 1].categoryValue;
+                let x: number;
+                const middleOfGap: number = seriesElement.widthOfGap / 2;
+                const categoryValue: number | Date = seriesElement.data[seriesElement.data.length - 1].categoryValue;
 
                 if (isScalar) {
                     x = xScale(middleOfGap + <number>categoryValue);
                 } else {
-                    x = xScale(<any>(new Date(middleOfGap + ((<Date>categoryValue).getTime()))));
+                    x = xScale((new Date(middleOfGap + ((<Date>categoryValue).getTime()))));
                 }
 
                 return SVGUtil.manipulation.translate(x, 0);
             });
 
-        gapNodeSelection = gapsSelectionMerged
-            .selectAll(Visual.GapNode.selectorName)
+        const gapNodeSelection: d3Selection<SVGRectElement, SVGUtil.IRect, SVGGElement, Series> = gapsSelectionMerged
+            .selectAll<SVGRectElement, IRect>(Visual.GapNode.selectorName)
             .data(gaps);
 
         const gapNodeSelectionMerged = gapNodeSelection
@@ -1531,7 +1533,6 @@ export class Visual implements IVisual {
         return this.animationHandler.isPlaying;
     }
 
-    // eslint-disable-next-line max-lines-per-function
     private drawTooltips(data: ChartData): void {
         const xScale: LinearScale = <LinearScale>data.xScale,
             yScales: LinearScale[] = <LinearScale[]>data.yScales,
@@ -1543,7 +1544,7 @@ export class Visual implements IVisual {
             timeDisplayProperty: string = this.data.settings.popup.showTime.value ? "inherit" : "none",
             titleDisplayProperty: string = this.data.settings.popup.showTitle.value ? "inherit" : "none";
 
-        const rootSelection: Selection<any> = this.rootSelection;
+        const rootSelection: d3Selection<SVGGElement, Series, SVGGElement, unknown> = this.rootSelection;
 
         const line: Line = d3Line<PointXY>()
             .x((d: PointXY) => d.x)
@@ -1555,7 +1556,9 @@ export class Visual implements IVisual {
             return this.isHigherMiddle(y, groupIndex) ? (-1 * marginTop + Visual.topShift) : this.size.height + marginTop;
         };
 
-        const tooltipRoot: Selection<any> = rootSelection.select(nodeParent.selectorName).selectAll(node.selectorName)
+        const tooltipRoot: d3Selection<SVGGElement, DataPoint, BaseType, Series> = rootSelection
+            .select(nodeParent.selectorName)
+            .selectAll<SVGGElement, DataPoint>(node.selectorName)
             .data(d => {
                 return filter(d.data, (value: DataPoint) => this.isPopupShow(value));
             });
@@ -1574,7 +1577,7 @@ export class Visual implements IVisual {
                 return manipulation.translate(x + d.popupInfo.offsetX, y);
             });
 
-        const tooltipRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipRect.selectorName).data(d => [d]);   
+        const tooltipRect: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipRect.selectorName).data(d => [d]);   
         const tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
@@ -1610,7 +1613,7 @@ export class Visual implements IVisual {
                 return line(points);
             });
 
-        const tooltipTriangle: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTriangle.selectorName).data(d => [d]);
+        const tooltipTriangle: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipTriangle.selectorName).data(d => [d]);
         const tooltipTriangleMerged = tooltipTriangle
             .enter()
             .append("path")
@@ -1638,7 +1641,7 @@ export class Visual implements IVisual {
             })
             .style("stroke-width", "1px");
 
-        const tooltipLine: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipLine.selectorName).data(d => [d]);
+        const tooltipLine: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipLine.selectorName).data(d => [d]);
         const tooltipLineMerged = tooltipLine.enter().append("path").merge(tooltipLine);
         tooltipLineMerged.classed(Visual.TooltipLine.className, true);
         tooltipLineMerged
@@ -1660,7 +1663,7 @@ export class Visual implements IVisual {
                 return line(<DataPoint[]>path);
             });
 
-        const timeRect: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTimeRect.selectorName).data(d => [d]);
+        const timeRect: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipTimeRect.selectorName).data(d => [d]);
         const timeRectMerged = timeRect.enter().append("path").merge(timeRect);
         timeRectMerged.classed(Visual.TooltipTimeRect.className, true);
         timeRectMerged
@@ -1693,7 +1696,7 @@ export class Visual implements IVisual {
                 return line(<DataPoint[]>path);
             });
 
-        const time: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTime.selectorName).data(d => [d]);
+        const time: d3Selection<SVGTextElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGTextElement, DataPoint>(Visual.TooltipTime.selectorName).data(d => [d]);
         const timeMerged = time.enter().append("text").merge(time);
         timeMerged.classed(Visual.TooltipTime.className, true);
         const timeFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties());
@@ -1708,7 +1711,7 @@ export class Visual implements IVisual {
                 : Visual.DefaultTooltipSettings.timeHeight - 3)
             .text((d: DataPoint) => textMeasurementService.getTailoredTextOrDefault(Visual.getTextProperties({ text: d.popupInfo.value.toString() }), this.data.widthOfTooltipValueLabel));
 
-        const title: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipTitle.selectorName).data(d => [d]);
+        const title: d3Selection<SVGTextElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGTextElement, DataPoint>(Visual.TooltipTitle.selectorName).data(d => [d]);
         const titleMerged = title.enter().append("text").merge(title);
         titleMerged
             .classed(Visual.TooltipTitle.className, true);
@@ -1734,7 +1737,7 @@ export class Visual implements IVisual {
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
             let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize.value;
 
-            let descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
+            const descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
             if (d.popupInfo) {
                 shiftY = ((titleDisplayProperty && d.popupInfo.title) || (timeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
             }
@@ -1749,7 +1752,7 @@ export class Visual implements IVisual {
             };
         };
 
-        const description: Selection<any> = tooltipRootMerged.selectAll(Visual.TooltipDescription.selectorName).data(d => [d]);
+        const description: d3Selection<SVGTextElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGTextElement, DataPoint>(Visual.TooltipDescription.selectorName).data(d => [d]);
         const descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(Visual.TooltipDescription.className, true);
         const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({text: null, fontSizeValue: this.data.settings.popup.fontSize.value}));
@@ -1789,9 +1792,9 @@ export class Visual implements IVisual {
             return groupIndex === 0;
         }
 
-        let domain: number[] = this.data.commonYScale.domain(),
-            minValue: number = d3Min(domain),
-            middleValue = Math.abs((d3Max(domain) - minValue) / 2);
+        const domain: number[] = this.data.commonYScale.domain();
+        const minValue: number = d3Min(domain);
+        let middleValue = Math.abs((d3Max(domain) - minValue) / 2);
 
         middleValue = middleValue === 0
             ? middleValue

@@ -23,7 +23,7 @@
  *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  *  THE SOFTWARE.
  */
-import { BaseType, Selection } from "d3-selection";
+import { Selection as d3Selection } from "d3-selection";
 
 import { ChartDataLabelsSettings } from "./models/models";
 import { PointLabelPosition } from "./enum/enums";
@@ -38,13 +38,11 @@ export function getFillOpacity(selected: boolean, highlight: boolean, hasSelecti
     return DefaultOpacity;
 }
 
-export function addOnTouchClick(selection: Selection<BaseType, any, BaseType, any>, callback: (event: any, data: any, index: number) => any): Selection<BaseType, any, BaseType, any> {
-    const preventDefaultCallback = (event: any, d: any) => {
+export function addOnTouchClick(selection: d3Selection<SVGGElement, unknown, null, undefined>, callback: () => void): d3Selection<SVGGElement, unknown, null, undefined> {
+    const preventDefaultCallback = (event: MouseEvent | TouchEvent) => {
         event.preventDefault();
         event.stopPropagation();
-        const e = selection.nodes();
-        const i = e.indexOf(this);
-        callback(event, d, i);
+        callback();
     };
     return selection
         .on("click", preventDefaultCallback)
