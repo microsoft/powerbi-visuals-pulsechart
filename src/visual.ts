@@ -290,7 +290,7 @@ export class Visual implements IVisual {
             widthOfTooltipValueLabel: widthOfTooltipValueLabel,
             heightOfTooltipDescriptionTextLine: heightOfTooltipDescriptionTextLine,
             runnerCounterHeight: textMeasurementService.measureSvgTextHeight(
-                Visual.getTextProperties({ text: "lj", fontSizeValue: settings.runnerCounter.fontSize.value }))
+                Visual.getTextProperties({ text: stringWithHighestAndLowestCharacters, fontSizeValue: settings.runnerCounter.fontSize.value }))
         };
     }
 
