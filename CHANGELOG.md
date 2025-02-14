@@ -10,6 +10,7 @@
 * Migrate to new formatting model
 * Fix npm vulnerabilities
 * Remove "coveralls" package
+* Migrate to eslint v9
 
 ### Other
 * Migrate from tslint to eslint, fix eslint errors
