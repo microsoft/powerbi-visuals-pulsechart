@@ -889,7 +889,8 @@ export class Visual implements IVisual {
 
         const axisBoxUpdateSelection = axisNodeUpdateSelectionMerged
             .selectAll(".tick")
-            .selectAll<SVGRectElement, never>(".axisBox");
+            .selectAll<SVGRectElement, never>(".axisBox")
+            .data([[]]);
 
         const axisBoxUpdateSelectionMerged = axisBoxUpdateSelection
             .enter()
