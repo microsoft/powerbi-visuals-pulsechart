@@ -1588,6 +1588,8 @@ export class Visual implements IVisual {
             .attr("display", (d: DataPoint) => d.popupInfo ? "inherit" : "none")
             .style("fill", this.data.settings.popup.color.value.value)
             .style("stroke", this.data.settings.popup.strokeColor.value.value)
+            .style("stroke-width", this.data.settings.popup.strokeWidth.value + "px")
+            .style("stroke-linecap", "round")
             .attr("d", (d: DataPoint) => {
                 const firstPoint: PointXY = {
                     "x": -2,
@@ -1648,7 +1650,7 @@ export class Visual implements IVisual {
         tooltipLineMerged
             .style("fill", this.data.settings.popup.color.value.value)
             .style("stroke", this.data.settings.popup.strokeColor.value.value || this.data.settings.popup.color.value.value)
-            .style("stroke-width", "1px")
+            .style("stroke-width", this.data.settings.popup.strokeWidth.value + "px")
             .attr("d", (d: DataPoint) => {
                 const path = [
                     {

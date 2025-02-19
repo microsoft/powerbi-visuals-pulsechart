@@ -281,6 +281,11 @@
                             }
                         }
                     }
+                },
+                "strokeWidth": {
+                    "type": {
+                        "numeric": true
+                    }
                 }
             }
         },

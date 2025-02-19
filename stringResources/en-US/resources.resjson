@@ -37,6 +37,7 @@
 	"Visual_PulseChart_TimeColor": "Time color",
 	"Visual_PulseChart_TimeFill": "Time fill",
 	"Visual_PulseChart_StrokeColor": "Stroke color",
+	"Visual_PulseChart_StrokeWidth": "Stroke width",
 	"Visual_MaxFontSize": "Max font size",
 	"Visual_PulseChart_Playback": "Playback",
 	"Visual_PulseChart_Autoplay": "Autoplay",

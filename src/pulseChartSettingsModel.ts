@@ -158,13 +158,24 @@ class PopupSettingsCard extends Card {
         displayName: "Stroke color",
         displayNameKey: "Visual_PulseChart_StrokeColor",
         value: { value: "#010101" },
-    })
+    });
+
+    strokeWidth = new formattingSettings.NumUpDown({
+        name: "strokeWidth",
+        displayName: "Stroke width",
+        displayNameKey: "Visual_PulseChart_StrokeWidth",
+        value: 1,
+        options: {
+            minValue: { value: 1, type: ValidatorType.Min },
+            maxValue: { value: 5, type: ValidatorType.Max },
+        }
+    });
 
     name: string = "popup";
     displayName: string = "Popup";
     displayNameKey: string = "Visual_Popup";
     topLevelSlice = this.show;
-    slices = [this.alwaysOnTop, this.width, this.height, this.color, this.fontSize, this.fontColor, this.showTime, this.showTitle, this.timeColor, this.timeFill, this.strokeColor];
+    slices = [this.alwaysOnTop, this.width, this.height, this.color, this.fontSize, this.fontColor, this.showTime, this.showTitle, this.timeColor, this.timeFill, this.strokeColor, this.strokeWidth];
 }
 
 class DotsSettingsCard extends Card {
