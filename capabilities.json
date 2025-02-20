@@ -270,6 +270,22 @@
                             }
                         }
                     }
+                },
+                "strokeColor": {
+                    "displayName": "Stroke color",
+                    "displayNameKey": "Visual_PulseChart_StrokeColor",
+                    "type": {
+                        "fill": {
+                            "solid": {
+                                "color": true
+                            }
+                        }
+                    }
+                },
+                "strokeWidth": {
+                    "type": {
+                        "numeric": true
+                    }
                 }
             }
         },
@@ -530,5 +546,15 @@
             }]
         }
     },
-    "supportsHighlight": true
+    "tooltips": {
+        "supportedTypes": {
+            "default": true,
+            "canvas": true
+        },
+        "roles": ["tooltips"]
+    },
+    "supportsHighlight": true,
+    "supportsKeyboardFocus": true,
+    "supportsSynchronizingFilterState": true,
+    "supportsMultiVisualSelection": true
 }

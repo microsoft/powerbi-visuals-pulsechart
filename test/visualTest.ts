@@ -29,6 +29,7 @@ import 'd3-transition';
 
 import DataView = powerbiVisualsApi.DataView;
 import IVisualHost = powerbiVisualsApi.extensibility.visual.IVisualHost;
+import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
 
 import { createColorPalette, createVisualHost, renderTimeout, d3Click } from "powerbi-visuals-utils-testutils";
 
@@ -38,8 +39,10 @@ import { VisualData } from "./visualData";
 import { VisualBuilder } from "./visualBuilder";
 import { areColorsEqual } from "./helpers";
 
-import { ChartData } from "../src/models/models";
+import { ChartData, DataPoint } from "../src/models/models";
 import { Visual as VisualClass } from "../src/visual";
+import { PulseChartSettingsModel } from "../src/pulseChartSettingsModel";
+import { Behavior } from "../src/behavior";
 
 const DefaultTimeout: number = 500;
 
@@ -63,7 +66,7 @@ describe("PulseChartTests", () => {
 
         it("update", (done) => {
             visualBuilder.updateRenderTimeout(dataView, () => {
-                expect(visualBuilder.mainElement.querySelector("g.y.axis").querySelector("g.tick")).toBeDefined();
+                expect(visualBuilder.mainElement.querySelector("g.y.axis")!.querySelector("g.tick")).toBeDefined();
                 expect(visualBuilder.animationDot).toBeDefined();
                 expect(visualBuilder.lineContainer.querySelector("path.line")).toBeDefined();
                 expect(visualBuilder.tooltipContainer).toBeDefined();
@@ -75,7 +78,7 @@ describe("PulseChartTests", () => {
             beforeEach(() => {
                 dataView.metadata.objects = {
                     popup: {
-                        show: true
+                        show: { value: true }
                     }
                 };
             });
@@ -100,7 +103,6 @@ describe("PulseChartTests", () => {
                 d3Click(clickPoint, 5, 5);
 
                 setTimeout(() => {
-                    debugger;
                     const timeRectWidth: number = (<HTMLElement>d3Select(".tooltipTimeRect").node()).getBoundingClientRect().width,
                         dataWidth: number = (<HTMLElement>d3Select(".tooltipTime").node()).getBoundingClientRect().width;
 
@@ -114,7 +116,7 @@ describe("PulseChartTests", () => {
             it("duplicate values", (done) => {
                 visualBuilder.viewport.width = 2000;
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    let tickTextValues: string[] = Array.from(visualBuilder.xAxisNodeTick.querySelectorAll("text")).map(x => x.textContent);
+                    let tickTextValues: (string | null)[] = Array.from(visualBuilder.xAxisNodeTick.querySelectorAll("text")).map(x => x.textContent);
                     for (let i = 0; i < tickTextValues.length - 1; i++) {
                         expect(tickTextValues[i]).not.toEqual(tickTextValues[i + 1]);
                     }
@@ -125,25 +127,27 @@ describe("PulseChartTests", () => {
         });
 
         describe("playback", () => {
-            let originalTimeout;
+            let originalTimeout: number;
 
             beforeEach(() => {
                 originalTimeout = jasmine.DEFAULT_TIMEOUT_INTERVAL;
-                jasmine.DEFAULT_TIMEOUT_INTERVAL = 100000;
+                jasmine.DEFAULT_TIMEOUT_INTERVAL = 100_000;
             });
 
             it("autoplay position set", (done) => {
+                if (dataView.categorical == null) dataView.categorical = {};
+                if (dataView.categorical.categories == null) dataView.categorical.categories = [];
                 dataView.metadata.objects = {
                     playback: {
                         autoplay: true,
                         position: {
                             series: 0,
                             index: dataView.categorical.categories[0].values.length / 2
-                        }
+                        },
                     }
                 };
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    let pathElem: SVGElement = visualBuilder.lineContainer.querySelector("path.line");
+                    let pathElem: SVGElement = visualBuilder.lineContainer.querySelector("path.line")!;
                     let pathWidth: number = pathElem.getBoundingClientRect().width;
 
                     expect(pathWidth).toBeGreaterThan(30);
@@ -154,7 +158,7 @@ describe("PulseChartTests", () => {
             it("repeat animation", (done) => {
                 dataView.metadata.objects = {
                     playback: {
-                        repeat: true
+                        repeat: true,
                     }
                 };
 
@@ -171,6 +175,8 @@ describe("PulseChartTests", () => {
             });
 
             it("popup is hidden when pressing play during pause", (done) => {
+                if (dataView.categorical == null) dataView.categorical = {};
+                if (dataView.categorical.categories == null) dataView.categorical.categories = [];
                 let eventIndex: number = dataView.categorical.categories[1].values
                     .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[0].index;
                 dataView.metadata.objects = {
@@ -179,19 +185,19 @@ describe("PulseChartTests", () => {
                         position: {
                             series: 0,
                             index: eventIndex - 1
-                        }
+                        },
                     }
                 };
 
                 visualBuilder.updateRenderTimeout(dataView, () => {
                     d3Click(visualBuilder.animationNext, 5, 5);
                     renderTimeout(() => {
-                        let popup: SVGElement = visualBuilder.tooltipContainerTooltip;
+                        const popup: SVGElement | null = visualBuilder.tooltipContainerTooltip;
                         expect(popup).toBeDefined();
                         d3Click(visualBuilder.animationPlay, 5, 5);
                         renderTimeout(() => {
-                            let popup = visualBuilder.tooltipContainerTooltip;
-                            expect(popup).toBe(null);
+                            const popup = visualBuilder.tooltipContainerTooltip;
+                            expect(popup).toBeNull();
                             done();
                         }, DefaultTimeout);
                     }, DefaultTimeout);
@@ -199,6 +205,8 @@ describe("PulseChartTests", () => {
             });
 
             it("popup is vissible when pressing next", (done) => {
+                if (dataView.categorical == null) dataView.categorical = {};
+                if (dataView.categorical.categories == null) dataView.categorical.categories = [];
                 let eventIndex: number = dataView.categorical.categories[1].values
                     .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[1].index;
                 dataView.metadata.objects = {
@@ -207,7 +215,7 @@ describe("PulseChartTests", () => {
                         position: {
                             series: 0,
                             index: eventIndex
-                        }
+                        },
                     }
                 };
 
@@ -223,6 +231,8 @@ describe("PulseChartTests", () => {
 
 
             it("popup is visible when pressing prev", (done) => {
+                if (dataView.categorical == null) dataView.categorical = {};
+                if (dataView.categorical.categories == null) dataView.categorical.categories = [];
                 let eventIndex: number = dataView.categorical.categories[1].values
                     .map((x, i) => <any>{ value: x, index: i }).filter(x => x.value)[2].index;
                 dataView.metadata.objects = {
@@ -231,7 +241,7 @@ describe("PulseChartTests", () => {
                         position: {
                             series: 0,
                             index: eventIndex
-                        }
+                        },
                     }
                 };
 
@@ -244,7 +254,7 @@ describe("PulseChartTests", () => {
                                 renderTimeout(() => {
                                     d3Click(visualBuilder.animationPrev, 5, 5);
                                     renderTimeout(() => {
-                                        let popup: SVGElement = visualBuilder.tooltipContainerTooltip;
+                                        const popup: SVGElement | null = visualBuilder.tooltipContainerTooltip;
                                         expect(popup).toBeDefined();
                                         done();
                                     }, DefaultTimeout);
@@ -307,32 +317,36 @@ describe("PulseChartTests", () => {
 
     describe("PulseChart.converter", () => {
         let colorHelper: ColorHelper;
+        let host: IVisualHost = createVisualHost({});
+        let defaultSettings: PulseChartSettingsModel = new PulseChartSettingsModel();
+        let selectionManager: ISelectionManager = host.createSelectionManager();
+        let behavior: Behavior = new Behavior(selectionManager);
 
         beforeEach(() => {
-            dataViewForCategoricalColumn = defaultDataViewBuilder.getDataView(null, true);
-
+            dataViewForCategoricalColumn = defaultDataViewBuilder.getDataView(undefined, true);
             colorHelper = new ColorHelper(createColorPalette());
+
+            host = createVisualHost({});
+            defaultSettings = new PulseChartSettingsModel();
+            selectionManager = host.createSelectionManager();
+            behavior = new Behavior(selectionManager);
         });
 
         it("date values provided as string should be converted to Date type", () => {
-            let host: IVisualHost = createVisualHost();
-
-            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, colorHelper, null);
+            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, defaultSettings, behavior);
 
             expect(convertedData.categories.every(d => d instanceof Date)).toBeTruthy();
         });
 
         it("values provided as string should be processed as zero values", () => {
-            let host: IVisualHost = createVisualHost();
-            dataViewForCategoricalColumn.categorical.values["0"].values[12] = "<scrutp> test test non number value";
-            dataViewForCategoricalColumn.categorical.values["0"].values[18] = ">>> #$%^$^scrutp> test test non number value";
-            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, colorHelper, null);
+            dataViewForCategoricalColumn!.categorical!.values!["0"].values[12] = "<scrutp> test test non number value";
+            dataViewForCategoricalColumn!.categorical!.values!["0"].values[18] = ">>> #$%^$^scrutp> test test non number value";
+            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, defaultSettings, behavior);
             expect(convertedData.series["0"].data.every(d => !isNaN(d.y))).toBeTruthy();
         });
 
         it("EventSize provided as string should be processed as zero values", () => {
-            let host: IVisualHost = createVisualHost();
-            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, colorHelper, null);
+            let convertedData: ChartData = VisualClass.CONVERTER(dataViewForCategoricalColumn, host, defaultSettings, behavior);
             expect(convertedData.series["0"].data.every(d => !isNaN(d.eventSize))).toBeTruthy();
         });
 
@@ -385,14 +399,14 @@ describe("PulseChartTests", () => {
             visual.data = <any>{
                 settings: {
                     popup: {
-                        show: true,
-                        height: 100
+                        show: { value: true },
+                        height: { value: 100 }
                     }
                 }
             };
 
             visualBuilder.visualInstance.animationIsPlaying = () => false;
-            let result = visualBuilder.visualInstance.isPopupShow(<any>{ popupInfo: {}, selected: true });
+            let result = visualBuilder.visualInstance.isPopupShow(<DataPoint>{ popupInfo: {}, selected: true });
             expect(result).toBeTruthy();
         });
     });
@@ -443,7 +457,7 @@ describe("PulseChartTests", () => {
 
             it("should use theme foreground color as stroke of line", (done) => {
                 visualBuilder.updateRenderTimeout(dataView, () => {
-                    expect(isColorAppliedToElements([visualBuilder.linePath], null, "stroke"));
+                    expect(isColorAppliedToElements([visualBuilder.linePath], undefined, "stroke"));
 
                     done();
                 });

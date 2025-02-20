@@ -48,7 +48,7 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     }
 
     public get mainElement(): SVGElement {
-        return this.element.querySelector(".pulseChart");
+        return this.element.querySelector(".pulseChart")!;
     }
     public get gaps(): NodeListOf<SVGElement> {
         return this.mainElement
@@ -56,28 +56,27 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     }
 
     public get animationDot(): SVGElement {
-        return this.mainElement
-            .querySelector("circle.animationDot");
+        return this.mainElement.querySelector("circle.animationDot")!;
     }
 
     public get chart(): SVGElement {
-        return this.mainElement.querySelector("g.chart");
+        return this.mainElement.querySelector("g.chart")!;
     }
 
     public get lineNode(): SVGElement {
-        return this.chart.querySelector("g.lineNode");
+        return this.chart.querySelector("g.lineNode")!;
     }
 
     public get lineContainer(): SVGElement {
-        return this.lineNode.querySelector("g.lineContainer");
+        return this.lineNode.querySelector("g.lineContainer")!;
     }
 
     public get linePath(): SVGElement {
-        return this.lineContainer.querySelector("path.line");
+        return this.lineContainer.querySelector("path.line")!;
     }
 
     public get dotsContainer(): SVGElement {
-        return this.lineNode.querySelector("g.dotsContainer");
+        return this.lineNode.querySelector("g.dotsContainer")!;
     }
 
     public get dotsContainerDot(): NodeListOf<SVGElement> {
@@ -85,11 +84,11 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     }
 
     public get xAxisNode(): SVGElement {
-        return this.lineNode.querySelector("g.xAxisNode");
+        return this.lineNode.querySelector("g.xAxisNode")!;
     }
 
     public get xAxisNodeTick(): SVGElement {
-        return this.xAxisNode.querySelector("g.tick");
+        return this.xAxisNode.querySelector("g.tick")!;
     }
 
     public get xAxisNodeRect(): NodeListOf<SVGElement> {
@@ -97,7 +96,7 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     }
 
     public get yAxis(): SVGElement {
-        return this.mainElement.querySelector("g.y.axis");
+        return this.mainElement.querySelector("g.y.axis")!;
     }
 
     public get yAxisTicks(): NodeListOf<SVGElement> {
@@ -105,25 +104,22 @@ export class VisualBuilder extends VisualBuilderBase<VisualClass> {
     }
 
     public get tooltipContainer(): SVGElement {
-        return this.lineNode.querySelector(".tooltipContainer");
+        return this.lineNode.querySelector(".tooltipContainer")!;
     }
 
-    public get tooltipContainerTooltip(): SVGElement {
+    public get tooltipContainerTooltip(): SVGElement | null{
         return this.tooltipContainer.querySelector("g.Tooltip");
     }
 
     public get animationPlay(): SVGElement {
-        return this.mainElement
-            .querySelector("g.animationPlay");
+        return this.mainElement.querySelector("g.animationPlay")!;
     }
 
     public get animationPrev(): SVGElement {
-        return this.mainElement
-            .querySelector("g.animationPrev");
+        return this.mainElement.querySelector("g.animationPrev")!;
     }
 
     public get animationNext(): SVGElement {
-        return this.mainElement
-            .querySelector("g.animationNext");
+        return this.mainElement.querySelector("g.animationNext")!;
     }
 }

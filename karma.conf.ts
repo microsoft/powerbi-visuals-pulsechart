@@ -33,17 +33,23 @@ const path = require("path");
 const testRecursivePath = "test/visualTest.ts";
 const srcOriginalRecursivePath = "src/**/*.ts";
 
-process.env.CHROME_BIN = require("puppeteer").executablePath();
+process.env.CHROME_BIN = require("playwright-chromium").chromium.executablePath();
 
 module.exports = (config) => {
   config.set({
     mode: "development",
     browserNoActivityTimeout: 100000,
     browsers: ["ChromeHeadless"],
+    customLaunchers: {
+      ChromeDebugging: {
+        base: "ChromeHeadless",
+        flags: ["--remote-debugging-port=9333"]
+      }
+    },
+    singleRun: true,
     colors: true,
     frameworks: ["jasmine"],
     reporters: ["progress"],
-    singleRun: true,
     plugins: [
       "karma-coverage",
       "karma-typescript",
