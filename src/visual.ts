@@ -602,7 +602,6 @@ export class Visual implements IVisual {
             const dataView: DataView = options.dataViews[0];
 
             this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
-            this.visualSettings.setLocalizedOptions(this.localizationManager);
             this.setHighContrastModeColors(this.colorHelper);
 
             const pulseChartData: ChartData = Visual.CONVERTER(

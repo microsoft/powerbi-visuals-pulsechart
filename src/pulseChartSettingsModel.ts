@@ -1,5 +1,5 @@
 import powerbi from "powerbi-visuals-api";
-import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
+import { formattingSettings, formattingSettingsInterfaces } from "powerbi-visuals-utils-formattingmodel";
 import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
@@ -7,16 +7,16 @@ import ValidatorType = powerbi.visuals.ValidatorType;
 import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
-import IEnumMember = powerbi.IEnumMember;
+import ILocalizedItemMember = formattingSettingsInterfaces.ILocalizedItemMember;
 
-const xAxisPositionOptions: IEnumMember[] = [
-    { value: XAxisPosition.Center, displayName: "Visual_Center" },
-    { value: XAxisPosition.Bottom, displayName: "Visual_Bottom" },
+const xAxisPositionOptions: ILocalizedItemMember[] = [
+    { value: XAxisPosition.Center, displayNameKey: "Visual_Center" },
+    { value: XAxisPosition.Bottom, displayNameKey: "Visual_Bottom" },
 ];
 
-const runnerCounterPositionOptions: IEnumMember[] = [
-    { value: RunnerCounterPosition.TopLeft, displayName: "Visual_TopLeft" },
-    { value: RunnerCounterPosition.TopRight, displayName: "Visual_TopRight" },
+const runnerCounterPositionOptions: ILocalizedItemMember[] = [
+    { value: RunnerCounterPosition.TopLeft, displayNameKey: "Visual_TopLeft" },
+    { value: RunnerCounterPosition.TopRight, displayNameKey: "Visual_TopRight" },
 ];
 
 class SeriesSettingsCard extends Card {
@@ -414,15 +414,4 @@ export class PulseChartSettingsModel extends Model {
         this.playback,
         this.runnerCounter,
     ];
-
-    public setLocalizedOptions(localizationManager: ILocalizationManager) {
-        this.setLocalizedDisplayName(xAxisPositionOptions, localizationManager);
-        this.setLocalizedDisplayName(runnerCounterPositionOptions, localizationManager);
-    }
-
-    private setLocalizedDisplayName(options: IEnumMember[], localizationManager: ILocalizationManager) {
-        options.forEach((option: IEnumMember) => {
-            option.displayName = localizationManager.getDisplayName(option.displayName.toString());
-        });
-    }
 }
