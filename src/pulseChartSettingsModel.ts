@@ -4,7 +4,6 @@ import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
 import ValidatorType = powerbi.visuals.ValidatorType;
-import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
 import ILocalizedItemMember = formattingSettingsInterfaces.ILocalizedItemMember;
