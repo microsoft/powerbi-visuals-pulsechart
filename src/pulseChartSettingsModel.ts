@@ -375,7 +375,7 @@ class RunnerCounterSettingsCard extends Card {
 
     fontSize = new formattingSettings.NumUpDown({
         name: "Text size",
-        displayName: "Visual_TextSize",
+        displayNameKey: "Visual_TextSize",
         value: 13,
     });
 
