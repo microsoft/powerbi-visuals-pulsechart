@@ -602,7 +602,7 @@ export class Visual implements IVisual {
             const dataView: DataView = options.dataViews[0];
 
             this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
-            this.setHighContrastModeColors(this.colorHelper);
+            this.visualSettings.parseSettings(this.colorHelper);
 
             const pulseChartData: ChartData = Visual.CONVERTER(
                 dataView,
@@ -1824,34 +1824,6 @@ export class Visual implements IVisual {
         this.hideAnimationDot();
         this.chart.selectAll(Visual.Line.selectorName).remove();
         this.chart.selectAll(Visual.Dot.selectorName).remove();
-    }
-
-    private setHighContrastModeColors(colorHelper: ColorHelper): void {
-        if (colorHelper.isHighContrast) {
-            const foregroundColor: string = colorHelper.getThemeColor("foreground");
-            const backgroundColor: string = colorHelper.getThemeColor("background");
-
-            this.visualSettings.series.fill.value.value = foregroundColor;
-
-            this.visualSettings.popup.color.value.value = backgroundColor;
-            this.visualSettings.popup.fontColor.value.value = foregroundColor;
-            this.visualSettings.popup.timeColor.value.value = foregroundColor;
-            this.visualSettings.popup.timeFill.value.value = backgroundColor;
-            this.visualSettings.popup.strokeColor.value.value = foregroundColor;
-
-            this.visualSettings.dots.color.value.value = foregroundColor;
-
-            this.visualSettings.xAxis.fontColor.value.value = foregroundColor;
-            this.visualSettings.xAxis.color.value.value = foregroundColor;
-            this.visualSettings.xAxis.backgroundColor.value.value = backgroundColor;
-
-            this.visualSettings.yAxis.color.value.value = foregroundColor;
-            this.visualSettings.yAxis.fontColor.value.value = foregroundColor;
-
-            this.visualSettings.playback.color.value.value = foregroundColor;
-
-            this.visualSettings.runnerCounter.fontColor.value.value = foregroundColor;
-        }
     }
 
     public getFormattingModel(): powerbiVisualsApi.visuals.FormattingModel {

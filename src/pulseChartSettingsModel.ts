@@ -6,7 +6,9 @@ import { AnimationPosition } from './models/models';
 import ValidatorType = powerbi.visuals.ValidatorType;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
+import Slice = formattingSettings.Slice;
 import ILocalizedItemMember = formattingSettingsInterfaces.ILocalizedItemMember;
+import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 
 const xAxisPositionOptions: ILocalizedItemMember[] = [
     { value: XAxisPosition.Center, displayNameKey: "Visual_Center" },
@@ -369,7 +371,7 @@ class RunnerCounterSettingsCard extends Card {
         displayName: "Position",
         displayNameKey: "Visual_Position",
         items: runnerCounterPositionOptions,
-        value: runnerCounterPositionOptions[0],
+        value: runnerCounterPositionOptions[1],
     });
 
     fontSize = new formattingSettings.NumUpDown({
@@ -413,4 +415,46 @@ export class PulseChartSettingsModel extends Model {
         this.playback,
         this.runnerCounter,
     ];
+
+    public parseSettings(colorHelper: ColorHelper): void {
+        // handle unexpected string value
+        this.runnerCounter.position.value = this.runnerCounter.position.value || runnerCounterPositionOptions[1];
+        this.setHighContrastModeColors(colorHelper);
+    }
+
+    private setHighContrastModeColors(colorHelper: ColorHelper): void {
+        if (colorHelper.isHighContrast) {
+            const foregroundColor: string = colorHelper.getThemeColor("foreground");
+            const backgroundColor: string = colorHelper.getThemeColor("background");
+
+            this.series.fill.value.value = foregroundColor;
+
+            this.popup.color.value.value = backgroundColor;
+            this.popup.fontColor.value.value = foregroundColor;
+            this.popup.timeColor.value.value = foregroundColor;
+            this.popup.timeFill.value.value = backgroundColor;
+            this.popup.strokeColor.value.value = foregroundColor;
+
+            this.dots.color.value.value = foregroundColor;
+
+            this.xAxis.fontColor.value.value = foregroundColor;
+            this.xAxis.color.value.value = foregroundColor;
+            this.xAxis.backgroundColor.value.value = backgroundColor;
+
+            this.yAxis.color.value.value = foregroundColor;
+            this.yAxis.fontColor.value.value = foregroundColor;
+
+            this.playback.color.value.value = foregroundColor;
+
+            this.runnerCounter.fontColor.value.value = foregroundColor;
+        }
+
+        this.cards.forEach((card: Card) => {
+            card.slices.forEach((slice: Slice) => {
+                if (slice instanceof formattingSettings.ColorPicker) {
+                    slice.visible = !colorHelper.isHighContrast;
+                }
+            });
+        });
+    }
 }
