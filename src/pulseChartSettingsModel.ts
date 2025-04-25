@@ -56,7 +56,13 @@ class GapsSettingsCard extends Card {
         displayName: "Visible gaps",
         displayNameKey: "Visual_PulseChart_VisibleGaps",
         value: 1,
-    })
+        options: {
+            minValue: { value: 0, type: ValidatorType.Min },
+            maxValue: { value: 100, type: ValidatorType.Max },
+            unitSymbol: "%",
+            unitSymbolAfterInput: true,
+        }
+    });
 
     name: string = "gaps";
     displayName: string = "Gaps";
@@ -213,6 +219,12 @@ class DotsSettingsCard extends Card {
         displayName: "Transparency",
         displayNameKey: "Visual_Transparency",
         value: 25,
+        options: {
+            minValue: { value: 0, type: ValidatorType.Min },
+            maxValue: { value: 100, type: ValidatorType.Max },
+            unitSymbol: "%",
+            unitSymbolAfterInput: true,
+        }
     });
 
     name: string = "dots";
@@ -378,6 +390,11 @@ class RunnerCounterSettingsCard extends Card {
         name: "Text size",
         displayNameKey: "Visual_TextSize",
         value: 13,
+        options:{
+            minValue: { value: 8, type: ValidatorType.Min },
+            maxValue: { value: 60, type: ValidatorType.Max },
+            unitSymbol: "pt",
+        }
     });
 
     fontColor = new formattingSettings.ColorPicker({
