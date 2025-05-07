@@ -1,22 +1,23 @@
 import powerbi from "powerbi-visuals-api";
-import { formattingSettings } from "powerbi-visuals-utils-formattingmodel";
+import { formattingSettings, formattingSettingsInterfaces } from "powerbi-visuals-utils-formattingmodel";
 import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
 import ValidatorType = powerbi.visuals.ValidatorType;
-import ILocalizationManager = powerbi.extensibility.ILocalizationManager;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
-import IEnumMember = powerbi.IEnumMember;
+import Slice = formattingSettings.Slice;
+import ILocalizedItemMember = formattingSettingsInterfaces.ILocalizedItemMember;
+import { ColorHelper } from "powerbi-visuals-utils-colorutils";
 
-const xAxisPositionOptions: IEnumMember[] = [
-    { value: XAxisPosition.Center, displayName: "Visual_Center" },
-    { value: XAxisPosition.Bottom, displayName: "Visual_Bottom" },
+const xAxisPositionOptions: ILocalizedItemMember[] = [
+    { value: XAxisPosition.Center, displayNameKey: "Visual_Center" },
+    { value: XAxisPosition.Bottom, displayNameKey: "Visual_Bottom" },
 ];
 
-const runnerCounterPositionOptions: IEnumMember[] = [
-    { value: RunnerCounterPosition.TopLeft, displayName: "Visual_TopLeft" },
-    { value: RunnerCounterPosition.TopRight, displayName: "Visual_TopRight" },
+const runnerCounterPositionOptions: ILocalizedItemMember[] = [
+    { value: RunnerCounterPosition.TopLeft, displayNameKey: "Visual_TopLeft" },
+    { value: RunnerCounterPosition.TopRight, displayNameKey: "Visual_TopRight" },
 ];
 
 class SeriesSettingsCard extends Card {
@@ -55,7 +56,13 @@ class GapsSettingsCard extends Card {
         displayName: "Visible gaps",
         displayNameKey: "Visual_PulseChart_VisibleGaps",
         value: 1,
-    })
+        options: {
+            minValue: { value: 0, type: ValidatorType.Min },
+            maxValue: { value: 100, type: ValidatorType.Max },
+            unitSymbol: "%",
+            unitSymbolAfterInput: true,
+        }
+    });
 
     name: string = "gaps";
     displayName: string = "Gaps";
@@ -212,6 +219,12 @@ class DotsSettingsCard extends Card {
         displayName: "Transparency",
         displayNameKey: "Visual_Transparency",
         value: 25,
+        options: {
+            minValue: { value: 0, type: ValidatorType.Min },
+            maxValue: { value: 100, type: ValidatorType.Max },
+            unitSymbol: "%",
+            unitSymbolAfterInput: true,
+        }
     });
 
     name: string = "dots";
@@ -370,13 +383,18 @@ class RunnerCounterSettingsCard extends Card {
         displayName: "Position",
         displayNameKey: "Visual_Position",
         items: runnerCounterPositionOptions,
-        value: runnerCounterPositionOptions[0],
+        value: runnerCounterPositionOptions[1],
     });
 
     fontSize = new formattingSettings.NumUpDown({
         name: "Text size",
-        displayName: "Visual_TextSize",
+        displayNameKey: "Visual_TextSize",
         value: 13,
+        options:{
+            minValue: { value: 8, type: ValidatorType.Min },
+            maxValue: { value: 60, type: ValidatorType.Max },
+            unitSymbol: "pt",
+        }
     });
 
     fontColor = new formattingSettings.ColorPicker({
@@ -415,14 +433,45 @@ export class PulseChartSettingsModel extends Model {
         this.runnerCounter,
     ];
 
-    public setLocalizedOptions(localizationManager: ILocalizationManager) {
-        this.setLocalizedDisplayName(xAxisPositionOptions, localizationManager);
-        this.setLocalizedDisplayName(runnerCounterPositionOptions, localizationManager);
+    public parseSettings(colorHelper: ColorHelper): void {
+        // handle unexpected string value
+        this.runnerCounter.position.value = this.runnerCounter.position.value || runnerCounterPositionOptions[1];
+        this.setHighContrastModeColors(colorHelper);
     }
 
-    private setLocalizedDisplayName(options: IEnumMember[], localizationManager: ILocalizationManager) {
-        options.forEach((option: IEnumMember) => {
-            option.displayName = localizationManager.getDisplayName(option.displayName.toString());
+    private setHighContrastModeColors(colorHelper: ColorHelper): void {
+        if (colorHelper.isHighContrast) {
+            const foregroundColor: string = colorHelper.getThemeColor("foreground");
+            const backgroundColor: string = colorHelper.getThemeColor("background");
+
+            this.series.fill.value.value = foregroundColor;
+
+            this.popup.color.value.value = backgroundColor;
+            this.popup.fontColor.value.value = foregroundColor;
+            this.popup.timeColor.value.value = foregroundColor;
+            this.popup.timeFill.value.value = backgroundColor;
+            this.popup.strokeColor.value.value = foregroundColor;
+
+            this.dots.color.value.value = foregroundColor;
+
+            this.xAxis.fontColor.value.value = foregroundColor;
+            this.xAxis.color.value.value = foregroundColor;
+            this.xAxis.backgroundColor.value.value = backgroundColor;
+
+            this.yAxis.color.value.value = foregroundColor;
+            this.yAxis.fontColor.value.value = foregroundColor;
+
+            this.playback.color.value.value = foregroundColor;
+
+            this.runnerCounter.fontColor.value.value = foregroundColor;
+        }
+
+        this.cards.forEach((card: Card) => {
+            card.slices.forEach((slice: Slice) => {
+                if (slice instanceof formattingSettings.ColorPicker) {
+                    slice.visible = !colorHelper.isHighContrast;
+                }
+            });
         });
     }
 }

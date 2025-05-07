@@ -1,3 +1,10 @@
+## 3.4.1.0
+### Code improvements
+* Added value validators to numeric setting fields
+
+### Fixes
+* Fixed displayName of Text size
+
 ## 3.4.0.0
 ### Visual changes
 * Enable [Sync slicer feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/enable-sync-slicers)
