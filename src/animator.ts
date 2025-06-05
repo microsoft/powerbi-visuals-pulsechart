@@ -27,7 +27,7 @@
 import powerbiVisualsApi from "powerbi-visuals-api";
 import isEqual from "lodash-es/isEqual";
 import isNumber from "lodash-es/isNumber";
-import { BaseType, Selection } from "d3-selection";
+import { Selection as d3Selection } from "d3-selection";
 
 import VisualObjectInstancesToPersist = powerbiVisualsApi.VisualObjectInstancesToPersist;
 
@@ -41,19 +41,19 @@ import { valueFormatter, textMeasurementService } from "powerbi-visuals-utils-fo
 import { AnimationPosition, DataPoint } from "./models/models";
 import { AnimatorStates, RunnerCounterPosition } from "./enum/enums";
 import { Visual } from "./visual";
-import { pulseChartUtils } from "./utils";
+import * as pulseChartUtils from "./utils";
 
 export class Animator {
     private chart: Visual;
-    private svg: Selection<BaseType, any, BaseType, any>;
-    private animationPlay: Selection<BaseType, any, BaseType, any>;
-    private animationPause: Selection<BaseType, any, BaseType, any>;
-    private animationReset: Selection<BaseType, any, BaseType, any>;
-    private animationToEnd: Selection<BaseType, any, BaseType, any>;
-    private animationPrev: Selection<BaseType, any, BaseType, any>;
-    private animationNext: Selection<BaseType, any, BaseType, any>;
-    private runnerCounter: Selection<BaseType, any, BaseType, any>;
-    private runnerCounterText: Selection<BaseType, any, BaseType, any>;
+    private svg: d3Selection<SVGSVGElement, unknown, null, undefined>;
+    private animationPlay: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationPause: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationReset: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationToEnd: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationPrev: d3Selection<SVGGElement, unknown, null, undefined>;
+    private animationNext: d3Selection<SVGGElement, unknown, null, undefined>;
+    private runnerCounter: d3Selection<SVGGElement, unknown, null, undefined>;
+    private runnerCounterText: d3Selection<SVGTextElement, unknown, null, undefined>;
     private static AnimationPlay: ClassAndSelector = createClassAndSelector("animationPlay");
     private static AnimationPause: ClassAndSelector = createClassAndSelector("animationPause");
     private static AnimationReset: ClassAndSelector = createClassAndSelector("animationReset");
@@ -77,7 +77,7 @@ export class Animator {
     private static DimmedOpacity: number = 0.25;
     private static DefaultOpacity: number = 1;
     private static DefaultControlsColor: string = "#777";
-    private container: Selection<BaseType, any, BaseType, any>;
+    private container: d3Selection<SVGGElement, unknown, null, undefined>;
     public animationPlayingIndex: number = 0;
     private color: string;
     private isAutoPlayed: boolean = false;
@@ -95,7 +95,7 @@ export class Animator {
     private static runnerCounterShiftY: number = 7;
 
     private get runnerCounterPosition(): RunnerCounterPosition {
-        return this.chart.data.settings.runnerCounter.position;
+        return <RunnerCounterPosition>this.chart.data.settings.runnerCounter.position?.value?.value || RunnerCounterPosition.TopLeft;
     }
 
     private get maxTextWidthOfRunnerCounterValue(): number {
@@ -121,14 +121,11 @@ export class Animator {
         return this.animatorState === AnimatorStates.Stopped;
     }
 
-    /* tslint:disable:max-func-body-length */
-    constructor(chart: Visual, svg: Selection<BaseType, any, BaseType, any>) {
+    constructor(chart: Visual, svg: d3Selection<SVGSVGElement, unknown, null, undefined>) {
         this.chart = chart;
         this.svg = svg;
-
         this.setDefaultValues();
-
-        let container: Selection<BaseType, any, BaseType, any> = this.container = this.svg
+        const container: d3Selection<SVGGElement, unknown, null, undefined> = this.container = this.svg
             .append("g")
             .classed(Animator.ControlsContainer.className, true)
             .style("display", "none");
@@ -247,7 +244,6 @@ export class Animator {
         this.runnerCounterText = this.runnerCounter.append("text");
         this.setControlsColor(Animator.DefaultControlsColor);
     }
-    /* tslint:enable:max-func-body-length */
 
     private setDefaultValues(): void {
         this.position = Animator.AnimationMinPosition;
@@ -300,8 +296,8 @@ export class Animator {
     private renderControls(): void {
         this.show();
         let counter: number = 0;
-        let shiftX = (): number => Animator.buttonShiftX * counter++;
-        let color: string = this.color;
+        const shiftX = (): number => Animator.buttonShiftX * counter++;
+        const color: string = this.color;
 
         this.animationPlay
             .attr("transform", manipulation.translate(shiftX(), 0))
@@ -338,15 +334,17 @@ export class Animator {
             .style("text-anchor", this.runnerCounterPosition === RunnerCounterPosition.TopLeft ? "start" : "end");
 
         if (this.chart.data && this.chart.data.settings) {
-            this.runnerCounterText.style(<any>Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(
-                Visual.GET_RUNNER_COUNTER_TEXT_PROPERTIES(null, this.chart.data.settings.runnerCounter.fontSize)));
-            this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor);
+            const styles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({ text: null, fontSizeValue: this.chart.data.settings.runnerCounter.fontSize.value}));
+            Object.entries(styles).forEach(([key, value]) => {
+                this.runnerCounterText.style(key, value);
+            });
+            this.runnerCounterText.style("fill", this.chart.data.settings.runnerCounter.fontColor.value.value);
         }
 
         this.drawCounterValue();
     }
 
-    private static setControlVisiblity(element: Selection<BaseType, any, BaseType, any>, isVisible: boolean, isDisabled: boolean = false): void {
+    private static setControlVisiblity(element: d3Selection<SVGGElement, unknown, null, undefined>, isVisible: boolean, isDisabled: boolean = false): void {
         element
             .style("opacity", isVisible ? Animator.DefaultOpacity : Animator.DimmedOpacity);
         if (isVisible) {
@@ -357,7 +355,7 @@ export class Animator {
     }
 
     private disableControls(): void {
-        let showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show;
+        const showRunner: boolean = this.chart.data && this.chart.data.settings && this.chart.data.settings.runnerCounter.show.value;
         Animator.setControlVisiblity(this.animationReset, true);
         Animator.setControlVisiblity(this.animationToEnd, true);
 
@@ -416,7 +414,7 @@ export class Animator {
     }
 
     public setRunnerCounterValue(index?: number): void {
-        let dataPoint: DataPoint = this.chart.data
+        const dataPoint: DataPoint = this.chart.data
             && this.chart.data.series
             && this.chart.data.series[this.position.series]
             && this.chart.data.series[this.position.series].data
@@ -427,18 +425,18 @@ export class Animator {
             : "";
 
         if (dataPoint && dataPoint.runnerCounterFormatString) {
-            let runnerCounterformatter = valueFormatter.create({ format: dataPoint.runnerCounterFormatString });
+            const runnerCounterformatter = valueFormatter.create({ format: dataPoint.runnerCounterFormatString });
             runnerCounterValue = runnerCounterformatter.format(runnerCounterValue);
         }
 
-        this.runnerCounterValue = `${this.chart.data.settings.runnerCounter.label} ${runnerCounterValue}`;
+        this.runnerCounterValue = `${this.chart.data.settings.runnerCounter.label.value} ${runnerCounterValue}`;
         this.drawCounterValue();
     }
 
     private drawCounterValue(): void {
-        let progressText: string = this.runnerCounterValue;
+        const progressText: string = this.runnerCounterValue;
         this.runnerCounterText.text(progressText);
-        textMeasurementService.svgEllipsis(<any>this.runnerCounterText.node(), this.maxTextWidthOfRunnerCounterValue);
+        textMeasurementService.svgEllipsis(this.runnerCounterText.node(), this.maxTextWidthOfRunnerCounterValue);
     }
 
     public play(delay: number = 0, renderDuringPlaying: boolean = false): void {

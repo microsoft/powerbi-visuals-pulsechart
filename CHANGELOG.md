@@ -1,3 +1,30 @@
+## 3.4.1.0
+### Code improvements
+* Added value validators to numeric setting fields
+
+### Fixes
+* Fixed displayName of Text size
+
+## 3.4.0.0
+### Visual changes
+* Enable [Sync slicer feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/enable-sync-slicers)
+* Enable [the support multiple visual selection feature](https://learn.microsoft.com/en-us/power-bi/developer/visuals/supportsmultivisualselection-feature)
+* Add report page tooltip support
+* Fix bug with ignoring of selecting visual when clicking on empty spot
+
+### Code improvements
+* Update API to 5.10.0, tools to 5.5.0 and other packages
+* Migrate to new formatting model
+* Fix npm vulnerabilities
+* Remove "coveralls" package
+* Migrate to eslint v9
+
+### Other
+* Migrate from tslint to eslint, fix eslint errors
+* Update README.md to include build status
+* Remove .travis.yml, azure-pipelines.yml
+* Update build.yml and code-ql pipelines
+
 ## 3.0.3
 * Packages update
 * IE 11 rendering axes fix
