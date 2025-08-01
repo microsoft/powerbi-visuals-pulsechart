@@ -1,3 +1,7 @@
+## 3.4.1.2
+### Fixes
+* Fixed circles outline color in high contrast mode
+
 ## 3.4.1.0
 ### Code improvements
 * Added value validators to numeric setting fields
