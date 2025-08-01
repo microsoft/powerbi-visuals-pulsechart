@@ -1425,7 +1425,8 @@ export class Visual implements IVisual {
                 const isSelected: boolean = pulseChartUtils.getFillOpacity(d.selected, d.highlight, hasSelection, hasHighlights) === pulseChartUtils.DefaultOpacity;
                 return isSelected ? this.dotOpacity : this.dotOpacity / 2;
             })
-            .style("cursor", "pointer");
+            .style("cursor", "pointer")
+            .style("outline-color", this.data.settings.dots.color.value.value);
 
         selection
             .exit()
