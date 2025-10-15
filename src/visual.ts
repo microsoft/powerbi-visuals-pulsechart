@@ -26,7 +26,7 @@
 
 import powerbiVisualsApi from "powerbi-visuals-api";
 
-import { min as d3Min, max as d3Max, range as d3Range } from  "d3-array";
+import { min as d3Min, max as d3Max, range as d3Range } from "d3-array";
 import { axisRight, axisBottom, Axis } from "d3-axis";
 import { Selection as d3Selection, select as d3Select, BaseType } from "d3-selection";
 import { timeMinute, timeDay } from "d3-time";
@@ -106,7 +106,7 @@ import { FormattingSettingsService } from "powerbi-visuals-utils-formattingmodel
 
 type TextStyles = {
     "font-family": string;
-    "font-size": string; 
+    "font-size": string;
     "font-weight"?: string;
 }
 
@@ -1578,7 +1578,7 @@ export class Visual implements IVisual {
                 return manipulation.translate(x + d.popupInfo.offsetX, y);
             });
 
-        const tooltipRect: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipRect.selectorName).data(d => [d]);   
+        const tooltipRect: d3Selection<SVGPathElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGPathElement, DataPoint>(Visual.TooltipRect.selectorName).data(d => [d]);
         const tooltipRectMerged = tooltipRect
             .enter()
             .append("path")
@@ -1719,7 +1719,7 @@ export class Visual implements IVisual {
         titleMerged
             .classed(Visual.TooltipTitle.className, true);
 
-        const titleFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({bold: true}));
+        const titleFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({ bold: true }));
         Visual.APPLY_TEXT_FONT_STYLES(titleMerged, titleFontStyles);
 
         titleMerged
@@ -1734,13 +1734,15 @@ export class Visual implements IVisual {
                 }
                 const maxWidth = width - Visual.PopupTextPadding * 2 -
                     (this.data.settings.popup.showTime ? (this.data.widthOfTooltipValueLabel - Visual.PopupTextPadding) : 0) - 10;
-                return textMeasurementService.getTailoredTextOrDefault(Visual.getTextProperties({ text: d.popupInfo.title, bold: true}), maxWidth);
+
+                return textMeasurementService.getTailoredTextOrDefault(Visual.getTextProperties({ text: d.popupInfo.title, bold: true }), maxWidth);
             });
 
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
-            let shiftY: number = Visual.PopupTextPadding + this.data.settings.popup.fontSize.value;
+            let shiftY: number = Visual.PopupTextPadding + Number(this.data.settings.popup.fontSize.value);
 
             const descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
+
             if (d.popupInfo) {
                 shiftY = ((titleDisplayProperty && d.popupInfo.title) || (timeDisplayProperty && d.popupInfo.value)) ? descriptionYOffset : shiftY;
             }
@@ -1758,7 +1760,7 @@ export class Visual implements IVisual {
         const description: d3Selection<SVGTextElement, DataPoint, SVGGElement, DataPoint> = tooltipRootMerged.selectAll<SVGTextElement, DataPoint>(Visual.TooltipDescription.selectorName).data(d => [d]);
         const descriptionMerged = description.enter().append("text").merge(description);
         descriptionMerged.classed(Visual.TooltipDescription.className, true);
-        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({text: null, fontSizeValue: this.data.settings.popup.fontSize.value}));
+        const descriptionFontStyles = Visual.CONVERT_TEXT_PROPERTIES_TO_STYLE(Visual.getTextProperties({ text: null, fontSizeValue: this.data.settings.popup.fontSize.value }));
         Visual.APPLY_TEXT_FONT_STYLES(descriptionMerged, descriptionFontStyles);
 
         descriptionMerged
@@ -1773,6 +1775,7 @@ export class Visual implements IVisual {
             })
             .attr("transform", (d: DataPoint) => {
                 const descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
+                console.log({ descriptionDimenstions })
                 return manipulation.translate(0, descriptionDimenstions.y);
             });
         descriptionMerged.selectAll("tspan").attr("x", Visual.PopupTextPadding);

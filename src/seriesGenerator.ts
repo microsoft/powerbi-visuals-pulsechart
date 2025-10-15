@@ -154,7 +154,6 @@ export function generateSeries(options: SeriesGenerationOptions): Series[] {
             } else {
                 formattedValue = categoryValue.toString();
             }
-
             popupInfo = {
                 value: formattedValue,
                 title: columns.EventTitle && columns.EventTitle.values && valueFormatterLocalized.format(columns.EventTitle.values[categoryIndex]),
