@@ -1775,7 +1775,6 @@ export class Visual implements IVisual {
             })
             .attr("transform", (d: DataPoint) => {
                 const descriptionDimenstions: ElementDimensions = getDescriptionDimenstions(d);
-                console.log({ descriptionDimenstions })
                 return manipulation.translate(0, descriptionDimenstions.y);
             });
         descriptionMerged.selectAll("tspan").attr("x", Visual.PopupTextPadding);
