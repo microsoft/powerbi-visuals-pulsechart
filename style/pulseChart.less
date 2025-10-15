@@ -94,13 +94,15 @@
     }
 
     .dot {
+        outline-width: 0px;
+        outline-offset: 3px;
         &:focus, &:focus-visible {
             outline: none;
         }
 
         &:focus-visible {
-            stroke: rgb(0, 95, 204);
-            stroke-width: 2px;
+            outline-width: 3px;
+            outline-style: solid;
         }
     }
 }
