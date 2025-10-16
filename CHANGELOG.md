@@ -1,3 +1,11 @@
+## 3.4.3.0
+### Fixes
+* Fixed event description position
+
+### Code improvements
+* Update packages
+* Fix npm vulnerabilities
+
 ## 3.4.1.2
 ### Fixes
 * Fixed circles outline color in high contrast mode
