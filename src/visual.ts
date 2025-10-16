@@ -1739,7 +1739,7 @@ export class Visual implements IVisual {
             });
 
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
-            let fontSizeValue = this.data.settings.popup.fontSize.value;
+            const fontSizeValue = this.data.settings.popup.fontSize.value;
             let fontSizeNumber = isNumber(fontSizeValue) ? fontSizeValue : Number(fontSizeValue);
             if (!isNumber(fontSizeNumber) || isNaN(fontSizeNumber)) {
                 fontSizeNumber = 12; // fallback default font size  
