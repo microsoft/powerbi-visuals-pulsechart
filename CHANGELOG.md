@@ -1,4 +1,4 @@
-## 3.4.2.0
+## 3.4.3.0
 ### Fixes
 * Fixed event description position
 
