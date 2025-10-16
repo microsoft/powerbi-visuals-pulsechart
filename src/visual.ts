@@ -1739,7 +1739,12 @@ export class Visual implements IVisual {
             });
 
         const getDescriptionDimenstions = (d: DataPoint): ElementDimensions => {
-            let shiftY: number = Visual.PopupTextPadding + Number(this.data.settings.popup.fontSize.value);
+            let fontSizeValue = this.data.settings.popup.fontSize.value;
+            let fontSizeNumber = isNumber(fontSizeValue) ? fontSizeValue : Number(fontSizeValue);
+            if (!isNumber(fontSizeNumber) || isNaN(fontSizeNumber)) {
+                fontSizeNumber = 12; // fallback default font size  
+            }
+            let shiftY: number = Visual.PopupTextPadding + fontSizeNumber;  
 
             const descriptionYOffset: number = shiftY + Visual.DefaultTooltipSettings.timeHeight;
 
