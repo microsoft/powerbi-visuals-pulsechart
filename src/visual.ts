@@ -594,6 +594,7 @@ export class Visual implements IVisual {
         this.host.eventService.renderingStarted(options);
         try {
             if (!options?.dataViews?.[0]) {
+                this.host.eventService.renderingFinished(options);
                 return;
             }
 
@@ -615,6 +616,7 @@ export class Visual implements IVisual {
 
             if (!this.validateData(this.data)) {
                 this.clearAll(true);
+                this.host.eventService.renderingFinished(options);
                 return;
             }
 
@@ -628,6 +630,7 @@ export class Visual implements IVisual {
 
             if (this.data.xScale.ticks(undefined).length < 2) {
                 this.clearAll(true);
+                this.host.eventService.renderingFinished(options);
                 return;
             }
 
