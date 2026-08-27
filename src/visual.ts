@@ -592,9 +592,10 @@ export class Visual implements IVisual {
 
     public update(options: VisualUpdateOptions): void {
         this.host.eventService.renderingStarted(options);
+        let renderingFailed = false;
+
         try {
             if (!options?.dataViews?.[0]) {
-                this.host.eventService.renderingFinished(options);
                 return;
             }
 
@@ -616,7 +617,6 @@ export class Visual implements IVisual {
 
             if (!this.validateData(this.data)) {
                 this.clearAll(true);
-                this.host.eventService.renderingFinished(options);
                 return;
             }
 
@@ -630,7 +630,6 @@ export class Visual implements IVisual {
 
             if (this.data.xScale.ticks(undefined).length < 2) {
                 this.clearAll(true);
-                this.host.eventService.renderingFinished(options);
                 return;
             }
 
@@ -639,10 +638,14 @@ export class Visual implements IVisual {
             this.updateElements();
 
             this.render();
-            this.host.eventService.renderingFinished(options);
         } catch (ex) {
+            renderingFailed = true;
             this.host.eventService.renderingFailed(options, ex);
             console.error(ex);
+        } finally {
+            if (!renderingFailed) {
+                this.host.eventService.renderingFinished(options);
+            }
         }
     }
 
