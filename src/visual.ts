@@ -592,61 +592,60 @@ export class Visual implements IVisual {
 
     public update(options: VisualUpdateOptions): void {
         this.host.eventService.renderingStarted(options);
-        let renderingFailed = false;
 
         try {
-            if (!options?.dataViews?.[0]) {
-                return;
-            }
-
-            this.viewport = options.viewport;
-
-            const dataView: DataView = options.dataViews[0];
-
-            this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
-            this.visualSettings.parseSettings(this.colorHelper);
-
-            const pulseChartData: ChartData = Visual.CONVERTER(
-                dataView,
-                this.host,
-                this.visualSettings,
-                this.behavior,
-            );
-
-            this.updateData(pulseChartData);
-
-            if (!this.validateData(this.data)) {
-                this.clearAll(true);
-                return;
-            }
-
-            const width = this.getChartWidth();
-            this.calculateXAxisProperties(width);
-
-            const height = this.getChartHeight(this.data.settings.xAxis.show.value
-                && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
-
-            this.calculateYAxisProperties(height);
-
-            if (this.data.xScale.ticks(undefined).length < 2) {
-                this.clearAll(true);
-                return;
-            }
-
-            this.size = { width, height };
-
-            this.updateElements();
-
-            this.render();
+            this.updateInternal(options);
+            this.host.eventService.renderingFinished(options);
         } catch (ex) {
-            renderingFailed = true;
             this.host.eventService.renderingFailed(options, ex);
             console.error(ex);
-        } finally {
-            if (!renderingFailed) {
-                this.host.eventService.renderingFinished(options);
-            }
         }
+    }
+
+    private updateInternal(options: VisualUpdateOptions): void {
+        if (!options?.dataViews?.[0]) {
+            return;
+        }
+
+        this.viewport = options.viewport;
+
+        const dataView: DataView = options.dataViews[0];
+
+        this.visualSettings = this.formattingSettingsService.populateFormattingSettingsModel(PulseChartSettingsModel, dataView);
+        this.visualSettings.parseSettings(this.colorHelper);
+
+        const pulseChartData: ChartData = Visual.CONVERTER(
+            dataView,
+            this.host,
+            this.visualSettings,
+            this.behavior,
+        );
+
+        this.updateData(pulseChartData);
+
+        if (!this.validateData(this.data)) {
+            this.clearAll(true);
+            return;
+        }
+
+        const width = this.getChartWidth();
+        this.calculateXAxisProperties(width);
+
+        const height = this.getChartHeight(this.data.settings.xAxis.show.value
+            && this.data.series.some((series: Series) => series.xAxisProperties.rotate));
+
+        this.calculateYAxisProperties(height);
+
+        if (this.data.xScale.ticks(undefined).length < 2) {
+            this.clearAll(true);
+            return;
+        }
+
+        this.size = { width, height };
+
+        this.updateElements();
+
+        this.render();
     }
 
     private updateData(data: ChartData): void {
