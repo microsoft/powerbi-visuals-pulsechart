@@ -30,6 +30,7 @@ import 'd3-transition';
 import DataView = powerbiVisualsApi.DataView;
 import IVisualHost = powerbiVisualsApi.extensibility.visual.IVisualHost;
 import ISelectionManager = powerbiVisualsApi.extensibility.ISelectionManager;
+import VisualUpdateOptions = powerbiVisualsApi.extensibility.visual.VisualUpdateOptions;
 
 import { createColorPalette, createVisualHost, renderTimeout, d3Click } from "powerbi-visuals-utils-testutils";
 
@@ -56,6 +57,62 @@ describe("PulseChartTests", () => {
         visualBuilder = new VisualBuilder(1000, 500);
         defaultDataViewBuilder = new VisualData();
         dataView = defaultDataViewBuilder.getDataView();
+    });
+
+    describe("rendering events", () => {
+        let eventService: powerbiVisualsApi.extensibility.IVisualEventService;
+
+        beforeEach(() => {
+            const host = (visualBuilder.visualInstance as unknown as { host: IVisualHost }).host;
+            eventService = host.eventService;
+        });
+
+        it("should call renderingFinished when there is no data view", () => {
+            const options = {
+                dataViews: [],
+                viewport: visualBuilder.viewport,
+            } as VisualUpdateOptions;
+            const renderingStarted = spyOn(eventService, "renderingStarted");
+            const renderingFinished = spyOn(eventService, "renderingFinished");
+            const renderingFailed = spyOn(eventService, "renderingFailed");
+
+            visualBuilder.visualInstance.update(options);
+
+            expect(renderingStarted).toHaveBeenCalledWith(options);
+            expect(renderingFinished).toHaveBeenCalledWith(options);
+            expect(renderingFailed).not.toHaveBeenCalled();
+        });
+
+        it("should call renderingFailed with the thrown error", () => {
+            const error = new Error("conversion failed");
+            const renderingStarted = spyOn(eventService, "renderingStarted");
+            const renderingFinished = spyOn(eventService, "renderingFinished");
+            const renderingFailed = spyOn(eventService, "renderingFailed");
+            spyOn(VisualClass, "CONVERTER").and.callFake(() => {
+                throw error;
+            });
+            spyOn(console, "error");
+
+            visualBuilder.updateFlushAllD3Transitions(dataView);
+
+            expect(renderingStarted).toHaveBeenCalled();
+            expect(renderingFailed).toHaveBeenCalled();
+            const failedCall = renderingFailed.calls.mostRecent().args as unknown as [VisualUpdateOptions, unknown];
+            expect(failedCall[1]).toBe(error);
+            expect(renderingFinished).not.toHaveBeenCalled();
+        });
+
+        it("should call renderingFinished after a successful render", () => {
+            const renderingStarted = spyOn(eventService, "renderingStarted");
+            const renderingFinished = spyOn(eventService, "renderingFinished");
+            const renderingFailed = spyOn(eventService, "renderingFailed");
+
+            visualBuilder.updateFlushAllD3Transitions(dataView);
+
+            expect(renderingStarted).toHaveBeenCalled();
+            expect(renderingFinished).toHaveBeenCalled();
+            expect(renderingFailed).not.toHaveBeenCalled();
+        });
     });
 
     describe("DOM tests", () => {

@@ -1,3 +1,7 @@
+## 3.4.4.0
+### Fixes
+* Fixed event rendering issue
+
 ## 3.4.3.0
 ### Fixes
 * Fixed event description position

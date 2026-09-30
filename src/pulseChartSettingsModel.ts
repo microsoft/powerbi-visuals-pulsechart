@@ -1,9 +1,10 @@
 import powerbi from "powerbi-visuals-api";
 import { formattingSettings, formattingSettingsInterfaces } from "powerbi-visuals-utils-formattingmodel";
-import { ValueFormatterOptions } from "powerbi-visuals-utils-formattingutils/lib/src/valueFormatter";
+import { valueFormatter } from "powerbi-visuals-utils-formattingutils";
 import { RunnerCounterPosition, XAxisDateFormat, XAxisPosition } from './enum/enums';
 import { AnimationPosition } from './models/models';
 import ValidatorType = powerbi.visuals.ValidatorType;
+import ValueFormatterOptions = valueFormatter.ValueFormatterOptions;
 import Model = formattingSettings.Model;
 import Card = formattingSettings.SimpleCard;
 import Slice = formattingSettings.Slice;
